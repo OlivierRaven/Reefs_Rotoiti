@@ -81,7 +81,9 @@ species_presence_absence <- Fish_data %>%
     names_from = Species, 
     values_from = Presence, 
     values_fill = list(Presence = 0), 
-    names_prefix = "Presence_")
+    names_prefix = "Presence_") %>%
+  mutate(Predator_Fish_Presence = pmax(Presence_Trout, Presence_Eel, Presence_Catfish))
+
 
 # Reshape CPUE_BCUE_weighted so each species becomes a column
 CPUE_BCUE_weighted_summary <- CPUE_BCUE_weighted %>%
@@ -121,12 +123,10 @@ Monitoring_Reef_data <- Site_info %>%
   left_join(CPUE_BCUE_weighted_summary, by = "Monitoring_ID")%>%
   left_join(species_presence_absence, by = "Monitoring_ID")
 
-Monitoring_Reef_data <- Monitoring_Reef_data %>%
-  mutate(Presence_rocks = if_else(Cobble > 1 | Boulders > 1 | Bedrock > 1, 1, 0))
-
 # Extract additional date and time components
 Monitoring_Reef_data <- Monitoring_Reef_data %>%
-  mutate(
+  mutate(Presence_rocks = if_else(Cobble > 1 | Boulders > 1, 1, 0),
+         Slope_5m = 5/Distance_5m,
     Date = as.Date(Date_Time),                      
     Time = format(Date_Time, "%H:%M:%S"),
     Year = year(Date_Time),
@@ -142,16 +142,16 @@ Monitoring_Reef_data <- Monitoring_Reef_data %>%
 
 str(Monitoring_Reef_data)
 
-Monitoring_Reef_data[c("Bottom_visible","Water_clarity","Depth_10m","Slope","Riparian_vegetation","Overhanging_trees","Erosion","Sructure" ,"Bedrock", "Boulders", "Cobble", "Gravel", "Sand", "Mud", "Organic_matter", "Turf","Rock_size", "Emergent_Native", "Emergent_Non_Native", "Submerged_Non_Native", "Wood_cover", "Temperature", "DO_mgl", "DO_percent", "Conductivity", "pH","Specific_conductivity", "Vegetation_nearby","Submerged_Native")] <-   #
-  sapply(Monitoring_Reef_data[c("Bottom_visible","Water_clarity","Depth_10m","Slope","Riparian_vegetation","Overhanging_trees","Erosion","Sructure" ,"Bedrock", "Boulders", "Cobble", "Gravel", "Sand", "Mud", "Organic_matter", "Turf","Rock_size", "Emergent_Native", "Emergent_Non_Native", "Submerged_Non_Native", "Wood_cover", "Temperature", "DO_mgl", "DO_percent", "Conductivity","Specific_conductivity", "pH", "Vegetation_nearby","Submerged_Native")], as.numeric)  
+Monitoring_Reef_data[c(         "Bottom_visible","Water_clarity","Depth_10m","Slope","Riparian_vegetation","Overhanging_trees","Erosion","Sructure" ,"Bedrock", "Boulders", "Cobble", "Gravel", "Sand", "Mud", "Organic_matter","Rock_size", "Emergent_Native", "Emergent_Non_Native", "Submerged_Non_Native", "Wood_cover", "Temperature", "DO_mgl", "DO_percent", "Conductivity","Specific_conductivity","pH","Vegetation_nearby","Submerged_Native")] <-   #
+  sapply(Monitoring_Reef_data[c("Bottom_visible","Water_clarity","Depth_10m","Slope","Riparian_vegetation","Overhanging_trees","Erosion","Sructure" ,"Bedrock", "Boulders", "Cobble", "Gravel", "Sand", "Mud", "Organic_matter","Rock_size", "Emergent_Native", "Emergent_Non_Native", "Submerged_Non_Native", "Wood_cover", "Temperature", "DO_mgl", "DO_percent", "Conductivity","Specific_conductivity","pH","Vegetation_nearby","Submerged_Native")], as.numeric)  
 
 # Determine the Dominant Habitat Types of each site 
 habitat_classification <- Monitoring_Reef_data %>%
   filter(Monitoring ==0 ) %>% # needs fixing as now the other monitoring's get NA
   select(Site_ID, DHT, Lake, 
-         Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter, Turf, 
+         Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter, 
          Emergent_Native, Emergent_Non_Native, Submerged_Native, Submerged_Non_Native, Wood_cover) %>%
-  pivot_longer(cols = c(Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter, Turf, Emergent_Native, Emergent_Non_Native, Submerged_Native, Submerged_Non_Native, Wood_cover), 
+  pivot_longer(cols = c(Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter, Emergent_Native, Emergent_Non_Native, Submerged_Native, Submerged_Non_Native, Wood_cover), 
                names_to = "Type", values_to = "Percentage") %>%
   group_by(Site_ID) %>%
   summarise(
@@ -159,13 +159,22 @@ habitat_classification <- Monitoring_Reef_data %>%
     Sand_Percentage = sum(Percentage[Type == "Sand"], na.rm = TRUE),
     Mud_Percentage  = sum(Percentage[Type %in% c("Mud", "Organic_matter")], na.rm = TRUE),
     Emergent_Percentage = sum(Percentage[Type %in% c("Emergent_Native")], na.rm = TRUE),
-    .groups = "drop") %>%
+    # Substrate index calculation
+    Substrate_index = sum(
+      0.08 * Percentage[Type == "Bedrock"] +
+        0.07 * Percentage[Type == "Boulders"] +
+        0.06 * Percentage[Type == "Cobble"] +
+        0.04 * Percentage[Type == "Gravel"] +
+        0.03 * Percentage[Type == "Sand"] +
+        0.02 * Percentage[Type == "Organic_matter"] +
+        0.01 * Percentage[Type == "Mud"],
+      na.rm = TRUE),.groups = "drop") %>%
   mutate(Habitat_Type = case_when(
     Rocky_Percentage > 25 ~ "Rocky",
     Emergent_Percentage > 25 ~ "Emergent Macrophyte",
     Sand_Percentage >= Mud_Percentage ~ "Sandy",
     TRUE ~ "Muddy")) %>%
-  select(Site_ID, Habitat_Type)
+  select(Site_ID, Habitat_Type, Substrate_index)
 
 # Save as CSV
 write.csv(habitat_classification, "Data_mod/habitat_classification.csv", row.names = FALSE)

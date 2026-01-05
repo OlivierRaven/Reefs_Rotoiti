@@ -176,7 +176,6 @@ medium_count <- size_class_counts %>% filter(Size_Class == "Medium") %>% pull(Co
 large_count <- size_class_counts %>% filter(Size_Class == "Large") %>% pull(Count)
 
 
-
 # Create the histogram with the total count in the title
 ggplot(Koura_data, aes(Length_mm, Weight_g, col=Sex))+
   geom_point()+
@@ -203,11 +202,13 @@ ggplot(Koura_data %>%
   theme(legend.position = "top")
 
 
+ggplot(total_count_by_site_ID, aes(as.factor(Site_ID), total_Kōura, col=Site_ID))+
+  geom_point()+
+  facet_wrap(~Monitoring )
 
 
 # Create the plot
-ggplot(Fish_data_2 %>% 
-         filter(Species == "Kōura") %>% 
+ggplot(Koura_data %>% 
          filter(!is.na(Length_mm), !is.na(Sex)),
        aes(x = Length_mm, fill = Sex)) +
   geom_histogram(binwidth = 3, color = "black", position = "dodge", na.rm = TRUE) +
@@ -225,7 +226,7 @@ ggplot(Fish_data_2 %>%
   theme(legend.position = "top")
 
 
-ggplot()
+
 
 
 

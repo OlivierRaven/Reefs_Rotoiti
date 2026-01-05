@@ -46,6 +46,488 @@ Macroinvertebrates <- readxl::read_excel(exc_file_dir, sheet = "Macroinvertebrat
 
 ```
 
+
+# Calculte CPUE & BCUE
+```{r fig.width=8, fig.height=5, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
+# use size of koura to fill missing weights.
+lw_model <- lm(log10(Weight_g) ~ log10(Length_mm),
+               data = Fish_data,
+               subset = Species_name == "Freshwater_crayfish" | Maori_name == "Kōura",
+               na.action = na.exclude)
+
+# extract the residual variance
+sigma_log10 <- sigma(lw_model)
+c <- 10^(0.5 * sigma_log10^2)
+
+Fish_data <- Fish_data |>
+  mutate(is_koura = Species_name == "Freshwater_crayfish" | Maori_name == "Kōura",
+    Predicted_weight = case_when( !is.na(Weight_g) ~ Weight_g,
+      is_koura ~ {pred_log <- predict(lw_model, newdata = pick(everything()))
+        10^(pred_log) * c}, TRUE ~ NA_real_ ),
+    Weight_source = case_when(is_koura & !is.na(Weight_g) ~ "measured",
+      is_koura & is.na(Weight_g) ~ "predicted",TRUE ~ NA_character_))
+
+count_df <- Fish_data |>
+  dplyr::filter(is_koura, !is.na(Weight_source)) |>
+  dplyr::count(Weight_source, name = "n")
+
+measured_n  <- count_df$n[count_df$Weight_source == "measured"]
+predicted_n <- count_df$n[count_df$Weight_source == "predicted"]
+
+total_koura <- Fish_data |>
+  dplyr::filter(is_koura) |>
+  nrow()
+
+hist(Fish_data |> dplyr::filter(is_koura) |> dplyr::pull(Length_mm),xlab = "Length (mm)")
+
+# Extract model coefficients
+a <- coef(lw_model)[1]
+b <- coef(lw_model)[2]
+
+# Create formula text for the plot
+formula_text <- paste0( "log10(Weight[g]) = ", round(a, 3), " + ", round(b, 3), " * log10(OCL Length[mm])")
+
+# Plot with formula added
+lengt_weight_plot <- ggplot(Fish_data |> dplyr::filter(is_koura),
+  aes(Length_mm, Predicted_weight, col = Weight_source, shape= Sex)) +
+  geom_point(size = 2, alpha = 0.9) +
+  labs(x = "OCL Length (mm)", y = "Weight (g)",col = "Weight source") +
+  annotate("text",x = Inf, y = Inf, label = formula_text, hjust = 1.5, vjust = 5,size = 3.5) 
+lengt_weight_plot
+
+ggsave(file.path(fig_dir, "lengt_weight_plot.png"),lengt_weight_plot,width = 8, height = 5, dpi = 300)
+
+CPUE_BCUE_legacy <- Fish_data %>%
+  filter(!is.na(Species)) %>%
+  group_by(Monitoring_ID, Species, Net_type) %>%
+  dplyr::reframe(
+    Total_Individuals = sum(Amount, na.rm = TRUE),
+    Total_Weight      = sum(Weight_g, na.rm = TRUE),
+    Total_Effort      = dplyr::first(Amount_nets),
+    CPUE              = Total_Individuals / Total_Effort,
+    BCUE              = Total_Weight      / Total_Effort,
+    Mean_Length       = mean(Length_mm, na.rm = TRUE),
+    Min_Length        = ifelse(all(is.na(Length_mm)), NA, min(Length_mm, na.rm = TRUE)),
+    Max_Length        = ifelse(all(is.na(Length_mm)), NA, max(Length_mm, na.rm = TRUE)),
+    Mean_Weight       = mean(Weight_g, na.rm = TRUE),
+    Min_Weight        = ifelse(all(is.na(Weight_g)), NA, min(Weight_g, na.rm = TRUE)),
+    Max_Weight        = ifelse(all(is.na(Weight_g)), NA, max(Weight_g, na.rm = TRUE))
+  )
+
+CPUE_BCUE_weighted <- CPUE_BCUE_legacy %>%
+  group_by(Monitoring_ID, Species) %>%
+  summarise(
+    Total_Individuals       = sum(Total_Individuals, na.rm = TRUE),
+    Total_Weight            = sum(Total_Weight,      na.rm = TRUE),
+    Weighted_CPUE_numerator = sum(CPUE * Total_Effort,  na.rm = TRUE),
+    Weighted_BCUE_numerator = sum(BCUE * Total_Effort,  na.rm = TRUE),
+    Total_Effort_sum        = sum(Total_Effort,         na.rm = TRUE),
+    Mean_Length             = mean(Mean_Length, na.rm = TRUE),
+    Min_Length              = ifelse(all(is.na(Min_Length)), NA, min(Min_Length, na.rm = TRUE)),
+    Max_Length              = ifelse(all(is.na(Max_Length)), NA, max(Max_Length, na.rm = TRUE)),
+    Mean_Weight             = mean(Mean_Weight, na.rm = TRUE),
+    Min_Weight              = ifelse(all(is.na(Min_Weight)), NA, min(Min_Weight, na.rm = TRUE)),
+    Max_Weight              = ifelse(all(is.na(Max_Weight)), NA, max(Max_Weight, na.rm = TRUE)),
+    .groups = "drop"
+  ) %>%
+  ungroup() %>%
+  mutate(
+    Total_Effort_sum = ifelse(Monitoring_ID %in% c("16_0", "10_1", "3_2", "16_2"), 3, 4),
+    Weighted_CPUE    = Weighted_CPUE_numerator / Total_Effort_sum,
+    Weighted_BCUE    = Weighted_BCUE_numerator / Total_Effort_sum
+  )
+
+species_presence_absence <- Fish_data %>%
+  filter(!is.na(Species)) %>%
+  distinct(Monitoring_ID, Species) %>%
+  mutate(Presence = 1) %>%
+  pivot_wider(
+    names_from  = Species,
+    values_from = Presence,
+    values_fill = list(Presence = 0),
+    names_prefix = "Presence_") %>%
+  mutate(Predator_Fish_Presence = pmax(Presence_Trout, Presence_Eel, Presence_Catfish))
+
+CPUE_BCUE_weighted_summary <- CPUE_BCUE_weighted %>%
+  pivot_wider(
+    names_from  = Species,
+    values_from = c(
+      Total_Individuals, Weighted_CPUE, Weighted_BCUE, Total_Weight,
+      Mean_Length, Mean_Weight, Weighted_CPUE_numerator, Weighted_BCUE_numerator,
+      Total_Effort_sum, Min_Length, Max_Length, Min_Weight, Max_Weight
+    ),
+    names_sep   = "_",
+    values_fill = list(Total_Individuals = 0, Weighted_CPUE = 0, Weighted_BCUE = 0)
+  ) %>%
+  mutate(
+    Richness  = rowSums(dplyr::select(., starts_with("Total_Individuals_")) > 0),
+    Abundance = rowSums(dplyr::select(., starts_with("Total_Individuals_") & !ends_with(c("_Bullies", "_Common_smelt"))))
+  )
+
+```
+
+# Combine the data frames
+```{r}
+unit_metadata <- Monitoring_data %>%
+  dplyr::select(Parameter, Unit) %>%
+  distinct()
+
+Monitoring_summary <- Monitoring_data %>%
+  dplyr::select(-Group, -Notes, -Unit) %>%
+  pivot_wider(
+    names_from  = c(Parameter),
+    values_from = Value,
+    values_fill = list(Value = NA))
+
+Monitoring_summary <- Monitoring_summary %>%
+  mutate(across(c(
+      Bottom_visible, Water_clarity, Depth_10m, Slope, Riparian_vegetation, Vegetation_nearby,
+      Overhanging_trees, Erosion, Sructure, Bedrock, Boulders, Cobble, Gravel,
+      Sand, Mud, Organic_matter, Rock_size, Temperature, DO_mgl, DO_percent,
+      Conductivity, Specific_conductivity, pH, Wood_cover), ~ as.numeric(.)))
+
+Reef_summary <- Reef_data %>%
+  select(-Unit, -Notes, -Site_ID)%>%
+  pivot_wider(names_from = c(Parameter, Reef_ID), values_from = Value,names_sep = ".")
+
+Weed_summary <- Weed_data %>%
+  group_by(Monitoring_ID, Weed_Type, Native_Status) %>%
+  summarise(Total_Cover = sum(Percentage_Cover, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(
+    names_from  = c(Weed_Type, Native_Status),
+    values_from = Total_Cover,
+    values_fill = 0)
+
+Macroinvertebrates_sum <- Macroinvertebrates %>%
+  group_by(Monitoring_ID, Species) %>%
+  summarise(Total_amount = sum(Amount, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = c(Species), values_from = Total_amount, values_fill = 0)
+
+Macroinvertebrates_sum <- Macroinvertebrates %>%
+  group_by(Monitoring_ID, Species) %>%
+  summarise(Total_amount = sum(Amount, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = c(Species), values_from = Total_amount, values_fill = 0) %>%
+  mutate(
+    Invertebrates_Richness  = rowSums(dplyr::select(., -Monitoring_ID) > 0),
+    Invertebrates_Abundance = rowSums(dplyr::select(., -Monitoring_ID)))
+
+Monitoring_CPUE_data <- Site_info %>%
+  left_join(Monitoring_summary, by = "Monitoring_ID") %>%
+  left_join(Reef_summary, by = c("Monitoring_ID")) %>%
+  left_join(Weed_summary %>% dplyr::select(Monitoring_ID,
+                                           Emergent_Native, Emergent_Non_Native,
+                                           Submerged_Non_Native, Turf_Native),
+            by = c("Monitoring_ID")) %>%
+  left_join(CPUE_BCUE_weighted_summary, by = "Monitoring_ID") %>%
+  left_join(species_presence_absence, by = "Monitoring_ID") %>%
+  left_join(Macroinvertebrates_sum, by = "Monitoring_ID")
+
+Monitoring_CPUE_data <- Monitoring_CPUE_data %>%
+  mutate(
+    Presence_rocks = if_else(Cobble > 1 | Boulders > 1, 1, 0),
+    Slope_5m       = 5 / Distance_5m,
+    Site_ID_       = Site_ID.x - 2,
+    Monitoring_ID_ = paste0(as.numeric(sub("_.*", "", Monitoring_ID)) - 2,
+                            sub("^[^_]*", "", Monitoring_ID)),
+    Monitoring     = sub(".*?_", "", Monitoring_ID),
+    Date           = as.Date(Date_Time),
+    Time           = format(Date_Time, "%H:%M:%S"),
+    Year           = lubridate::year(Date_Time),
+    Month          = lubridate::month(Date_Time, label = TRUE),
+    Day            = lubridate::day(Date_Time),
+    Season         = case_when(
+      Month %in% c("Dec", "Jan", "Feb") ~ "Summer",
+      Month %in% c("Mar", "Apr", "May") ~ "Autumn",
+      Month %in% c("Jun", "Jul", "Aug") ~ "Winter",
+      Month %in% c("Sep", "Oct", "Nov") ~ "Spring",
+      TRUE ~ NA_character_),Date_Time_Numeric = as.numeric(Date_Time))
+
+Monitoring_CPUE_data <- Monitoring_CPUE_data %>%
+  mutate(Monitoring_label = case_when(
+    Monitoring == 0 ~ "0 Pre/Summer",
+    Monitoring == 1 ~ "1 Autumn",
+    Monitoring == 2 ~ "2 Winter",
+    Monitoring == 3 ~ "3 Spring",
+    Monitoring == 4 ~ "4 Summer",
+    TRUE ~ as.character(Monitoring)))
+
+habitat_classification <- Monitoring_CPUE_data %>%
+  dplyr::select(Monitoring_ID, DHT, Lake,
+                Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter,
+                Emergent_Native, Emergent_Non_Native, Submerged_Non_Native, Wood_cover) %>%
+  pivot_longer(
+    cols      = c(Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter,
+                  Emergent_Native, Emergent_Non_Native,
+                  Submerged_Non_Native, Wood_cover),
+    names_to  = "Type",
+    values_to = "Percentage"
+  ) %>%
+  group_by(Monitoring_ID) %>%
+  summarise(
+    Rocky_Percentage    = sum(Percentage[Type %in% c("Bedrock", "Boulders", "Cobble")], na.rm = TRUE),
+    Sand_Percentage     = sum(Percentage[Type == "Sand"], na.rm = TRUE),
+    Mud_Percentage      = sum(Percentage[Type %in% c("Mud", "Organic_matter")], na.rm = TRUE),
+    Emergent_Percentage = sum(Percentage[Type %in% c("Emergent_Native")], na.rm = TRUE),
+    Substrate_index = sum(
+      0.08 * Percentage[Type == "Bedrock"] +
+      0.07 * Percentage[Type == "Boulders"] +
+      0.06 * Percentage[Type == "Cobble"] +
+      0.04 * Percentage[Type == "Gravel"] +
+      0.03 * Percentage[Type == "Sand"] +
+      0.02 * Percentage[Type == "Organic_matter"] +
+      0.01 * Percentage[Type == "Mud"],
+      na.rm = TRUE),.groups = "drop") %>%
+  mutate(Habitat_Type = case_when(
+      Rocky_Percentage    > 25 ~ "Rocky",
+      Emergent_Percentage > 25 ~ "Emergent Macrophyte",
+      Sand_Percentage   >= Mud_Percentage ~ "Sandy",
+      TRUE ~ "Muddy")) %>%
+  dplyr::select(Monitoring_ID, Habitat_Type, Substrate_index)
+
+Monitoring_CPUE_data <- Monitoring_CPUE_data %>%
+  left_join(habitat_classification, by = c("Monitoring_ID"))
+
+writexl::write_xlsx(Monitoring_CPUE_data, file.path(der_data_dir, "Monitoring_CPUE_data.xlsx"))
+write.csv(Monitoring_CPUE_data, file.path(der_data_dir, "Monitoring_CPUE_data.csv"), row.names = FALSE)
+write.csv(habitat_classification, file.path(der_data_dir, "habitat_classification.csv"), row.names = FALSE)
+
+list(habitat_classification_head = head(habitat_classification, 5),monitoring_cpue_head        = head(Monitoring_CPUE_data, 5))
+
+```
+
+# Physical parameters
+```{r fig.width=12, fig.height=6, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
+# De fine a custom color palette
+sediment_colors <- c("Bedrock" = "black","Boulders" = "gray25","Cobble" = "gray55","Gravel" = "gray80","Sand" = "gold","Mud" = "saddlebrown","Organic_matter" = "darkgreen", "Turf" = "lightgreen")
+weed_colors <- c("Emergent_Native" = "darkgreen","Emergent_Non_Native" = "limegreen","Submerged_Non_Native" = "royalblue4","Wood_cover" = "saddlebrown")
+
+#Create the 'presence_rocks' variable
+Monitoring_CPUE_data <- Monitoring_CPUE_data %>%
+  mutate(ID = factor(ID),
+    Presence_rocks = if_else(Cobble > 1 | Boulders > 1 | Bedrock > 1, 1, 0))
+
+# Remake Physical parameters
+sediment_data <- Monitoring_CPUE_data %>%
+  select(ID, Monitoring_ID, Site,DHT,Monitoring,Habitat_Type , Lake, Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter) %>%
+  pivot_longer(cols = c(Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter), 
+               names_to = "Sediment_Type", values_to = "Percentage") 
+
+weed_data <- Monitoring_CPUE_data %>%
+  select(ID,Monitoring_ID, Site,DHT,Monitoring,Habitat_Type , Lake, Emergent_Native,Emergent_Non_Native, Submerged_Non_Native,Wood_cover) %>%
+  pivot_longer(cols = c(Emergent_Native,Emergent_Non_Native, Submerged_Non_Native,Wood_cover), 
+               names_to = "Weeds", values_to = "Percentage") 
+
+# Plot Physical parameters
+Sediment_plot <- ggplot(sediment_data, aes(ID, Percentage, fill = Sediment_Type)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = sediment_colors) +
+  facet_grid( ~ Site, scales = "free_x") 
+
+Weed_plot <- ggplot(weed_data, aes(ID,Percentage, fill = Weeds)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = weed_colors) +
+  facet_grid( ~Site , scales = "free_x") 
+
+#Slope_plot <- 
+  ggplot(Monitoring_CPUE_data, aes(ID, Distance_deep_20m, col=Site))+
+  geom_point()+
+  facet_grid(Habitat_Type ~ Site, scales = "free_x")
+
+Physical_plot <- Sediment_plot/Weed_plot
+Physical_plot
+
+#ggsave("Figures/Physical_plot.png", Physical_plot, width = 12, height = 6, dpi = 300)
+
+
+```
+
+
+
+# Chemical parameters
+```{r fig.width=10, fig.height=8, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
+# Remake Chemical parameters
+Chemical_data <- Monitoring_CPUE_data %>%
+  select(Monitoring_ID,Season, Site, ID, Monitoring, Monitoring_label,DHT,Habitat_Type,Lake,DO_mgl,DO_percent,Conductivity,Specific_conductivity,pH, Temperature) %>%
+  pivot_longer(cols = c(Temperature,DO_mgl,DO_percent,Conductivity,Specific_conductivity,pH), 
+               names_to = "Variable", values_to = "Values") 
+
+# Plot Chemical parameters
+Chemical_plot <- ggplot(Chemical_data, aes(Monitoring_label, Values, fill = Site)) +
+  geom_boxplot() +
+  facet_wrap(~ Variable, scales = "free", nrow = 2) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+Chemical_plot
+
+ggsave(file.path(fig_dir, "Chemical_plot.png"), Chemical_plot, width = 10, height = 8,  dpi = 300)
+```
+# Reef parameters
+```{r fig.width=12, fig.height=6, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
+# Remake Reef parameters
+Reefs_data <- Monitoring_CPUE_data %>%
+  select(Monitoring_ID,ID, Site, Monitoring, DHT, Habitat_Type, Lake,
+         Distance_to_shore.1, Length.1, Width.1, Area.1, Weight.1, Depth_on_R.1, Depth_on_L.1, Hight_above.1, Depth_after.1, Volume.1, Sedimentation.1, Accumulation_of_weeds.1,
+         Distance_to_shore.2, Length.2, Width.2, Area.2, Weight.2, Depth_on_R.2, Depth_on_L.2, Hight_above.2, Depth_after.2, Volume.2, Sedimentation.2, Accumulation_of_weeds.2,
+         Distance_to_shore.3, Length.3, Width.3, Area.3, Weight.3, Depth_on_R.3, Depth_on_L.3, Hight_above.3, Depth_after.3, Volume.3, Sedimentation.3, Accumulation_of_weeds.3) %>%
+  pivot_longer(cols = matches("Distance_to_shore|Length|Width|Area|Weight|Depth_on_R|Depth_on_L|Hight_above|Depth_after|Volume|Sedimentation|Accumulation_of_weeds"),
+    names_to = c("Variable", "Reef_Number"),names_sep = "\\.",values_to = "Values")%>%
+  filter(Site == "Reef", Monitoring == 0) 
+
+Reefs_summary <- Reefs_data %>%
+  group_by(Variable) %>%
+  summarize(Mean = mean(Values, na.rm = TRUE),SEM = sd(Values, na.rm = TRUE) / sqrt(n()))
+
+Reefs_plot <- ggplot(Reefs_data, aes(ID , Values, col = Reef_Number)) +
+  geom_point() +
+  facet_wrap(~Variable , scales = "free") 
+
+Reefs_plot
+
+#ggsave("Figures/Reefs_plot.png", Reefs_plot, width = 12, height = 5, dpi = 300)
+
+```
+# Biological parameters Kōura
+
+```{r fig.width=14, fig.height=8, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
+
+PLOT <- Monitoring_CPUE_data %>%
+  ggplot(aes(as.factor(Monitoring),Weighted_CPUE_Kōura, fill = Site)) +
+  geom_boxplot(alpha = 0.6,outlier.shape = NA,color = "black",position = position_dodge(width = 0.6)) +
+  geom_point(aes(color = Site),position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.6), size = 2,shape = 21,stroke = 0.2, col="black") +
+  geom_smooth(aes(group = Site, color = Site),method = "loess", se = FALSE) +
+  #facet_grid(~ Site, scales = "free") +
+  labs(y= "CPUE Kōura", x="Monitoring") +
+  theme_bw()
+PLOT
+
+
+p1_koura <- Monitoring_CPUE_data %>%
+  filter(Site != "Reference") %>%
+  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
+  ggplot(aes(Monitoring_label,`Total_Individuals_Kōura`, col = Site)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, aes(group = Site)) +
+  facet_wrap( ~ ID, ncol=2, scales = "free" ) +
+  scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
+  labs(y = "Total Kōura", x = "Monitoring") +
+  theme_bw()
+
+p2_koura <- Monitoring_CPUE_data %>%
+  filter(Site == "Reference") %>%
+  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
+  ggplot(aes(Monitoring_label,`Total_Individuals_Kōura`, col = Site)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, aes(group = Site)) +
+  facet_wrap( ~ ID, ncol=2, scales = "free" ) +
+  scale_colour_manual(values = c("Reference" = "blue")) +
+  labs(y = "Total Kōura", x = "Monitoring") +
+  theme_bw()+
+  theme(axis.title.y = element_blank())
+  
+
+combined_koura <- p1_koura + p2_koura + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+combined_koura
+
+ggsave(file.path(fig_dir, "total_Koura_reefs.png"), combined_koura, width = 14, height = 8, dpi = 300)
+
+
+```
+
+# Biological parameters other fish
+
+```{r fig.width=14, fig.height=8, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
+
+# Catfish
+p1_cat <- Monitoring_CPUE_data %>%
+  filter(Site != "Reference") %>%
+  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
+  ggplot(aes(Monitoring_label,`Total_Individuals_Catfish`, col = Site)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, aes(group = Site)) +
+  facet_wrap( ~ ID, ncol=2) +
+  scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
+  labs(y = "Total Catfish", x = "Monitoring") +
+  theme_bw()
+
+p2_cat <- Monitoring_CPUE_data %>%
+  filter(Site == "Reference") %>%
+  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
+  ggplot(aes(Monitoring_label,`Total_Individuals_Catfish`, col = Site)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, aes(group = Site)) +
+  facet_wrap( ~ ID, ncol=2) +
+  scale_colour_manual(values = c("Reference" = "blue")) +
+  labs(y = "Total Catfish", x = "Monitoring") +
+  theme_bw()+
+  theme(axis.title.y = element_blank())
+  
+combined_cat <- p1_cat + p2_cat + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+combined_cat
+
+# Kōaro
+p1_koaro <- Monitoring_CPUE_data %>%
+  filter(Site != "Reference") %>%
+  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
+  ggplot(aes(Monitoring_label,`Total_Individuals_Kōaro`, col = Site)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, aes(group = Site)) +
+  facet_wrap( ~ ID, ncol=2 ) +
+  scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
+  labs(y = "Total Kōaro", x = "Monitoring") +
+  theme_bw()
+
+p2_koaro <- Monitoring_CPUE_data %>%
+  filter(Site == "Reference") %>%
+  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
+  ggplot(aes(Monitoring_label,`Total_Individuals_Kōaro`, col = Site)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, aes(group = Site)) +
+  facet_wrap( ~ ID, ncol=2) +
+  scale_colour_manual(values = c("Reference" = "blue")) +
+  labs(y = "Total Kōaro", x = "Monitoring") +
+  theme_bw()+
+  theme(axis.title.y = element_blank())
+  
+combined_koaro <- p1_koaro + p2_koaro + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+combined_koaro
+
+# Goldfish
+p1_Goldfish <- Monitoring_CPUE_data %>%
+  filter(Site != "Reference") %>%
+  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
+  ggplot(aes(Monitoring_label,`Total_Individuals_Goldfish`, col = Site)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, aes(group = Site)) +
+  facet_wrap( ~ ID, ncol=2) +
+  scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
+  labs(y = "Total Goldfish", x = "Monitoring") +
+  theme_bw()
+
+p2_Goldfish <- Monitoring_CPUE_data %>%
+  filter(Site == "Reference") %>%
+  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
+  ggplot(aes(Monitoring_label,`Total_Individuals_Goldfish`, col = Site)) +
+  geom_point(size = 2) +
+  geom_smooth(se = FALSE, aes(group = Site)) +
+  facet_wrap( ~ ID, ncol=2) +
+  scale_colour_manual(values = c("Reference" = "blue")) +
+  labs(y = "Total Goldfish", x = "Monitoring") +
+  theme_bw()+
+  theme(axis.title.y = element_blank())
+  
+combined_Goldfish <- p1_Goldfish + p2_Goldfish + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+combined_Goldfish
+
+
+```
+# Statistics
+```{r}
+
+
+
+
+```
+
 # transform the Fish_data
 ```{r}
 # Safe helpers
@@ -162,219 +644,6 @@ species_wide <- site_species %>%
 
 ```
 
-# Calculte CPUE & BCUE
-```{r}
-CPUE_BCUE_legacy <- Fish_data %>%
-  filter(!is.na(Species)) %>%
-  group_by(Monitoring_ID, Species, Net_type) %>%
-  dplyr::reframe(
-    Total_Individuals = sum(Amount, na.rm = TRUE),
-    Total_Weight      = sum(Weight_g, na.rm = TRUE),
-    Total_Effort      = dplyr::first(Amount_nets),
-    CPUE              = Total_Individuals / Total_Effort,
-    BCUE              = Total_Weight      / Total_Effort,
-    Mean_Length       = mean(Length_mm, na.rm = TRUE),
-    Min_Length        = ifelse(all(is.na(Length_mm)), NA, min(Length_mm, na.rm = TRUE)),
-    Max_Length        = ifelse(all(is.na(Length_mm)), NA, max(Length_mm, na.rm = TRUE)),
-    Mean_Weight       = mean(Weight_g, na.rm = TRUE),
-    Min_Weight        = ifelse(all(is.na(Weight_g)), NA, min(Weight_g, na.rm = TRUE)),
-    Max_Weight        = ifelse(all(is.na(Weight_g)), NA, max(Weight_g, na.rm = TRUE))
-  )
-
-CPUE_BCUE_weighted <- CPUE_BCUE_legacy %>%
-  group_by(Monitoring_ID, Species) %>%
-  summarise(
-    Total_Individuals       = sum(Total_Individuals, na.rm = TRUE),
-    Total_Weight            = sum(Total_Weight,      na.rm = TRUE),
-    Weighted_CPUE_numerator = sum(CPUE * Total_Effort,  na.rm = TRUE),
-    Weighted_BCUE_numerator = sum(BCUE * Total_Effort,  na.rm = TRUE),
-    Total_Effort_sum        = sum(Total_Effort,         na.rm = TRUE),
-    Mean_Length             = mean(Mean_Length, na.rm = TRUE),
-    Min_Length              = ifelse(all(is.na(Min_Length)), NA, min(Min_Length, na.rm = TRUE)),
-    Max_Length              = ifelse(all(is.na(Max_Length)), NA, max(Max_Length, na.rm = TRUE)),
-    Mean_Weight             = mean(Mean_Weight, na.rm = TRUE),
-    Min_Weight              = ifelse(all(is.na(Min_Weight)), NA, min(Min_Weight, na.rm = TRUE)),
-    Max_Weight              = ifelse(all(is.na(Max_Weight)), NA, max(Max_Weight, na.rm = TRUE)),
-    .groups = "drop"
-  ) %>%
-  ungroup() %>%
-  mutate(
-    Total_Effort_sum = ifelse(Monitoring_ID %in% c("16_0", "10_1", "3_2", "16_2"), 3, 4),
-    Weighted_CPUE    = Weighted_CPUE_numerator / Total_Effort_sum,
-    Weighted_BCUE    = Weighted_BCUE_numerator / Total_Effort_sum
-  )
-
-species_presence_absence <- Fish_data %>%
-  filter(!is.na(Species)) %>%
-  distinct(Monitoring_ID, Species) %>%
-  mutate(Presence = 1) %>%
-  pivot_wider(
-    names_from  = Species,
-    values_from = Presence,
-    values_fill = list(Presence = 0),
-    names_prefix = "Presence_") %>%
-  mutate(Predator_Fish_Presence = pmax(Presence_Trout, Presence_Eel, Presence_Catfish))
-
-CPUE_BCUE_weighted_summary <- CPUE_BCUE_weighted %>%
-  pivot_wider(
-    names_from  = Species,
-    values_from = c(
-      Total_Individuals, Weighted_CPUE, Weighted_BCUE, Total_Weight,
-      Mean_Length, Mean_Weight, Weighted_CPUE_numerator, Weighted_BCUE_numerator,
-      Total_Effort_sum, Min_Length, Max_Length, Min_Weight, Max_Weight
-    ),
-    names_sep   = "_",
-    values_fill = list(Total_Individuals = 0, Weighted_CPUE = 0, Weighted_BCUE = 0)
-  ) %>%
-  mutate(
-    Richness  = rowSums(dplyr::select(., starts_with("Total_Individuals_")) > 0),
-    Abundance = rowSums(dplyr::select(., starts_with("Total_Individuals_") & !ends_with(c("_Bullies", "_Common_smelt"))))
-  )
-
-```
-
-# Combine the Data frames
-```{r}
-unit_metadata <- Monitoring_data %>%
-  dplyr::select(Parameter, Unit) %>%
-  distinct()
-
-Monitoring_summary <- Monitoring_data %>%
-  dplyr::select(-Group, -Notes, -Unit) %>%
-  pivot_wider(
-    names_from  = c(Parameter),
-    values_from = Value,
-    values_fill = list(Value = NA)
-  )
-
-Monitoring_summary <- Monitoring_summary %>%
-  mutate(across(c(
-      Bottom_visible, Water_clarity, Depth_10m, Slope, Riparian_vegetation, Vegetation_nearby,
-      Overhanging_trees, Erosion, Sructure, Bedrock, Boulders, Cobble, Gravel,
-      Sand, Mud, Organic_matter, Rock_size, Temperature, DO_mgl, DO_percent,
-      Conductivity, Specific_conductivity, pH, Wood_cover
-    ), ~ as.numeric(.)))
-
-Reef_summary <- Reef_data %>%
-  select(-Unit, -Notes, -Site_ID)%>%
-  pivot_wider(names_from = c(Parameter, Reef_ID), values_from = Value,names_sep = ".")
-
-Weed_summary <- Weed_data %>%
-  group_by(Monitoring_ID, Weed_Type, Native_Status) %>%
-  summarise(Total_Cover = sum(Percentage_Cover, na.rm = TRUE), .groups = "drop") %>%
-  pivot_wider(
-    names_from  = c(Weed_Type, Native_Status),
-    values_from = Total_Cover,
-    values_fill = 0
-  )
-
-Macroinvertebrates_sum <- Macroinvertebrates %>%
-  group_by(Monitoring_ID, Species) %>%
-  summarise(Total_amount = sum(Amount, na.rm = TRUE), .groups = "drop") %>%
-  pivot_wider(names_from = c(Species), values_from = Total_amount, values_fill = 0)
-
-Macroinvertebrates_sum <- Macroinvertebrates %>%
-  group_by(Monitoring_ID, Species) %>%
-  summarise(Total_amount = sum(Amount, na.rm = TRUE), .groups = "drop") %>%
-  pivot_wider(names_from = c(Species), values_from = Total_amount, values_fill = 0) %>%
-  mutate(
-    Invertebrates_Richness  = rowSums(dplyr::select(., -Monitoring_ID) > 0),
-    Invertebrates_Abundance = rowSums(dplyr::select(., -Monitoring_ID))
-  )
-
-Monitoring_CPUE_data <- Site_info %>%
-  left_join(Monitoring_summary, by = "Monitoring_ID") %>%
-  left_join(Reef_summary, by = c("Monitoring_ID")) %>%
-  left_join(Weed_summary %>% dplyr::select(Monitoring_ID,
-                                           Emergent_Native, Emergent_Non_Native,
-                                           Submerged_Non_Native, Turf_Native),
-            by = c("Monitoring_ID")) %>%
-  left_join(species_wide, by = "Monitoring_ID") %>%
-  # left_join(species_presence_absence, by = "Monitoring_ID") %>%
-  left_join(Macroinvertebrates_sum, by = "Monitoring_ID")
-
-Monitoring_CPUE_data <- Monitoring_CPUE_data %>%
-  mutate(
-    Presence_rocks = if_else(Cobble > 1 | Boulders > 1, 1, 0),
-    Slope_5m       = 5 / Distance_5m,
-    Site_ID_       = Site_ID.x - 2,
-    Monitoring_ID_ = paste0(as.numeric(sub("_.*", "", Monitoring_ID)) - 2,
-                            sub("^[^_]*", "", Monitoring_ID)),
-    Monitoring     = sub(".*?_", "", Monitoring_ID),
-    Date           = as.Date(Date_Time),
-    Time           = format(Date_Time, "%H:%M:%S"),
-    Year           = lubridate::year(Date_Time),
-    Month          = lubridate::month(Date_Time, label = TRUE),
-    Day            = lubridate::day(Date_Time),
-    Season         = case_when(
-      Month %in% c("Dec", "Jan", "Feb") ~ "Summer",
-      Month %in% c("Mar", "Apr", "May") ~ "Autumn",
-      Month %in% c("Jun", "Jul", "Aug") ~ "Winter",
-      Month %in% c("Sep", "Oct", "Nov") ~ "Spring",
-      TRUE ~ NA_character_
-    ),
-    Date_Time_Numeric = as.numeric(Date_Time)
-  )
-
-Monitoring_CPUE_data <- Monitoring_CPUE_data %>%
-  mutate(Monitoring_label = case_when(
-    Monitoring == 0 ~ "0 Pre/Summer",
-    Monitoring == 1 ~ "1 Autumn",
-    Monitoring == 2 ~ "2 Winter",
-    Monitoring == 3 ~ "3 Spring",
-    TRUE ~ as.character(Monitoring)
-  ))
-
-habitat_classification <- Monitoring_CPUE_data %>%
-  dplyr::select(Monitoring_ID, DHT, Lake,
-                Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter,
-                Emergent_Native, Emergent_Non_Native, Submerged_Non_Native, Wood_cover) %>%
-  pivot_longer(
-    cols      = c(Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter,
-                  Emergent_Native, Emergent_Non_Native,
-                  Submerged_Non_Native, Wood_cover),
-    names_to  = "Type",
-    values_to = "Percentage"
-  ) %>%
-  group_by(Monitoring_ID) %>%
-  summarise(
-    Rocky_Percentage    = sum(Percentage[Type %in% c("Bedrock", "Boulders", "Cobble")], na.rm = TRUE),
-    Sand_Percentage     = sum(Percentage[Type == "Sand"], na.rm = TRUE),
-    Mud_Percentage      = sum(Percentage[Type %in% c("Mud", "Organic_matter")], na.rm = TRUE),
-    Emergent_Percentage = sum(Percentage[Type %in% c("Emergent_Native")], na.rm = TRUE),
-    Substrate_index = sum(
-      0.08 * Percentage[Type == "Bedrock"] +
-      0.07 * Percentage[Type == "Boulders"] +
-      0.06 * Percentage[Type == "Cobble"] +
-      0.04 * Percentage[Type == "Gravel"] +
-      0.03 * Percentage[Type == "Sand"] +
-      0.02 * Percentage[Type == "Organic_matter"] +
-      0.01 * Percentage[Type == "Mud"],
-      na.rm = TRUE
-    ),
-    .groups = "drop"
-  ) %>%
-  mutate(
-    Habitat_Type = case_when(
-      Rocky_Percentage    > 25 ~ "Rocky",
-      Emergent_Percentage > 25 ~ "Emergent Macrophyte",
-      Sand_Percentage   >= Mud_Percentage ~ "Sandy",
-      TRUE ~ "Muddy"
-    )
-  ) %>%
-  dplyr::select(Monitoring_ID, Habitat_Type, Substrate_index)
-
-Monitoring_CPUE_data <- Monitoring_CPUE_data %>%
-  left_join(habitat_classification, by = c("Monitoring_ID"))
-
-writexl::write_xlsx(Monitoring_CPUE_data, file.path(der_data_dir, "Monitoring_CPUE_data.xlsx"))
-write.csv(Monitoring_CPUE_data, file.path(der_data_dir, "Monitoring_CPUE_data.csv"), row.names = FALSE)
-write.csv(habitat_classification, file.path(der_data_dir, "habitat_classification.csv"), row.names = FALSE)
-
-list(habitat_classification_head = head(habitat_classification, 5),monitoring_cpue_head        = head(Monitoring_CPUE_data, 5))
-
-```
-
 # Raw Fish data
 ```{r}
 # Save raw fish data combined with Sites
@@ -464,230 +733,3 @@ ggplot(Koura_data %>%
   theme(legend.position = "top")
 
 ```
-# Physical parameters
-```{r fig.width=12, fig.height=6, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
-# De fine a custom color palette
-sediment_colors <- c("Bedrock" = "black","Boulders" = "gray25","Cobble" = "gray55","Gravel" = "gray80","Sand" = "gold","Mud" = "saddlebrown","Organic_matter" = "darkgreen", "Turf" = "lightgreen")
-weed_colors <- c("Emergent_Native" = "darkgreen","Emergent_Non_Native" = "limegreen","Submerged_Non_Native" = "royalblue4","Wood_cover" = "saddlebrown")
-
-#Create the 'presence_rocks' variable
-Monitoring_CPUE_data <- Monitoring_CPUE_data %>%
-  mutate(Presence_rocks = if_else(Cobble > 1 | Boulders > 1 | Bedrock > 1, 1, 0))
-
-# Remake Physical parameters
-sediment_data <- Monitoring_CPUE_data %>%
-  select(ID, Monitoring_ID, Site,DHT,Monitoring,Habitat_Type , Lake, Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter) %>%
-  pivot_longer(cols = c(Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter), 
-               names_to = "Sediment_Type", values_to = "Percentage") 
-
-weed_data <- Monitoring_CPUE_data %>%
-  select(ID,Monitoring_ID, Site,DHT,Monitoring,Habitat_Type , Lake, Emergent_Native,Emergent_Non_Native, Submerged_Non_Native,Wood_cover) %>%
-  pivot_longer(cols = c(Emergent_Native,Emergent_Non_Native, Submerged_Non_Native,Wood_cover), 
-               names_to = "Weeds", values_to = "Percentage") 
-
-# Plot Physical parameters
-Sediment_plot <- ggplot(sediment_data, aes(ID, Percentage, fill = Sediment_Type)) +
-  geom_bar(stat = "identity", position = "stack") +
-  scale_fill_manual(values = sediment_colors) +
-  facet_grid(Habitat_Type ~ Site, scales = "free_x") 
-
-Weed_plot <- ggplot(weed_data, aes(ID,Percentage, fill = Weeds)) +
-  geom_bar(stat = "identity", position = "stack") +
-  scale_fill_manual(values = weed_colors) +
-  facet_grid(Habitat_Type ~Site , scales = "free_x") 
-
-#Slope_plot <- 
-  ggplot(Monitoring_CPUE_data, aes(ID, Distance_deep_20m, col=Site))+
-  geom_point()+
-  facet_grid(Habitat_Type ~ Site, scales = "free_x")
-
-Physical_plot <- Sediment_plot/Weed_plot
-Physical_plot
-
-#ggsave("Figures/Physical_plot.png", Physical_plot, width = 12, height = 6, dpi = 300)
-
-```
-# Chemical parameters
-```{r fig.width=12, fig.height=6, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
-# Remake Chemical parameters
-Chemical_data <- Monitoring_CPUE_data %>%
-  select(Monitoring_ID,Season, Site, ID, Monitoring,DHT,Habitat_Type,Lake,DO_mgl,DO_percent,Conductivity,Specific_conductivity,pH, Temperature) %>%
-  pivot_longer(cols = c(Temperature,DO_mgl,DO_percent,Conductivity,Specific_conductivity,pH), 
-               names_to = "Variable", values_to = "Values") 
-
-# Plot Chemical parameters
-Chemical_plot <- ggplot(Chemical_data, aes(as.factor(Monitoring), Values, fill = Site)) +
-  geom_boxplot() +
-  facet_wrap(~ Variable, scales = "free", nrow = 1) 
-
-Chemical_plot
-
-#ggsave("Figures/Chemical_plot.png", Chemical_plot, width = 12, height = 5, dpi = 300)
-
-```
-# Reef parameters
-```{r fig.width=12, fig.height=6, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
-# Remake Reef parameters
-Reefs_data <- Monitoring_CPUE_data %>%
-  select(Monitoring_ID,ID, Site, Monitoring, DHT, Habitat_Type, Lake,
-         Distance_to_shore.1, Length.1, Width.1, Area.1, Weight.1, Depth_on_R.1, Depth_on_L.1, Hight_above.1, Depth_after.1, Volume.1, Sedimentation.1, Accumulation_of_weeds.1,
-         Distance_to_shore.2, Length.2, Width.2, Area.2, Weight.2, Depth_on_R.2, Depth_on_L.2, Hight_above.2, Depth_after.2, Volume.2, Sedimentation.2, Accumulation_of_weeds.2,
-         Distance_to_shore.3, Length.3, Width.3, Area.3, Weight.3, Depth_on_R.3, Depth_on_L.3, Hight_above.3, Depth_after.3, Volume.3, Sedimentation.3, Accumulation_of_weeds.3) %>%
-  pivot_longer(cols = matches("Distance_to_shore|Length|Width|Area|Weight|Depth_on_R|Depth_on_L|Hight_above|Depth_after|Volume|Sedimentation|Accumulation_of_weeds"),
-    names_to = c("Variable", "Reef_Number"),names_sep = "\\.",values_to = "Values")%>%
-  filter(Site == "Reef", Monitoring == 0) 
-
-Reefs_summary <- Reefs_data %>%
-  group_by(Variable) %>%
-  summarize(Mean = mean(Values, na.rm = TRUE),SEM = sd(Values, na.rm = TRUE) / sqrt(n()))
-
-Reefs_plot <- ggplot(Reefs_data, aes(ID , Values, col = Reef_Number)) +
-  geom_point() +
-  facet_wrap(~Variable , scales = "free") 
-
-Reefs_plot
-
-#ggsave("Figures/Reefs_plot.png", Reefs_plot, width = 12, height = 5, dpi = 300)
-
-```
-# Biological parameters Kōura
-
-```{r fig.width=14, fig.height=8, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
-
-PLOT <- Monitoring_CPUE_data %>%
-  ggplot(aes(as.factor(Monitoring),CPUE_Kōura, fill = Site)) +
-  geom_boxplot(alpha = 0.6,outlier.shape = NA,color = "black",position = position_dodge(width = 0.6)) +
-  geom_point(aes(color = Site),position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.6), size = 2,shape = 21,stroke = 0.2, col="black") +
-  geom_smooth(aes(group = Site, color = Site),method = "loess", se = FALSE) +
-  #facet_grid(~ Site, scales = "free") +
-  labs(y= "CPUE Kōura", x="Monitoring") +
-  theme_bw()
-PLOT
-
-
-p1_koura <- Monitoring_CPUE_data %>%
-  filter(Site != "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Kōura`, col = Site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = Site)) +
-  facet_wrap( ~ ID, ncol=2, scales = "free" ) +
-  scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
-  labs(y = "Total Kōura", x = "Monitoring") +
-  theme_bw()
-
-p2_koura <- Monitoring_CPUE_data %>%
-  filter(Site == "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Kōura`, col = Site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = Site)) +
-  facet_wrap( ~ ID, ncol=2, scales = "free" ) +
-  scale_colour_manual(values = c("Reference" = "blue")) +
-  labs(y = "Total Kōura", x = "Monitoring") +
-  theme_bw()+
-  theme(axis.title.y = element_blank())
-  
-
-combined_koura <- p1_koura + p2_koura + plot_layout(guides = "collect") & theme(legend.position = "bottom")
-combined_koura
-
-
-```
-
-# Biological parameters other fish
-
-```{r fig.width=14, fig.height=8, dpi=100, echo=FALSE, message=FALSE, warning=FALSE}
-
-p1_cat <- Monitoring_CPUE_data %>%
-  filter(Site != "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Catfish`, col = Site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = Site)) +
-  facet_wrap( ~ ID, ncol=2) +
-  scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
-  labs(y = "Total Catfish", x = "Monitoring") +
-  theme_bw()
-
-p2_cat <- Monitoring_CPUE_data %>%
-  filter(Site == "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Catfish`, col = Site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = Site)) +
-  facet_wrap( ~ ID, ncol=2) +
-  scale_colour_manual(values = c("Reference" = "blue")) +
-  labs(y = "Total Catfish", x = "Monitoring") +
-  theme_bw()+
-  theme(axis.title.y = element_blank())
-  
-combined_cat <- p1_cat + p2_cat + plot_layout(guides = "collect") & theme(legend.position = "bottom")
-combined_cat
-
-# Kōaro
-p1_koaro <- Monitoring_CPUE_data %>%
-  filter(Site != "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Kōaro`, col = Site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = Site)) +
-  facet_wrap( ~ ID, ncol=2 ) +
-  scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
-  labs(y = "Total Kōaro", x = "Monitoring") +
-  theme_bw()
-
-p2_koaro <- Monitoring_CPUE_data %>%
-  filter(Site == "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Kōaro`, col = Site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = Site)) +
-  facet_wrap( ~ ID, ncol=2) +
-  scale_colour_manual(values = c("Reference" = "blue")) +
-  labs(y = "Total Kōaro", x = "Monitoring") +
-  theme_bw()+
-  theme(axis.title.y = element_blank())
-  
-combined_koaro <- p1_koaro + p2_koaro + plot_layout(guides = "collect") & theme(legend.position = "bottom")
-combined_koaro
-
-# Morihana
-p1_morihana <- Monitoring_CPUE_data %>%
-  filter(Site != "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Morihana`, col = Site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = Site)) +
-  facet_wrap( ~ ID, ncol=2) +
-  scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
-  labs(y = "Total Morihana", x = "Monitoring") +
-  theme_bw()
-
-p2_morihana <- Monitoring_CPUE_data %>%
-  filter(Site == "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label,levels = c("0 Pre/Summer", "1 Autumn", "2 Winter", "3 Spring"))) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Morihana`, col = Site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = Site)) +
-  facet_wrap( ~ ID, ncol=2) +
-  scale_colour_manual(values = c("Reference" = "blue")) +
-  labs(y = "Total Morihana", x = "Monitoring") +
-  theme_bw()+
-  theme(axis.title.y = element_blank())
-  
-combined_morihana <- p1_morihana + p2_morihana + plot_layout(guides = "collect") & theme(legend.position = "bottom")
-combined_morihana
-
-
-```
-# Statistics
-```{r}
-
-
-
-
-```
-
-
-

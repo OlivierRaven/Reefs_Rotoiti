@@ -70,8 +70,8 @@ MR_data <- MR_data %>%
 
 # Remake Physical parameters
 sediment_data <- MR_data %>%
-  select(ID, Monitoring_ID, Site,DHT,Monitoring,Habitat_Type , Lake, Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter, Turf) %>%
-  pivot_longer(cols = c(Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter, Turf), 
+  select(ID, Monitoring_ID, Site,DHT,Monitoring,Habitat_Type , Lake, Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter) %>%
+  pivot_longer(cols = c(Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter), 
                names_to = "Sediment_Type", values_to = "Percentage") 
 
 weed_data <- MR_data %>%
@@ -104,12 +104,12 @@ ggsave("Figures/Physical_plot.png", Physical_plot, width = 12, height = 6, dpi =
 # Chemical parameters ----------------------------------------------------------
 # Remake Chemical parameters
 Chemical_data <- MR_data %>%
-  select(Monitoring_ID,Season, Site, Monitoring,DHT,Habitat_Type,Lake,DO_mgl,DO_percent,Conductivity,Specific_conductivity,pH, Temperature) %>%
+  select(Monitoring_ID,Season, Site, ID, Monitoring,DHT,Habitat_Type,Lake,DO_mgl,DO_percent,Conductivity,Specific_conductivity,pH, Temperature) %>%
   pivot_longer(cols = c(Temperature,DO_mgl,DO_percent,Conductivity,Specific_conductivity,pH), 
                names_to = "Variable", values_to = "Values") 
 
 # Plot Chemical parameters
-Chemical_plot <- ggplot(Chemical_data, aes(Monitoring, Values, fill = Site)) +
+Chemical_plot <- ggplot(Chemical_data, aes(as.factor(Monitoring), Values, fill = Site)) +
   geom_boxplot() +
   facet_wrap(~ Variable, scales = "free", nrow = 1) 
 
@@ -126,7 +126,7 @@ Reefs_data <- MR_data %>%
          Distance_to_shore.3, Length.3, Width.3, Area.3, Weight.3, Depth_on_R.3, Depth_on_L.3, Hight_above.3, Depth_after.3, Volume.3, Sedimentation.3, Accumulation_of_weeds.3) %>%
   pivot_longer(cols = matches("Distance_to_shore|Length|Width|Area|Weight|Depth_on_R|Depth_on_L|Hight_above|Depth_after|Volume|Sedimentation|Accumulation_of_weeds"),
     names_to = c("Variable", "Reef_Number"),names_sep = "\\.",values_to = "Values")%>%
-  filter(Site == "Impact") 
+  filter(Site == "Reef") 
 
 Reefs_summary <- Reefs_data %>%
   group_by(Variable) %>%
@@ -213,7 +213,7 @@ ggplot(BCUE_summary, aes(Site, mean_BCUE, fill = Fish_Type)) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 
-# Koura plots
+# Kōura plots
 plot1 <- MR_data %>%
   ggplot(aes(Season, Total_Individuals_Kōura, fill = Monitoring)) +
   geom_boxplot() +
@@ -238,7 +238,7 @@ plot3 <- MR_data %>%
 Koura_plot <- plot1 / plot2 / plot3
 Koura_plot
 
-ggsave("Figures/Koura_plot.png", Koura_plot, width = 12, height = 5, dpi = 300)
+ggsave("figures/Koura_plot.png", Koura_plot, width = 12, height = 5, dpi = 300)
 
 
 plot1 <- MR_data %>%
@@ -272,6 +272,15 @@ Koura_plot <- plot1 / plot2 / plot3
 Koura_plot
 
 
+PLOT <- MR_data %>%
+  ggplot(aes(as.factor(Monitoring),Weighted_CPUE_Kōura, fill = Site)) +
+  geom_boxplot(alpha = 0.6,outlier.shape = NA,color = "black",position = position_dodge(width = 0.6)) +
+  geom_point(aes(color = Site),position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.6), size = 2,shape = 21,stroke = 0.2, col="black") +
+  geom_smooth(aes(group = Site, color = Site),method = "loess", se = FALSE) +
+  #facet_grid(~ Site, scales = "free") +
+  labs(y= "CPUE Kōura", x="Monitoring") +
+  theme_bw()
+PLOT
 
 
 # Spatial plots ----------------------------------------------------------------
@@ -315,34 +324,13 @@ tik<-ggplot(MR_data, aes(Monitoring, Total_Individuals_Kōura, fill = Site)) +
 cpue/bcue/tik
 
 
-# Sediment analysis ------------------------------------------------------------
-# Define a custom color palette
-sediment_colors <- c(
-  "Bedrock" = "gray0",
-  "Boulders" = "gray20",
-  "Cobble" = "gray40",
-  "Gravel" = "gray",
-  "Sand" = "gold",
-  "Mud" = "saddlebrown",
-  "Organic_matter" = "darkgreen",
-  "Turf" = "forestgreen")
+# Kōura data explained ---------------------------------------------------------
 
-# Select relevant columns and reshape the data
-sediment_data <- MR_data %>%
-  select(Site_ID, DHT,Lake, Site, Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter, Turf) %>%
-  pivot_longer(cols = c(Bedrock, Boulders, Cobble, Gravel, Sand, Mud, Organic_matter, Turf), names_to = "Sediment_Type", values_to = "Percentage") 
+ggplot(MR_data,aes(Temperature,Weighted_CPUE_Kōura, col = as.factor(Monitoring))) +
+  geom_point()
 
-# Plot the data
-ggplot(sediment_data, aes(x = factor( Site_ID  ), y = Percentage, fill = Sediment_Type)) +
-  geom_bar(stat = "identity", position = "stack") +
-  scale_fill_manual(values = sediment_colors) +
-  labs(
-    title = "Sediment Composition by Site",
-    x = "Site ID",
-    y = "Percentage (%)",
-    fill = "Sediment Type") +
-  facet_wrap(~DHT, scales = "free")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0))
+
+
 
 
 
