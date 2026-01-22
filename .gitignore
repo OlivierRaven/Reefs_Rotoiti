@@ -3,4 +3,4 @@
 .RData
 .Ruserdata
 *.gpkg
-*.png
+*.R
