@@ -529,7 +529,7 @@ combined_koura
 #| fig-width: 6
 #| fig-height: 7
 #| dpi: 300
-#| fig-cap:
+#| fig-cap: "."
 
 species_vec <- c("Kōura", "Catfish", "Kōaro", "Goldfish")
 
