@@ -83,7 +83,7 @@ Macroinvertebrates <- readxl::read_excel(exc_file_dir, sheet = "Macroinvertebrat
 #| fig-width: 6
 #| fig-height: 4
 #| dpi: 300
-#| fig-cap: ".
+#| fig-cap: "."
 
 # use size of koura to fill missing weights.
 lw_model <- lm(log10(weight_g) ~ log10(length_mm), data = Fish_data, subset = species_name == "Freshwater_crayfish", na.action = na.exclude)
@@ -277,10 +277,8 @@ Combined_data <- Combined_data %>%
       monitoring == 6 ~ "6 Winter",
       TRUE ~ as.character(monitoring)
     ) %>% as.factor(), site_id = as.factor(site_id)) %>%
-  dplyr::mutate(Depth_5m  = suppressWarnings(as.numeric(Distance_5m)),
-    Depth_20m = suppressWarnings(as.numeric(Distance_20m)),
-    Slope_0_5m  = Depth_5m  / 5,
-    Slope_0_20m = Depth_20m / 20)
+  dplyr::mutate(Depth_5m  = suppressWarnings(as.numeric(Distance_5m)), Depth_20m = suppressWarnings(as.numeric(Distance_20m)),
+    Slope_0_5m  = Depth_5m  / 5, Slope_0_20m = Depth_20m / 20)
         
 
 habitat_classification <- Combined_data %>%
@@ -626,7 +624,7 @@ plots_by_species[["Kōura"]]
 #| fig-width: 3
 #| fig-height: 4
 #| dpi: 300
-#| fig-cap:
+#| fig-cap: "."
 
 Chemical_data2 <- all_data %>%
   select(monitoring_id, site_id, site, Monitoring_label, Habitat_Type, DO_mgl, DO_percent, Conductivity, Specific_conductivity, pH, Temperature) %>%
