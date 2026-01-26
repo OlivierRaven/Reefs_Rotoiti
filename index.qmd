@@ -26,7 +26,7 @@ This site accompanies the scientific work on: *Reefs Rotoiti*.
 ```{r load packages}
 #| label: setup
 
-packages <- c("emmeans", "lmerTest", "lme4", "tidyverse", "dplyr","writexl","readxl")
+packages <- c("emmeans", "lmerTest", "lme4", "patchwork", "devtools", "tidyverse", "dplyr","writexl","readxl")
 
 quiet_load <- function(pkg) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
@@ -39,20 +39,13 @@ quiet_load <- function(pkg) {
 invisible(lapply(packages, quiet_load))
 
 base_theme_bw <- theme_classic() +
-  theme(text = element_text(family = "Arial", size = 11),
-    axis.title = element_text(face = "plain"),
-    axis.text = element_text(face = "plain"),
-    plot.title = element_text(face = "plain"),
-    strip.text = element_text(face = "plain"),
-    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.3)
-  )
+  theme(text     = element_text(family = "Arial", size = 11),
+    axis.title   = element_text(face = "plain"),
+    axis.text    = element_text(face = "plain"),
+    plot.title   = element_text(face = "plain"),
+    strip.text   = element_text(face = "plain"),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.3))
 theme_set(base_theme_bw)
-
-clean_smooth_title <- function(x) {
-  x <- gsub("^s\\((.*)\\)$", "\\1", x)
-  x <- gsub("_", " ", x)
-  x
-}
 ```
 
 # Data import
@@ -495,32 +488,31 @@ knitr::kable(
 #| fig-cap: "Kōura abundance plot."
 
 koura_plot1 <- all_data %>%
-  filter(site != "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label)) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Kōura`, col = site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = site)) +
-  facet_wrap(~site_id, ncol=2, scales = "free_y") +
-  scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
-  labs(y = "Total Kōura", x = "Monitoring")
+   dplyr::filter(site != "Reference") %>%
+    ggplot2::ggplot(ggplot2::aes(Monitoring_label, `Total_Individuals_Kōura`, col = site)) +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::geom_smooth(se = FALSE, ggplot2::aes(group = site)) +
+    ggplot2::facet_wrap(~site_id, ncol=2, scales = "free_y") +
+    ggplot2::scale_colour_manual(values = c("Reef" = "red", "Control" = "orange")) +
+    ggplot2::labs(y = "Total Kōura", x = "Monitoring") +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
 
 koura_plot2 <- all_data %>%
-  filter(site == "Reference") %>%
-  mutate(Monitoring_label = factor(Monitoring_label)) %>%
-  ggplot(aes(Monitoring_label,`Total_Individuals_Kōura`, col = site)) +
-  geom_point(size = 2) +
-  geom_smooth(se = FALSE, aes(group = site)) +
-  facet_wrap(~site_id, ncol=2, scales = "free_y") +
-  scale_colour_manual(values = c("Reference" = "blue")) +
-  labs(y = "Total Kōura", x = "Monitoring") +
-  theme(axis.title.y = element_blank())
-  
+  dplyr::filter(site == "Reference") %>%
+    ggplot2::ggplot(ggplot2::aes(Monitoring_label, `Total_Individuals_Kōura`, col = site)) +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::geom_smooth(se = FALSE, ggplot2::aes(group = site)) +
+    ggplot2::facet_wrap(~site_id, ncol=2, scales = "free_y") +
+    ggplot2::scale_colour_manual(values = c("Reference" = "blue")) +
+    ggplot2::labs(y = "Total Kōura", x = "Monitoring") +
+    ggplot2::theme(axis.title.y = ggplot2::element_blank()) +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+ 
 combined_koura <- koura_plot1 + koura_plot2 + plot_layout(guides = "collect") & theme(legend.position = "bottom")
 
 ggsave(file.path(fig_dir, "Koura_plots.png"), combined_koura, width = 400, height = 250, units = "mm", dpi = 300)
 
 combined_koura
-
 ```
 
 # Fish abundance
@@ -618,18 +610,17 @@ plots_by_species[["Kōura"]]
 
 ```
 
-# Chemical Plot
+# Chemical & Habitat Plot
 ```{r}
-#| label: Chemical Plot
+#| label: Chemical & Habitat Plot
 #| fig-width: 3
-#| fig-height: 4
+#| fig-height: 2.5
 #| dpi: 300
 #| fig-cap: "."
 
 Chemical_data2 <- all_data %>%
-  select(monitoring_id, site_id, site, Monitoring_label, Habitat_Type, DO_mgl, DO_percent, Conductivity, Specific_conductivity, pH, Temperature) %>%
-  pivot_longer(cols = c(Temperature, DO_mgl, DO_percent, Conductivity, Specific_conductivity, pH), 
-               names_to = "Variable", values_to = "Values") 
+  dplyr::select(monitoring_id, site_id, site, Monitoring_label, Habitat_Type, DO_mgl, DO_percent, Conductivity, Specific_conductivity, pH, Temperature) %>%
+  tidyr::pivot_longer(cols = c(Temperature, DO_mgl, DO_percent, Conductivity, Specific_conductivity, pH), names_to = "Variable", values_to = "Values") 
 
 Chemical_plot <- ggplot(Chemical_data2, aes(Monitoring_label, Values, col = site_id)) +
   geom_point() +
@@ -644,8 +635,7 @@ Chemical_plot
 
 Habitat_data <- all_data %>%
   dplyr::select(site_id, site, Habitat_Type,Slope_0_5m, Slope_0_20m, Substrate_index, Riparian_vegetation, Overhanging_trees, Wood_cover) %>%
-  tidyr::pivot_longer(cols = c(Slope_0_5m, Slope_0_20m, Substrate_index, Riparian_vegetation, Overhanging_trees, Wood_cover), names_to  = "Variable",
-    values_to = "Value") %>%
+  tidyr::pivot_longer(cols = c(Slope_0_5m, Slope_0_20m, Substrate_index, Riparian_vegetation, Overhanging_trees, Wood_cover), names_to  = "Variable", values_to = "Value") %>%
   dplyr::group_by(site_id, site, Variable) %>%
   dplyr::summarise(Value = dplyr::first(Value),.groups = "drop")
 
