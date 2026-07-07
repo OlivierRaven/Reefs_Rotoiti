@@ -92,7 +92,7 @@ knitr:
 :::
 
 ::: {.content-visible unless-format="pdf"}
-![](../images/ch5_cover.jpg){fig-align="center" width="100%"}
+![](images/ch5_cover.jpg){fig-align="center" width="100%"}
 
 *Can habitat enhancement structures provide effective habitat for kōura in Lake Rotoiti?*
 :::
@@ -102,13 +102,27 @@ knitr:
 #| include: false
 
 chapter_dir <- dirname(knitr::current_input(dir = TRUE))
+fig_labels <- c("fig-koura-trends", "fig-convergence-plot", "fig-forest-plot",
+                 "fig-length-weight", "fig-descriptive-context")
+out_dir <- file.path(chapter_dir, "outputs")
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+parent_knit_env <- knitr::knit_global()
+
+tmp_r <- tempfile(fileext = ".R")
 withr::with_dir(chapter_dir, {
-  knitr::knit("analysis.qmd", output = tempfile(), quiet = TRUE)
+  knitr::purl("analysis.qmd", output = tmp_r, quiet = TRUE, documentation = 0)
+  eval(parse(file = tmp_r), envir = parent_knit_env)
 })
-for (lbl in c("fig-koura-trends", "fig-convergence-plot", "fig-forest-plot",
-               "fig-length-weight", "fig-descriptive-context")) {
-  src <- knitr::fig_chunk(lbl, "png")
-  if (file.exists(src)) file.copy(src, paste0("outputs/", lbl, ".png"), overwrite = TRUE)
+
+if (!all(file.exists(file.path(out_dir, paste0(fig_labels, ".png"))))) {
+  withr::with_dir(chapter_dir, {
+    knitr::knit("analysis.qmd", output = tempfile(), quiet = TRUE, envir = parent_knit_env)
+  })
+  for (lbl in fig_labels) {
+    src <- knitr::fig_chunk(lbl, "png")
+    if (file.exists(src)) file.copy(src, file.path(out_dir, paste0(lbl, ".png")), overwrite = TRUE)
+  }
 }
 ```
 

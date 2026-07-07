@@ -10,7 +10,7 @@
   numbers=noendperiod]{scrartcl}
 \usepackage{xcolor}
 \usepackage{amsmath,amssymb}
-\setcounter{secnumdepth}{5}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
@@ -245,7 +245,7 @@ Placeholder --- abstract to be written.
 \end{center}
 \afterpage{\pagecolor{thesiscream}}
 
-\section{Introduction}\label{introduction}
+\subsection{Introduction}\label{introduction}
 
 Freshwater biodiversity is declining faster than any other biome, with
 one quarter of freshwater fauna now threatened with extinction
@@ -372,9 +372,9 @@ stone pile sites would progressively converge toward kōura densities
 observed at natural rocky reference sites, and that catfish would not
 show this pattern.
 
-\section{Materials and Methods}\label{materials-and-methods}
+\subsection{Materials and Methods}\label{materials-and-methods}
 
-\subsection{Study location and
+\subsubsection{Study location and
 construction}\label{study-location-and-construction}
 
 Lake Rotoiti (-38.03, 176.42) is a warm monomictic mesotrophic lake
@@ -408,7 +408,7 @@ preference for enclosed stone structures
 Stone piles were positioned approximately 4.3 m from shore at a mean
 depth of 0.49 m and with a mean area of 4.1 m².
 
-\subsection{Monitoring}\label{monitoring}
+\subsubsection{Monitoring}\label{monitoring}
 
 Monitoring consisted of physical, chemical, and biological parameters
 recorded at each site during each monitoring round. Static site
@@ -479,7 +479,7 @@ with a lognormal bias correction factor (10\^{}\{0.5
 \log_{10}(\text{Weight [g]}) = -2.67 + 2.683 \times \log_{10}(\text{OCL length [mm]})
 \]
 
-\subsection{Data analysis}\label{data-analysis}
+\subsubsection{Data analysis}\label{data-analysis}
 
 Site variation before stone pile construction was assessed using paired
 Wilcoxon signed-rank tests to compare stone pile sites with their paired
@@ -534,7 +534,7 @@ for each model. Robustness of the models was further assessed via
 sensitivity analyses and colonisation driver comparison in supplementary
 material.
 
-\section{Results}\label{results}
+\subsection{Results}\label{results}
 
 Construction-effect model
 
@@ -548,7 +548,7 @@ Figure~\ref{fig-convergence-plot}
 
 Figure~\ref{fig-forest-plot}
 
-\section{Discussion}\label{discussion}
+\subsection{Discussion}\label{discussion}
 
 Most kōura were found along the edges of the stone piles there for
 recommended future stone piles should be designed to create the most
@@ -561,9 +561,9 @@ beds and test if stone piles could suppress machrophyte growth and
 create pathways for kōura to move between the deeperparts of the lake
 and the shore.
 
-\subsection{Conclusion}\label{conclusion}
+\subsubsection{Conclusion}\label{conclusion}
 
-\section{Acknowledgements}\label{acknowledgements}
+\subsection{Acknowledgements}\label{acknowledgements}
 
 We thank Te Arawa Lakes Trust and Te Komiti Whakahaere for the
 opportunity to collect and study the treasured kōura. We are grateful to
@@ -575,7 +575,7 @@ allowing the build of the build of stone piles. And Martin Sarkezi, Mael
 Marguet, Ethan Morgan, Logan Kallam and Matt Prentice for assisting in
 with fieldwork and data collection.
 
-\subsection{Funding statement}\label{funding-statement}
+\subsubsection{Funding statement}\label{funding-statement}
 
 This research was supported by the Fish Futures programme funded through
 a Ministry of Business, Innovation and Employment grant (CAWX2101) with
@@ -583,7 +583,7 @@ additional funding provided by the Bay of Plenty Regional Council under
 the Toihuarewa Waimāori - Bay of Plenty Regional Council Chair in Lake
 and Freshwater Science programme.
 
-\subsection{Authors' contributions}\label{authors-contributions}
+\subsubsection{Authors' contributions}\label{authors-contributions}
 
 Study conception and design were undertaken by O.V.R., I.A.K.K., R.H.,
 F.J.B. and D.Ö. Fieldwork was executed by O.V.R. Data analysis was
@@ -592,7 +592,7 @@ provided local ecological knowledge. Manuscript drafting was led by
 O.V.R. All authors contributed to manuscript revision, approved the
 results, and the final manuscript.
 
-\subsection{Use of Artificial
+\subsubsection{Use of Artificial
 Intelligence}\label{use-of-artificial-intelligence}
 
 Use of Artificial Intelligence: Claude (Anthropic) was used to assist
@@ -600,12 +600,12 @@ with manuscript editing and language refinement. All content was
 critically reviewed and the authors take full responsibility for the
 final manuscript.
 
-\subsection{Declarations}\label{declarations}
+\subsubsection{Declarations}\label{declarations}
 
 The corresponding author has declared that none of the authors has any
 competing interests.
 
-\subsection{Data availability
+\subsubsection{Data availability
 statement}\label{data-availability-statement}
 
 The code and derived data supporting the findings of this study are
@@ -618,7 +618,7 @@ review documents, including the cover letter and reviewer responses, are
 available in the manuscript repository in the interest of open and
 transparent science.
 
-\section{Tables}\label{tables}
+\subsection{Tables}\label{tables}
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.2941}}
@@ -695,7 +695,7 @@ pH & 7.5 ± 2.15 & 7.61 ± 2.2 & 8.53 ± 0.66 & 1.000 & 0.426 \\
 \href{https://OlivierRaven.github.io/Reefs_Rotoiti/index.qmd.html}{Article
 Notebook}}
 
-\section{Figures}\label{figures}
+\subsection{Figures}\label{figures}
 
 \begin{figure}
 
@@ -758,7 +758,7 @@ log link. Models with degenerate confidence intervals
 
 \end{figure}%
 
-\section{Supplementary information}\label{supplementary-information}
+\subsection{Supplementary information}\label{supplementary-information}
 
 \begin{figure}
 
