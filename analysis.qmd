@@ -1,17 +1,8 @@
 ---
 title: "Analysis Notebook"
-format:
-  html:
-    fig-path: "analysis_files/figure-html/"
-    theme:
-      light: flatly
-      dark: darkly
-    code-fold: true
-    code-tools: true
-    code-summary: "View Code"
-    toc: true
-    toc-depth: 3
-    number-sections: true
+toc: true
+toc-depth: 3
+number-sections: true
 fig-width: 8
 fig-height: 6
 
@@ -360,7 +351,14 @@ Combined_data <- Combined_data %>%
   left_join(habitat_classification, by = c("site_id"))%>%
   dplyr::mutate(monitoring_int = as.integer(monitoring),
     pair_id = factor(ceiling(as.numeric(as.character(site_id)) / 2)),
-    koura_present = as.integer(`Total_Individuals_Kōura` > 0))
+    koura_present = as.integer(`Total_Individuals_Kōura` > 0),
+    Site_type_detail = factor(dplyr::case_when(
+      site == "Stone_pile" ~ "Stone_pile",
+      site == "Control"    ~ "Control",
+      site == "Reference" & as.numeric(as.character(site_id)) %% 2 == 1 ~ "Reference_1",
+      site == "Reference" & as.numeric(as.character(site_id)) %% 2 == 0 ~ "Reference_2",
+      TRUE ~ site),
+      levels = c("Stone_pile", "Control", "Reference_1", "Reference_2")))
 
 # Substrate_index_before above is fixed at the baseline (pre-construction) substrate
 # survey and never updated, even though the stone piles physically added new
@@ -681,7 +679,8 @@ make_trend_plot <- function(sp) {
     scale_fill_manual(values = site_fill, labels = site_labels) +
     scale_shape_manual(values = site_shapes, labels = site_labels) +
     scale_x_continuous(breaks = 0:6, labels = monitor_labels, limits = c(-0.3, 6.3)) +
-    labs(title  = species_labels[[sp]], x = NULL, y = "Mean CPUE (± 95% CI)", colour = "Site type", shape = "Site type", fill = "Site type") +
+    scale_y_continuous(trans = "log1p") +
+    labs(title  = species_labels[[sp]], x = NULL, y = "Mean CPUE (± 95% CI, log scale)", colour = "Site type", shape = "Site type", fill = "Site type") +
     theme(axis.text.x     = element_text(size = 7,
         colour = c(rep("black", 6), "grey50")),
       axis.text.y     = element_text(size = 8),
@@ -745,9 +744,9 @@ koura_trend <- make_trend_plot("Kōura") +
     axis.text.x     = element_text(size = 9),
     axis.text.y     = element_text(size = 9),
     axis.title.y    = element_text(size = 10),
-    legend.position = "bottom")
+    legend.position = "right")
 
-ggsave(file.path(out_dir, "fig-koura-trends.png"), koura_trend, width = 5, height = 3, dpi = 300)
+ggsave(file.path(out_dir, "fig-koura-trends.png"), koura_trend, width = 6, height = 3, dpi = 300)
 
 koura_trend
 ```
@@ -758,42 +757,29 @@ koura_trend
 #| include: true
 #| fig-width: 8
 #| fig-height: 7
-#| fig-cap: "Kōura CPUE over time at each individual site, faceted by site_id. Stone pile and control sites are shown on the left; reference sites on the right."
+#| fig-cap: "Kōura CPUE (log scale) over time at each individual site, faceted by site ID. Point shape and smoother colour indicate site type."
 
-koura_cpue_sites <- all_data %>%
-  dplyr::filter(site != "Reference") %>%
-  dplyr::mutate(site = factor(site, levels = c("Stone_pile", "Control", "Reference"))) %>%
-  ggplot(aes(monitoring_int, `Weighted_CPUE_Kōura`,  shape = site, fill = site)) +
-  geom_smooth(se = FALSE, aes(group = site, col = site)) +
-  geom_point(size = 2, col = "black") +
-  facet_wrap(~site_id, ncol = 2, scales = "free_y") +
-  scale_colour_manual(values = site_colours, labels = site_labels) +
-  scale_fill_manual(  values = site_fill,    labels = site_labels) +
-  scale_shape_manual( values = site_shapes,  labels = site_labels) +
-  scale_x_continuous(breaks = 0:6, labels = monitor_labels, limits = c(-0.3, 6.3)) +
-  labs(y = "Kōura CPUE", x = "Monitoring",
-       col = "Site type", shape = "Site type", fill = "Site type") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7))
+site_id_order <- c(1, 2, 11, 12, 3, 4, 13, 14, 5, 6, 15, 16, 7, 8, 17, 18, 9, 10, 19, 20)
 
-koura_cpue_reference <- all_data %>%
-  dplyr::filter(site == "Reference") %>%
-  dplyr::mutate(site = factor(site, levels = c("Stone_pile", "Control", "Reference"))) %>%
+koura_cpue_plot <- all_data %>%
+  dplyr::mutate(
+    site    = factor(site, levels = c("Stone_pile", "Control", "Reference")),
+    site_id = factor(as.numeric(as.character(site_id)), levels = site_id_order)) %>%
   ggplot(aes(monitoring_int, `Weighted_CPUE_Kōura`, shape = site, fill = site)) +
   geom_smooth(se = FALSE, aes(group = site, col = site)) +
   geom_point(size = 2, col = "black") +
-  facet_wrap(~site_id, ncol = 2, scales = "free_y") +
+  facet_wrap(~site_id, ncol = 4) +
   scale_colour_manual(values = site_colours, labels = site_labels) +
   scale_fill_manual(  values = site_fill,    labels = site_labels) +
   scale_shape_manual( values = site_shapes,  labels = site_labels) +
   scale_x_continuous(breaks = 0:6, labels = monitor_labels, limits = c(-0.3, 6.3)) +
-  labs(y = "Kōura CPUE", x = "Monitoring",
+  scale_y_continuous(trans = "log1p") +
+  labs(y = "Kōura CPUE (log scale)", x = "Monitoring",
        col = "Site type", shape = "Site type", fill = "Site type") +
-  theme(axis.title.y = element_blank(),
-        axis.text.x  = element_text(angle = 45, hjust = 1, size = 7))
+  theme(axis.text.x     = element_text(angle = 45, hjust = 1, size = 7),
+        legend.position = "right")
 
-koura_cpue_plot <- koura_cpue_sites + koura_cpue_reference + plot_layout(guides = "collect") & theme(legend.position = "bottom")
-
-ggsave(file.path(out_dir, "fig-koura-cpue.png"),  koura_cpue_plot, width = 8, height = 7, dpi = 300)
+ggsave(file.path(out_dir, "fig-koura-cpue.png"), koura_cpue_plot, width = 10, height = 7, dpi = 300)
 
 koura_cpue_plot
 ```
@@ -1117,6 +1103,27 @@ RQ3 - Did species abundance/biomass at stone pile sites converge toward referenc
   M3bk - Biomass,   Koura,   Stone_pile vs Reference, full timeline, Tweedie
   M3bc - Biomass,   Catfish, Stone_pile vs Reference, full timeline, Tweedie
 
+*Baseline and equivalence*
+RQ4 — Did species abundance/biomass differ between stone pile, control, and reference sites before construction, and did these differences change after construction?
+  M4TBak - Treatment, Before, Abundance, Koura,   Stone_pile vs Control, round 0, Tweedie
+  M4TBbk - Treatment, Before, Biomass,   Koura,   Stone_pile vs Control, round 0, Tweedie
+  M4TBac - Treatment, Before, Abundance, Catfish, Stone_pile vs Control, round 0, Tweedie
+  M4TBbc - Treatment, Before, Biomass,   Catfish, Stone_pile vs Control, round 0, Tweedie
+
+  M4RBak - Reference, Before, Abundance, Koura,   Reference 1 vs Reference 2, round 0, Tweedie
+  M4RBbk - Reference, Before, Biomass,   Koura,   Reference 1 vs Reference 2, round 0, Tweedie
+  M4RBac - Reference, Before, Abundance, Catfish, Reference 1 vs Reference 2, round 0, Tweedie
+  M4RBbc - Reference, Before, Biomass,   Catfish, Reference 1 vs Reference 2, round 0, Tweedie
+
+  M4TAak - Treatment, After, Abundance, Koura,   Stone_pile vs Control, round 1-5, Tweedie
+  M4TAbk - Treatment, After, Biomass,   Koura,   Stone_pile vs Control, round 1-5, Tweedie
+  M4TAac - Treatment, After, Abundance, Catfish, Stone_pile vs Control, round 1-5, Tweedie
+  M4TAbc - Treatment, After, Biomass,   Catfish, Stone_pile vs Control, round 1-5, Tweedie
+
+  M4RAak - Reference, After, Abundance, Koura,   Reference 1 vs Reference 2, round 1-5, Tweedie
+  M4RAbk - Reference, After, Biomass,   Koura,   Reference 1 vs Reference 2, round 1-5, Tweedie
+  M4RAac - Reference, After, Abundance, Catfish, Reference 1 vs Reference 2, round 1-5, Tweedie
+  M4RAbc - Reference, After, Biomass,   Catfish, Reference 1 vs Reference 2, round 1-5, Tweedie
 
 ## Model data subsets
 ```{r}
@@ -1167,7 +1174,7 @@ pull_model <- function(results, sp, resp) {
 }
 ```
 
-## Effect of construction (RQ1 — step change: occupancy, abundance, biomass)
+## RQ1 — Effect of construction (step change: occupancy, abundance, biomass)
 ```{r}
 #| label: tbl-rq1-full
 #| tbl-cap: "RQ1 (step change) — full fixed-effects estimates, kōura and catfish, occupancy/abundance/biomass."
@@ -1181,8 +1188,15 @@ fit_rq1 <- function(species, response_type) {
 
   form    <- paste0("`", response_col, "` ~ Period * site + monitoring_int + Temperature + (1 | pair_id / site_id)")
   fam_obj <- if (response_type == "occupancy") binomial() else tweedie()
-  m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = baci_data, REML = TRUE, family = fam_obj),
+  zif     <- if (species == "Catfish" && response_type == "abundance") ~1 else ~0
+  m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = baci_data, REML = TRUE, family = fam_obj,
+                  ziformula = zif),
                 error = function(e) NULL)
+  if (!is.null(m) && m$fit$convergence != 0)
+    m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = baci_data, REML = TRUE, family = fam_obj,
+                    ziformula = zif,
+                    control = glmmTMBControl(optCtrl = list(iter.max = 1000, eval.max = 2000))),
+                  error = function(e) NULL)
   repoint_call(m, form, "baci_data",
                if (response_type == "occupancy") quote(binomial()) else quote(tweedie()))
 }
@@ -1216,14 +1230,14 @@ rq1_full_tidy <- rq1_results %>%
 DT::datatable(
   rq1_full_tidy,
   filter = "top",
-  options = list(pageLength = 15, dom = 'Bfrtip', buttons = c('csv', 'excel')),
+  options = list(pageLength = 38, dom = 'Bfrtip', buttons = c('csv', 'excel')),
   extensions = 'Buttons',
   rownames = FALSE
 ) |>
   DT::formatRound(columns = c("estimate","std.error","statistic","p.value","p_adj_BH","conf.low","conf.high"), digits = 3)
 ```
 
-## Post-construction trend (RQ2 — abundance and biomass, Stone_pile vs Control)
+## RQ2 — Post-construction trend (abundance and biomass, Stone_pile vs Control)
 ```{r}
 #| label: tbl-rq2-full
 #| tbl-cap: "RQ2 (post-construction trend) — full fixed-effects estimates, kōura and catfish, abundance/biomass."
@@ -1233,8 +1247,15 @@ fit_rq2 <- function(species, response_type) {
   if (!response_col %in% names(baci_data_after)) return(NULL)
 
   form <- paste0("`", response_col, "` ~ site * monitoring_int + Temperature + Substrate_index_before + (1 | site_id)")
-  m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = baci_data_after, REML = TRUE, family = tweedie()),
+  zif  <- if (species == "Catfish" && response_type == "abundance") ~1 else ~0
+  m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = baci_data_after, REML = TRUE, family = tweedie(),
+                  ziformula = zif),
                 error = function(e) NULL)
+  if (!is.null(m) && m$fit$convergence != 0)
+    m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = baci_data_after, REML = TRUE, family = tweedie(),
+                    ziformula = zif,
+                    control = glmmTMBControl(optCtrl = list(iter.max = 1000, eval.max = 2000))),
+                  error = function(e) NULL)
   repoint_call(m, form, "baci_data_after", quote(tweedie()))
 }
 
@@ -1267,14 +1288,14 @@ rq2_full_tidy <- rq2_results %>%
 DT::datatable(
   rq2_full_tidy,
   filter = "top",
-  options = list(pageLength = 15, dom = 'Bfrtip', buttons = c('csv', 'excel')),
+  options = list(pageLength = 26, dom = 'Bfrtip', buttons = c('csv', 'excel')),
   extensions = 'Buttons',
   rownames = FALSE
 ) |>
   DT::formatRound(columns = c("estimate","std.error","statistic","p.value","p_adj_BH","conf.low","conf.high"), digits = 3)
 ```
 
-## Convergence to reference conditions (RQ3 — abundance and biomass, Stone_pile vs Reference)
+## RQ3 — Convergence to reference conditions (abundance and biomass, Stone_pile vs Reference)
 ```{r}
 #| label: tbl-rq3-full
 #| tbl-cap: "RQ3 (convergence to Reference) — full fixed-effects estimates, kōura and catfish, abundance/biomass."
@@ -1284,7 +1305,9 @@ fit_rq3 <- function(species, response_type) {
   if (!response_col %in% names(convergence_data)) return(NULL)
 
   form <- paste0("`", response_col, "` ~ site * monitoring_int + Season + Substrate_index_after + (1 | site_id)")
-  m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = convergence_data, REML = TRUE, family = tweedie()),
+  zif  <- if (species == "Catfish" && response_type == "abundance") ~1 else ~0
+  m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = convergence_data, REML = TRUE, family = tweedie(),
+                  ziformula = zif),
                 error = function(e) NULL)
   repoint_call(m, form, "convergence_data", quote(tweedie()))
 }
@@ -1318,7 +1341,7 @@ rq3_full_tidy <- rq3_results %>%
 DT::datatable(
   rq3_full_tidy,
   filter = "top",
-  options = list(pageLength = 15, dom = 'Bfrtip', buttons = c('csv', 'excel')),
+  options = list(pageLength = 34, dom = 'Bfrtip', buttons = c('csv', 'excel')),
   extensions = 'Buttons',
   rownames = FALSE
 ) |>
@@ -1389,13 +1412,246 @@ convergence_plot <- ggplot() +
   scale_fill_manual(  values = conv_fill,    labels = conv_labels) +
   scale_shape_manual( values = conv_shapes,  labels = conv_labels) +
   scale_x_continuous(breaks = 0:6, labels = monitor_labels, limits = c(-0.3, 6.3)) +
-  labs(x= "Monitoring",y= "Kōura CPUE",colour = "Site type",fill= "Site type",shape  = "Site type")+
+  scale_y_continuous(trans = "log1p") +
+  labs(x=NULL ,y= "Kōura CPUE (log scale)",colour = "Site type",fill= "Site type",shape  = "Site type") +
+  theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9), axis.title.y = element_text(size = 10), legend.position = "right")+
   theme(axis.text.x = element_text(colour = c(rep("black", 6), "grey50")))
 
-ggsave(file.path(out_dir, "fig-convergence-plot.png"), convergence_plot, width = 8, height = 4, dpi = 300)
+ggsave(file.path(out_dir, "fig-convergence-plot.png"), convergence_plot, width = 6, height = 3, dpi = 300)
 
 convergence_plot
 ```
+
+## RQ4 — Baseline and equivalence (abundance and biomass, Stone_pile vs Control / Reference 1 vs Reference 2)
+```{r}
+#| label: tbl-rq4-full
+#| tbl-cap: "RQ4 — abundance and biomass before and after construction: Stone pile vs Control (treatment comparison) and Reference 1 vs Reference 2 (reference equivalence). BH-adjusted p-values are applied within each sub-question group."
+
+# RQ4 Data subsets 
+rq4_trt_before <- all_data %>%
+  dplyr::filter(site %in% c("Stone_pile", "Control"), monitoring == 0) %>%
+  dplyr::mutate(
+    Site_type_detail = factor(Site_type_detail, levels = c("Control", "Stone_pile")),
+    pair_id = factor(pair_id), site_id = factor(site_id))
+
+rq4_trt_after <- all_data %>%
+  dplyr::filter(site %in% c("Stone_pile", "Control"), monitoring_int >= 1) %>%
+  dplyr::mutate(
+    Site_type_detail = factor(Site_type_detail, levels = c("Control", "Stone_pile")),
+    pair_id = factor(pair_id), site_id = factor(site_id))
+
+rq4_ref_before <- all_data %>%
+  dplyr::filter(site == "Reference", monitoring == 0) %>%
+  dplyr::mutate(
+    Site_type_detail = factor(Site_type_detail, levels = c("Reference_1", "Reference_2")),
+    pair_id = factor(pair_id), site_id = factor(site_id))
+
+rq4_ref_after <- all_data %>%
+  dplyr::filter(site == "Reference", monitoring_int >= 1) %>%
+  dplyr::mutate(
+    Site_type_detail = factor(Site_type_detail, levels = c("Reference_1", "Reference_2")),
+    pair_id = factor(pair_id), site_id = factor(site_id))
+
+# Fit functions 
+# Before
+fit_rq4_before <- function(data, species, response_type) {
+  response_col <- if (response_type == "abundance") paste0("Weighted_CPUE_", species) else paste0("Weighted_BPUE_", species)
+  if (!response_col %in% names(data)) return(NULL)
+  form <- paste0("`", response_col, "` ~ Site_type_detail")
+  tryCatch(
+    glmmTMB::glmmTMB(as.formula(form), data = data, family = tweedie()),
+    error = function(e) NULL)
+}
+
+# After: longitudinal — interaction with monitoring time.
+# Temperature inclusion per model-selection (tbl-rq4-temperature-selection):
+#   - Biomass (both species, both comparisons): drop — ΔAICc > 2 without it
+#   - Catfish abundance treatment: drop — Temperature causes non-PD Hessian
+#   - Catfish abundance reference: keep — dropping causes non-PD Hessian
+#   - Kōura abundance (both): keep — marginal (|ΔAICc| < 2)
+# Catfish abundance gets zero-inflation (excess zeros in count data).
+fit_rq4_after <- function(data, species, response_type, drop_temp = FALSE) {
+  response_col <- if (response_type == "abundance") paste0("Weighted_CPUE_", species) else paste0("Weighted_BPUE_", species)
+  if (!response_col %in% names(data)) return(NULL)
+  zif  <- if (species == "Catfish" && response_type == "abundance") ~1 else ~0
+  form <- if (drop_temp)
+    paste0("`", response_col, "` ~ Site_type_detail * monitoring_int + (1 | pair_id / site_id)")
+  else
+    paste0("`", response_col, "` ~ Site_type_detail * monitoring_int + Temperature + (1 | pair_id / site_id)")
+
+  conv_failed <- FALSE
+  m <- withCallingHandlers(
+    tryCatch(
+      glmmTMB::glmmTMB(as.formula(form), data = data, REML = TRUE, family = tweedie(),
+        ziformula = zif),
+      error = function(e) NULL),
+    warning = function(w) {
+      if (grepl("convergence|false conv", conditionMessage(w), ignore.case = TRUE))
+        conv_failed <<- TRUE
+      invokeRestart("muffleWarning")
+    })
+
+  if (conv_failed || is.null(m)) {
+    m <- tryCatch(
+      glmmTMB::glmmTMB(as.formula(form), data = data, REML = TRUE, family = tweedie(),
+        ziformula = zif,
+        control = glmmTMBControl(optCtrl = list(iter.max = 1000, eval.max = 2000))),
+      error = function(e) NULL)
+  }
+  m
+}
+
+# Treatment after: drop Temperature for biomass (both species) + catfish abundance
+fit_rq4_trt_after <- function(data, species, response_type)
+  fit_rq4_after(data, species, response_type,
+    drop_temp = response_type == "biomass" || (species == "Catfish" && response_type == "abundance"))
+
+# Reference after: drop Temperature for biomass only
+fit_rq4_ref_after <- function(data, species, response_type)
+  fit_rq4_after(data, species, response_type,
+    drop_temp = response_type == "biomass")
+
+# Helper to build a results tibble for one sub-question 
+make_rq4_results <- function(data, fit_fn, comparison, time_frame, term_of_interest, model_prefix) {
+  tidyr::crossing(species = all_species, response_type = c("abundance", "biomass")) %>%
+    dplyr::mutate(
+      RQ               = "RQ4",
+      comparison       = comparison,
+      time_frame       = time_frame,
+      term_of_interest = term_of_interest,
+      model_id         = paste0(model_prefix, response_letter_map[response_type], species_letter_map[species]),
+      model            = purrr::map2(species, response_type, ~ fit_fn(data, .x, .y))) %>%
+    dplyr::arrange(match(species, names(species_letter_map)), match(response_type, names(response_letter_map))) %>%
+    dplyr::mutate(
+      p_value  = purrr::map2_dbl(model, term_of_interest, function(m, trm) {
+        if (is.null(m)) return(NA_real_)
+        broom.mixed::tidy(m, effects = "fixed", component = "cond") %>%
+          dplyr::filter(term == trm) %>%
+          dplyr::pull(p.value)
+      }),
+      p_adj_BH = p.adjust(p_value, method = "BH"))
+}
+
+# Fit all four sub-questions 
+# Model ID scheme: M4 + T/R (treatment/reference) + B/A (before/after) + a/b + k/c
+rq4_trt_before_results <- make_rq4_results(
+  rq4_trt_before, fit_rq4_before,
+  comparison = "treatment", time_frame = "before",
+  term_of_interest = "Site_type_detailStone_pile",
+  model_prefix = "M4TB")
+
+rq4_trt_after_results <- make_rq4_results(
+  rq4_trt_after, fit_rq4_trt_after,
+  comparison = "treatment", time_frame = "after",
+  term_of_interest = "Site_type_detailStone_pile:monitoring_int",
+  model_prefix = "M4TA")
+
+rq4_ref_before_results <- make_rq4_results(
+  rq4_ref_before, fit_rq4_before,
+  comparison = "reference", time_frame = "before",
+  term_of_interest = "Site_type_detailReference_2",
+  model_prefix = "M4RB")
+
+rq4_ref_after_results <- make_rq4_results(
+  rq4_ref_after, fit_rq4_ref_after,
+  comparison = "reference", time_frame = "after",
+  term_of_interest = "Site_type_detailReference_2:monitoring_int",
+  model_prefix = "M4RA")
+
+rq4_results <- dplyr::bind_rows(
+  rq4_trt_before_results,
+  rq4_ref_before_results,
+  rq4_trt_after_results,
+  rq4_ref_after_results)
+
+# Full tidy table
+rq4_full_tidy <- rq4_results %>%
+  dplyr::mutate(
+    time_frame  = factor(time_frame,  levels = c("before", "after")),
+    comparison  = factor(comparison,  levels = c("treatment", "reference")),
+    species     = factor(species,     levels = names(species_letter_map)),
+    response_type = factor(response_type, levels = names(response_letter_map))) %>%
+  dplyr::arrange(time_frame, comparison, species, response_type) %>%
+  dplyr::mutate(tidy = purrr::map(model, ~ if (is.null(.x)) NULL else
+    broom.mixed::tidy(.x, effects = "fixed", component = "cond", conf.int = TRUE))) %>%
+  dplyr::filter(!purrr::map_lgl(tidy, is.null)) %>%
+  tidyr::unnest(tidy) %>%
+  dplyr::mutate(p_adj_BH = dplyr::if_else(term == term_of_interest, p_adj_BH, NA_real_)) %>%
+  dplyr::select(model_id, comparison, time_frame, species, response_type,
+                term, estimate, std.error, statistic, p.value, p_adj_BH, conf.low, conf.high) %>%
+  dplyr::mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+print(rq4_full_tidy, n=53)
+
+DT::datatable(
+  rq4_full_tidy,
+  filter = "top",
+  options = list(pageLength = 51, dom = 'Bfrtip', buttons = c('csv', 'excel')),
+  extensions = 'Buttons',
+  rownames = FALSE
+) |>
+  DT::formatRound(columns = c("estimate","std.error","statistic","p.value","p_adj_BH","conf.low","conf.high"), digits = 3)
+
+
+
+```
+
+### RQ4 Model figure
+```{r}
+#| label: fig-RQ4-models
+#| fig-width: 8
+#| fig-height: 10
+#| fig-cap: "Observed distributions of kōura and catfish CPUE and BPUE by site type and monitoring period (before/after stone pile installation). Boxes show interquartile range, line = median, whiskers extend to 1.5×IQR."
+
+rq4_combined <- dplyr::bind_rows(
+  dplyr::mutate(rq4_trt_before, period = "Before"),
+  dplyr::mutate(rq4_trt_after,  period = "After"),
+  dplyr::mutate(rq4_ref_before, period = "Before"),
+  dplyr::mutate(rq4_ref_after,  period = "After")) |>
+  dplyr::mutate(
+    period          = factor(period, levels = c("Before", "After")),
+    Site_type_detail = factor(Site_type_detail,
+      levels = c("Stone_pile", "Control", "Reference_1", "Reference_2")))
+
+response_cols <- intersect(
+  c(paste0("Weighted_CPUE_", all_species), paste0("Weighted_BPUE_", all_species)),
+  names(rq4_combined))
+
+rq4_long <- rq4_combined |>
+  tidyr::pivot_longer(cols = dplyr::all_of(response_cols),
+                      names_to = "response_var", values_to = "value") |>
+  dplyr::mutate(
+    species  = stringr::str_extract(response_var,
+                 paste(all_species, collapse = "|")),
+    response = dplyr::if_else(stringr::str_detect(response_var, "CPUE"),
+                              "Abundance (CPUE)", "Biomass (BPUE)"),
+    panel    = factor(paste0(species, " — ", response),
+                levels = c(paste0(all_species[1], " — Abundance (CPUE)"),
+                           paste0(all_species[1], " — Biomass (BPUE)"),
+                           paste0(all_species[2], " — Abundance (CPUE)"),
+                           paste0(all_species[2], " — Biomass (BPUE)"))))
+
+ggplot2::ggplot(rq4_long,
+    ggplot2::aes(x = Site_type_detail, y = value, fill = period)) +
+  ggplot2::geom_boxplot(outlier.size = 0.6,
+                        position = ggplot2::position_dodge(0.8)) +
+  ggplot2::facet_wrap(~ panel, scales = "free_y", ncol = 2) +
+  ggplot2::scale_fill_manual(values = c("Before" = "#c9a96e", "After" = "#3d7a5e")) +
+  ggplot2::scale_x_discrete(labels = c(
+    "Stone_pile"  = "Stone pile",
+    "Control"     = "Control",
+    "Reference_1" = "Reference 1",
+    "Reference_2" = "Reference 2")) +
+  ggplot2::scale_y_continuous(trans = "log1p") +
+  ggplot2::labs(x = NULL, y = "log(value + 1)", fill = "Period") +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    strip.text      = ggplot2::element_text(face = "bold"),
+    axis.text.x     = ggplot2::element_text(angle = 35, hjust = 1),
+    legend.position = "bottom")
+```
+
+
 
 ## Model diagnostics 
 ```{r}
@@ -1404,10 +1660,22 @@ convergence_plot
 #| fig-height: 10
 #| fig-cap: "DHARMa scaled-residual diagnostics for each model: QQ plot (left) and residual vs. predicted (right). Red flags indicate a significant departure from the expected uniform distribution, dispersion, or outlier rate."
 
-model_registry <- dplyr::bind_rows(rq1_results, rq2_results, rq3_results) %>%
+model_registry <- dplyr::bind_rows(rq1_results, rq2_results, rq3_results, rq4_results) %>%
   dplyr::select(model_id, RQ, species, response_type, comparison, time_frame, term_of_interest, p_adj_BH, model)
 
-diagnostic_models <- purrr::set_names(model_registry$model, model_registry$model_id) %>%
+
+is_dharma_safe <- function(m) {
+  if (is.null(m) || m$fit$convergence != 0) return(FALSE)
+  tryCatch({
+    v <- diag(as.matrix(vcov(m, full = TRUE)))
+    all(is.finite(v) & v > 0)
+  }, error = function(e) FALSE, warning = function(w) FALSE)
+}
+
+diagnostic_models <- model_registry %>%
+  dplyr::filter(!(RQ == "RQ4" & time_frame == "before")) %>%
+  dplyr::filter(purrr::map_lgl(model, is_dharma_safe)) %>%
+  { purrr::set_names(.$model, .$model_id) } %>%
   purrr::compact()
 
 simulate_check <- function(model, name, seed = 42) {
@@ -1451,15 +1719,28 @@ question_structure <- model_registry %>%
     data = dplyr::case_when(
       comparison == "vs_control" & time_frame == "full" ~ "baci_data",
       comparison == "vs_control" & time_frame == "post" ~ "baci_data_after",
-      comparison == "vs_reference"                      ~ "convergence_data"),
+      comparison == "vs_reference"                      ~ "convergence_data",
+      comparison == "treatment"  & time_frame == "before" ~ "rq4_trt_before",
+      comparison == "treatment"  & time_frame == "after"  ~ "rq4_trt_after",
+      comparison == "reference"  & time_frame == "before" ~ "rq4_ref_before",
+      comparison == "reference"  & time_frame == "after"  ~ "rq4_ref_after"),
     formula = dplyr::case_when(
       comparison == "vs_control" & time_frame == "full" ~
         "<response> ~ Period * site + monitoring_int + Temperature + (1 | pair_id / site_id)",
       comparison == "vs_control" & time_frame == "post" ~
         "<response> ~ site * monitoring_int + Temperature + Substrate_index_before + (1 | site_id)",
       comparison == "vs_reference" ~
-        "<response> ~ site * monitoring_int + Season + Substrate_index_after + (1 | site_id)")) %>%
-  dplyr::arrange(RQ, response_type) %>%
+        "<response> ~ site * monitoring_int + Season + Substrate_index_after + (1 | site_id)",
+      comparison %in% c("treatment", "reference") & time_frame == "before" ~
+        "<response> ~ Site_type_detail + (1 | pair_id / site_id)",
+      comparison == "treatment" & time_frame == "after" ~
+        "<response> ~ Site_type_detail * monitoring_int + Temperature† + (1 | pair_id / site_id)",
+      comparison == "reference" & time_frame == "after" ~
+        "<response> ~ Site_type_detail * monitoring_int + Temperature† + (1 | pair_id / site_id)")) %>%
+  dplyr::mutate(
+    time_frame = factor(time_frame, levels = c("full", "post", "before", "after")),
+    comparison = factor(comparison, levels = c("vs_control", "vs_reference", "treatment", "reference"))) %>%
+  dplyr::arrange(RQ, time_frame, comparison, response_type) %>%
   dplyr::select(RQ, response_type, comparison, time_frame, family, data, formula, term_of_interest)
 
 write.csv(question_structure, file.path(out_dir, "tbl-question-structure.csv"), row.names = FALSE)
@@ -1490,7 +1771,7 @@ tidy_all <- model_registry %>%
 DT::datatable(
   tidy_all,
   filter = "top",
-  options = list(pageLength = 14, dom = 'Bfrtip', buttons = c('csv', 'excel')),
+  options = list(pageLength = 30, dom = 'Bfrtip', buttons = c('csv', 'excel')),
   extensions = 'Buttons',
   rownames = FALSE
 ) |>
@@ -1522,7 +1803,7 @@ write.csv(tidy_all_full, file.path(out_dir, "tbl-models-summary-full.csv"), row.
 DT::datatable(
   tidy_all_full,
   filter = "top",
-  options = list(pageLength = 20, dom = 'Bfrtip', buttons = c('csv', 'excel')),
+  options = list(pageLength = 51, dom = 'Bfrtip', buttons = c('csv', 'excel')),
   extensions = 'Buttons',
   rownames = FALSE
 ) |>
@@ -1532,59 +1813,70 @@ DT::datatable(
 ## All models summary plot
 ```{r}
 #| label: fig-forest-plot
-#| fig-width: 6
-#| fig-height: 6
+#| fig-width: 3
+#| fig-height: 12
 #| dpi: 300
-#| fig-cap: "Effect sizes (β ± 95% CI) for the key interaction term of every model in model_registry (kōura and catfish, RQ1-RQ3). Filled points indicate significant effects (p < 0.05). Occupancy (RQ1) is on the log-odds scale; abundance/biomass models are on the log scale (Tweedie log link)."
+#| fig-cap: "Effect sizes (β ± 95% CI) for the key term of interest of every model in model_registry (kōura and catfish, RQ1–RQ4). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — β magnitudes are not directly comparable across panels because each RQ tests a different contrast (step-change, per-round slope, or simple group difference) and RQ1 occupancy is on the log-odds scale while all others use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded."
 
-# Built directly from tidy_all
+# Built directly from tidy_all — drop models with degenerate CIs (non-PD Hessian)
 forest_data <- tidy_all %>%
+  dplyr::filter(is.finite(conf.low) & is.finite(conf.high),
+                abs(conf.high - conf.low) < 200) %>%
   dplyr::mutate(
-    model_name = paste0(model_id, " ", species, " (", response_type, ")\n(Stone pile vs ",
-             dplyr::if_else(comparison == "vs_control", "Control", "Reference"), ")"),
+    comparison_label = dplyr::case_when(
+      comparison == "vs_control"   ~ "Stone pile vs Control",
+      comparison == "vs_reference" ~ "Stone pile vs Reference",
+      comparison == "treatment"    ~ "Stone pile vs Control",
+      comparison == "reference"    ~ "Ref 1 vs Ref 2",
+      TRUE ~ comparison),
+    model_name = paste0(model_id, " ", species, " (", response_type, ")\n(", comparison_label, ")"),
     group = dplyr::case_when(
-      comparison == "vs_reference"     ~ "Convergence",
-      time_frame == "post"             ~ "Post-construction trend",
-      TRUE                              ~ "Construction-effect"),
+      RQ == "RQ3"                              ~ "Convergence",
+      RQ == "RQ2"                              ~ "Post-construction trend",
+      RQ == "RQ4" & time_frame == "before"     ~ "Baseline",
+      RQ == "RQ4" & time_frame == "after"      ~ "Equivalence",
+      TRUE                                     ~ "Construction-effect"),
     significant = p.value < 0.05,
     model_name  = factor(model_name, levels = rev(unique(model_name))),
-    group       = factor(group, levels = c("Construction-effect", "Trend", "Convergence")))
+    group       = factor(group, levels = c(
+      "Construction-effect",
+      "Post-construction trend",
+      "Convergence",
+      "Baseline",
+      "Equivalence")))
 
-group_colours <- c("Construction-effect"     = "#d6604d",
-                   "Post-construction trend" = "#b8860b",
-                   "Convergence"             = "#2166ac")
+species_colours <- c("Kōura" = "#3d7a5e", "Catfish" = "#c9603a")
+species_shapes  <- c("Kōura" = 21,       "Catfish" = 24)
 
 forest_plot <- ggplot(forest_data,
     aes(estimate, model_name)) +
   geom_vline(xintercept = 0, linetype = "dashed",
              colour = "grey40", linewidth = 0.5) +
   geom_errorbarh(aes(xmin = conf.low, xmax = conf.high,
-                     colour = group),
+                     colour = species),
                  height = 0.25, linewidth = 0.6) +
-  # All points — coloured fill, black outline
-  geom_point(aes(fill = group),
-             colour = "black", shape = 21,
-             size = 3.5, stroke = 0.5) +
-  # Overlay faded layer for non-significant
+  geom_point(aes(fill = species, shape = species),
+             colour = "black", size = 3.5, stroke = 0.5) +
   geom_point(data = forest_data %>% filter(!significant),
-             aes(fill = group),
-             colour = "black", shape = 21,
-             size = 3.5, stroke = 0.5, alpha = 0.25) +
-  scale_fill_manual(  values = group_colours) +
-  scale_colour_manual(values = group_colours) +
-  facet_grid(group ~ ., scales = "free_y", space = "free_y") +
+             aes(fill = species, shape = species),
+             colour = "black", size = 3.5, stroke = 0.5, alpha = 0.2) +
+  scale_fill_manual(  values = species_colours) +
+  scale_colour_manual(values = species_colours) +
+  scale_shape_manual( values = species_shapes) +
+  facet_wrap(~ group, ncol = 1, scales = "free") +
   labs(
     x      = "Effect size (β ± 95% CI)",
     y      = NULL,
-    fill   = "Model group",
-    colour = "Model group") +
+    fill   = "Species",
+    colour = "Species",
+    shape  = "Species") +
   theme(
     strip.text         = element_text(size = 9, face = "bold"),
     axis.text.y        = element_text(size = 8),
-    legend.position    = "none",
+    legend.position    = "bottom",
     panel.grid.major.x = element_line(colour = "grey92", linewidth = 0.3))
 
-ggsave(file.path(out_dir, "fig-forest-plot.png"), forest_plot, width = 6, height = 6, dpi = 300)
+ggsave(file.path(out_dir, "fig-forest-plot.png"), forest_plot, width = 4, height = 12, dpi = 300)
 
 forest_plot
 ```
@@ -1705,6 +1997,69 @@ season_vs_temperature <- purrr::pmap_dfr(rq3_results, function(model_id, model, 
 
 knitr::kable(season_vs_temperature, digits = 1)
 
+```
+
+### RQ4 after-period covariate selection (Temperature vs Season vs neither)
+```{r}
+#| label: tbl-rq4-covariate-selection
+#| include: true
+#| tbl-cap: "Covariate selection for all 8 RQ4 after-period models: Temperature (1 parameter), Season (3 parameters, categorical), or neither. REML = FALSE for AICc comparison. ΔAICc is relative to the best candidate per model (lowest AICc = 0). Models with non-positive-definite Hessian are flagged."
+
+hessian_ok <- function(m) {
+  if (is.null(m) || m$fit$convergence != 0) return(FALSE)
+  tryCatch({
+    v <- diag(as.matrix(vcov(m, full = TRUE)))
+    all(is.finite(v) & v > 0)
+  }, error = function(e) FALSE, warning = function(w) FALSE)
+}
+
+rq4_after_sets <- list(treatment = rq4_trt_after, reference = rq4_ref_after)
+
+covariate_compare_one <- function(comparison, species, response_type) {
+  data         <- rq4_after_sets[[comparison]]
+  response_col <- if (response_type == "abundance") paste0("Weighted_CPUE_", species)
+                  else paste0("Weighted_BPUE_", species)
+  if (!response_col %in% names(data)) return(NULL)
+
+  prefix   <- if (comparison == "treatment") "M4TA" else "M4RA"
+  model_id <- paste0(prefix, response_letter_map[response_type], species_letter_map[species])
+  zif      <- if (species == "Catfish" && response_type == "abundance") ~1 else ~0
+  base     <- paste0("`", response_col, "` ~ Site_type_detail * monitoring_int")
+
+  candidates <- list(
+    Temperature = paste0(base, " + Temperature + (1 | pair_id / site_id)"),
+    Season      = paste0(base, " + Season      + (1 | pair_id / site_id)"),
+    Neither     = paste0(base,                  " + (1 | pair_id / site_id)"))
+
+  fit_m <- function(form) tryCatch(
+    glmmTMB::glmmTMB(as.formula(form), data = data, REML = FALSE, family = tweedie(),
+      ziformula = zif, control = glmmTMBControl(optCtrl = list(iter.max = 1000, eval.max = 2000))),
+    error = function(e) NULL)
+
+  models <- purrr::map(candidates, fit_m)
+  aiccs  <- purrr::map_dbl(models, ~ if (is.null(.x)) NA_real_ else MuMIn::AICc(.x))
+  best   <- min(aiccs, na.rm = TRUE)
+
+  tibble::tibble(
+    model_id   = model_id,
+    species    = species,
+    response   = response_type,
+    comparison = comparison,
+    covariate  = names(candidates),
+    conv       = purrr::map_int(models, ~ if (is.null(.x)) NA_integer_ else .x$fit$convergence),
+    hess_ok    = purrr::map_lgl(models, hessian_ok),
+    K          = purrr::map_dbl(models, ~ if (is.null(.x)) NA_real_ else attr(logLik(.x), "df")),
+    AICc       = round(aiccs, 1),
+    delta_AICc = round(aiccs - best, 2))
+}
+
+rq4_covariate_selection <- purrr::pmap_dfr(
+  tidyr::crossing(
+    tibble::tibble(comparison = c("treatment", "reference")),
+    tidyr::crossing(species = all_species, response_type = c("abundance", "biomass"))),
+  ~ covariate_compare_one(..1, ..2, ..3))
+
+knitr::kable(rq4_covariate_selection)
 ```
 
 ### Colonisation drivers — what explains the colonisation pattern?

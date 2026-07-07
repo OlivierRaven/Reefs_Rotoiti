@@ -1,5 +1,5 @@
 ---
-title: "Reenforcing kōura reseliance using habitat enhancing structures"
+title: "Reinforcing kōura resilience using rock piles to enhance freshwater crayfish habitat in a Aotearoa New Zealand lake"
 subtitle: "Stone piles Rotoiti"
 
 execute:
@@ -59,7 +59,7 @@ author:
 
 date: today
 
-abstract: Stone_Piles_Rotoiti
+abstract: "Placeholder — abstract to be written."
  
 keywords:
   - Paranephrops planifrons
@@ -76,40 +76,57 @@ citation:
 knitr:
   opts_chunk:
     dev: "ragg_png"
-
 ---
+
+::: {.content-visible when-format="pdf"}
+\thispagestyle{empty}
+\AddToShipoutPictureBG*{\AtPageUpperLeft{\includegraphics[width=\paperwidth,height=\paperheight]{images/ch5_cover.jpg}}}
+\null
+\newpage
+\pagecolor{thesissand}
+\vspace{1cm}
+\begin{center}
+\textit{Can habitat enhancement structures provide effective habitat for kōura in Lake Rotoiti?}
+\end{center}
+\afterpage{\pagecolor{thesiscream}}
+:::
+
+::: {.content-visible unless-format="pdf"}
+![](../images/ch5_cover.jpg){fig-align="center" width="100%"}
+
+*Can habitat enhancement structures provide effective habitat for kōura in Lake Rotoiti?*
+:::
 
 ```{r}
 #| label: start
 #| include: false
 
-# Change to chapter directory so relative paths in analysis.qmd resolve correctly
-# when this file is rendered as part of the thesis book from the root directory
 chapter_dir <- dirname(knitr::current_input(dir = TRUE))
-old_wd <- setwd(chapter_dir)
-knitr::knit("analysis.qmd", output = tempfile(), quiet = TRUE)
-setwd(old_wd)
+withr::with_dir(chapter_dir, {
+  knitr::knit("analysis.qmd", output = tempfile(), quiet = TRUE)
+})
+for (lbl in c("fig-koura-trends", "fig-convergence-plot", "fig-forest-plot",
+               "fig-length-weight", "fig-descriptive-context")) {
+  src <- knitr::fig_chunk(lbl, "png")
+  if (file.exists(src)) file.copy(src, paste0("outputs/", lbl, ".png"), overwrite = TRUE)
+}
 ```
 
-# Introduction
-**Global crayfish decline**
+## Introduction
 Freshwater biodiversity is declining faster than any other biome, with one quarter of freshwater fauna now threatened with extinction [@Sayer2025]. Among the most endangered are freshwater crayfish, with 32% of species assessed as threatened globally due to habitat loss, invasive species, and water quality decline [@Richman2015]. As keystone species and ecosystem engineers, crayfish play crucial roles in nutrient cycling, bioturbation, and foodweb dynamics, and their loss can have cascading consequences for freshwater ecosystems [@Momot1995; @Collier1997; @Parkyn2001].
 
-**Kōura ecology, cultural significance and threats**
-In Aotearoa New Zealand (hereafter Aotearoa), the endemic freshwater crayfish kōura (*Paranephrops planifrons* White, 1842) is a *taonga* (culturally treasured) species of significant ecological and cultural importance to Māori, particularly Te Arawa iwi of the Rotorua lakes region in the North Island of Aotearoa [@Kusabs2009]. Kōura support customary fisheries using culturally important practices such as tau kōura, yet populations in Lakes Rotoiti and Rotorua have declined by up to 96 % over the past two decades, with consequent loss of these customary practices [@Kusabs2015a; @Kusabs2026]. The primary driver of decline is predation by the invasive brown bullhead catfish (*Ameiurus nebulosus* Lesueur, 1819, hereafter catfish), confirmed in these lakes in 2016 and 2018 [@Francis2019; @Grayling2020]. Catfish are native to eastern North America where they mostly live in muddy slow-moving water bodies and can survive and spawn in a wide temperature range, tolerate poor water quality, low oxygen concentration and have a broad diet [@Scott1973], making them a highly adaptable/tolerant invader. Catfish were introduced in Aotearoa in 1877 as sport fish [@McDowall1994] with their distribution continuously spreading over the upper North Island such as the Waikato River and in 1985 they were detected in Lake Taupō [@Barnes2003]. In Aotearoa catfish are a major predator on kōura, as 64 % of large catfish (<250 mm fork length) had kōura in their stomach contents [@Barnes2003]. In combination with predation by catfish kōura are further compressed by multiple interacting stressors that progressively restrict their available habitat. Kōura are naturally found in complex rocky habitats [@Jowett2008; @Kusabs2015b] or in deeper parts of the lake to avoid predation during the day, migrating to the productive littoral zone at night to forage [@Devcich1979]. However, thermal stratification creates anoxic conditions in deeper waters, displacing kōura into the shallow littoral zone [@Kusabs2026], precisely where catfish predation pressure is greatest, as catfish rarely swim beyond 18 m depth [@Dedual2002]. This compression is further intensified by dense invasive macrophyte beds obstructing kōura migration in the littoral zone [@Kusabs2009], which also intensify oxygen depletion in deeper waters by die-off events [@Vincent1984; @Hamilton2005]. The importance of deep refuge is shown by Lake Taupō, where kōura persist at a depth even in the presence of catfish because the lake remains oxygenated below the thermocline [@Verburg2019]. In Lake Rotoiti this deep refuge becomes anoxic and unavailable for kōura [@Kusabs2026]. Next to direct predation catfish exposure triggers anti-predator responses in kōura including increased refuge use [@Raveninreviewa], reducing time available for foraging and potentially suppressing growth and reproduction [@Preisser2005; @Sheriff2020]. Climate change is expected to strengthen thermal stratification, expand anoxic zones [@Woolway2021], and increase the range of suitable catfish habitat in Aotearoa, further reducing kōura persistence [@Lee2025].
+In Aotearoa New Zealand (hereafter Aotearoa), the endemic freshwater crayfish kōura (*Paranephrops planifrons* White, 1842) is a taonga (culturally treasured) species of significant ecological and cultural importance to Māori, particularly for Te Arawa iwi of the Rotorua lakes region in the North Island of Aotearoa [@Kusabs2009]. Kōura support customary fisheries using cultural practices such as tau kōura, yet populations in Lakes Rotoiti and Rotorua have declined by up to 96 % over the past two decades, with consequent loss of these customary practices [@Kusabs2015a; @Kusabs2026]. The primary driver of decline is predation by the invasive brown bullhead catfish (*Ameiurus nebulosus* Lesueur, 1819, hereafter catfish), confirmed in these lakes in 2016 and 2018 [@Francis2019; @Grayling2020]. Catfish are native to eastern North America where they mostly live in muddy slow-moving water bodies and can survive and spawn in a wide temperature range, tolerate poor water quality, low oxygen concentration and have a broad diet [@Scott1973], making them a highly adaptable/tolerant invader. Catfish were introduced in Aotearoa in 1877 as sport fish [@McDowall1994] with their distribution continuously spreading over the upper North Island such as the Waikato River and in 1985 they were detected in Lake Taupō [@Barnes2003]. In Aotearoa catfish are a major predator on kōura, as 64 % of large catfish (<250 mm fork length) had kōura in their stomach contents [@Barnes2003]. In combination with predation by catfish kōura are further compressed by multiple interacting stressors that progressively restrict their available habitat. Kōura are naturally found in complex rocky habitats [@Jowett2008; @Kusabs2015b] or in deeper parts of the lake to avoid predation during the day, migrating to the productive littoral zone at night to forage [@Devcich1979]. However, thermal stratification creates anoxic conditions in deeper waters, displacing kōura into the shallow littoral zone [@Kusabs2026], precisely where catfish predation pressure is greatest, as catfish rarely swim beyond 17 m depth [@Dedual2002]. This compression is further intensified by dense invasive macrophyte beds obstructing kōura migration in the littoral zone [@Kusabs2009], which also intensify oxygen depletion in deeper waters by die-off events [@Vincent1984; @Hamilton2005]. The importance of deep refuge is shown by Lake Taupō, where kōura persist at a depth even in the presence of catfish because the lake remains oxygenated below the thermocline [@Verburg2019]. In Lake Rotoiti this deep refuge becomes anoxic and unavailable for kōura [@Kusabs2026]. Next to direct predation catfish exposure triggers anti-predator responses in kōura including increased refuge use [@Raveninreviewa], reducing time available for foraging and potentially suppressing growth and reproduction [@Preisser2005; @Sheriff2020]. Climate change is expected to strengthen thermal stratification, expand anoxic zones [@Woolway2021], and increase the range of suitable catfish habitat in Aotearoa, further reducing kōura persistence [@Lee2025].
 
-**Habitat as a limiting factor and Habitat enhancement structures**
 The compression of kōura into the littoral zone makes the quality of nearshore habitats increasingly important for kōura populations. In stream environments, kōura are positively associated with structurally complex habitats including bank undercuts, woody debris, leaf litter, and coarse substrates [@Usio2000; @Parkyn2004; @Jowett2008; @Parkyn2009]. In lake environments benthic substrate characteristics are a stronger predictor of kōura distribution than nutrient enrichment or predator abundance [@Kusabs2015b], and kōura are positively associated with coarse substrates and riparian vegetation [@Raveninreviewb]. Coarse rocky substrate provides refugia from predators and shelter during moulting [@Streissl2002]. Experimental studies confirm that shelter availability directly reduces catfish predation on crayfish [@Adams2007; @Zhao2024], and kōura increase refuge use in the presence of catfish compared to native predators [@Raveninreviewa], emphasising the importance of shelter availability for kōura populations. Shelter availability is likely a limiting factor for kōura in Lake Rotoiti, where the majority of the shoreline is sandy with dense beds of introduced macrophytes and little natural rocky structure. Adding rocky substrate to soft-bottomed lake areas has been shown to significantly increase crayfish abundance [@Johnsen2008], and increasing structural complexity in streams improves crayfish restocking success [@Huolila1997]. Deploying habitat enhancement structures that add structurally complexity in the littoral zone could potentially be a practical way to restore kōura populations in Lake Rotoiti. 
 
-**Study aims and hypotheses**
-In this study habitat enhancement structures in the shape of stone piles were deployed along the shoreline of Lake Rotoiti to investigate the ability of the structures in providing additional habitat for kōura to live and hide from predators. Kōura presence, abundance, and biomass were monitored at stone pile, control, and reference sites over 18 months. We predicted that kōura occupancy, abundance and biomass would increase at stone pile sites relative to control sites after construction, and that catfish would not change. We further predicted that kōura abundance would keep increasing progressively after construction, at least within the first 18 months, and that catfish would instead show seasonal patterns of shoreline use rather than a construction-driven trend. Finally, we predicted that stone pile sites would progressively converge toward kōura densities observed at natural rocky reference sites, and that catfish would not show this pattern.
+In this study habitat enhancement structures in the shape of stone piles were deployed along the shoreline of Lake Rotoiti to investigate the ability of the structures in providing additional habitat for kōura to live and hide from predators. Kōura presence, abundance, and biomass were monitored at stone pile, control, and reference sites over 18 months. We predicted that kōura occupancy, abundance and biomass would increase at stone pile sites relative to control sites after construction, and that catfish would not change. We further predicted that kōura abundance would keep increasing progressively after construction, at least within the first 18 months, and that catfish would instead show seasonal patterns of shoreline use rather than a construction-driven trend [@Barnes1996; @Dedual2002]. Finally, we predicted that stone pile sites would progressively converge toward kōura densities observed at natural rocky reference sites, and that catfish would not show this pattern.
 
-# Materials and Methods
-## Study location and construction
+## Materials and Methods
+### Study location and construction
 Lake Rotoiti (-38.03, 176.42) is a warm monomictic mesotrophic lake located in the Rotorua Te Arawa Lakes region of the North Island of Aotearoa (34 km², maximum depth 128 m). The lake stratifies for approximately nine months a year. Since 2008, nutrient-rich inflows from Lake Rotorua have been diverted toward the Kaituna River via the Ōhau Channel diversion wall to improve water quality in Lake Rotoiti [@Hamilton2005; @Prentice2024]. Lake level is regulated by a weir at the outlet of the Kaituna River, providing a stable and controlled water level throughout the year. Catfish are present throughout the lake but occur in particularly high concentrations in Te Weta Bay on the North West side of the lake [@Francis2019]. Five stone pile sites were selected alongside the lake shoreline based on accessibility and land owner approval (@fig-sites). At each stone pile site, a paired control site was established 50 m along the shoreline in the same habitat type. Five naturally occurring rocky shoreline locations were selected as reference sites, each with two monitoring points 50 m apart. In total 20 sites of 150 m² (15 * 10 m) were monitored seasonally over 18 months. Baseline monitoring was conducted in February 2025 prior to stone pile deployment, which occurred the following week. Stone piles were constructed from locally sourced quarry rock (Manawahe Stone and Quarry, ~25 km from the lake) with a size range of 50 - 400 mm. At each of the five stone pile sites, three stone piles were arranged horizontally along the shoreline by hand from the shore. Stone pile design was informed by mesocosm experiments demonstrating kōura preference for enclosed stone structures [@Raveninreviewc]. Stone piles were positioned approximately `r round(mean_dist_shore, 1)` m from shore at a mean depth of `r round(mean_depth, 2)` m and with a mean area of `r round(mean_area, 1)` m².
 
-## Monitoring
-Monitoring consisted of physical, chemical, and biological parameters were recorded at each site during each monitoring round. Static site characteristics including substrate composition, slope to depth contour, riparian vegetation, overhanging tree cover and wood cover were visually estimated at baseline monitoring only, as these were not expected to change substantially over the monitoring period. Substrate composition was visually estimated using an underwater viewing chamber, categorising bedrock, boulders (>256 mm), cobble (64–256 mm), gravel (2–64 mm), sand (0.063–2 mm), mud (<0.063 mm), and organic matter. A substrate index was calculated from these estimates [@Jowett1990; @Jowett2008]:
+### Monitoring
+Monitoring consisted of physical, chemical, and biological parameters recorded at each site during each monitoring round. Static site characteristics including substrate composition, slope to depth contour, riparian vegetation, overhanging tree cover and wood cover were visually estimated at baseline monitoring only, as these were not expected to change substantially over the monitoring period. Substrate composition was visually estimated using an underwater viewing chamber, categorising bedrock, boulders (>256 mm), cobble (64–256 mm), gravel (2–64 mm), sand (0.063–2 mm), mud (<0.063 mm), and organic matter. A substrate index was calculated from these estimates [@Jowett1990; @Jowett2008]:
 $$
 \text{Substrate index} = 0.08 \times \text{bedrock} + 0.07 \times \text{boulders} + 0.06 \times \text{cobble} + 0.04 \times \text{gravel} + 0.03 \times \text{sand} + 0.02 \times \text{organic matter} + 0.01 \times \text{mud}
 $$
@@ -117,17 +134,27 @@ Coarser substrates were assigned higher weights as they provide greater intersti
 
 Seasonal variable parameters were recorded at every monitoring round, and included aquatic vegetation cover (emergent and submerged macrophytes) and chemical parameters included water temperature (°C), dissolved oxygen (mg L⁻¹), and conductivity (µS cm⁻¹) were measured using a YSI ProSolo meter (Pro2030, YSI Inc., Yellow Springs, OH, USA). pH was measured using a handheld pH meter (EC-PCTestr35, Eutech Instruments). 
 
-Kōura and fish were every monitoring round sampled using two single-winged, double-throated fyke nets (600 mm high D-shaped entrance hoop) and two collapsible bait traps (480 × 250 mm; two 50 mm entrance openings) baited with catfish flesh [@MacNeil2025]. Fyke nets were placed perpendicular to the shoreline outside of the stone pile structures or at 10 m intervals, with bait traps positioned between them. All equipment was deployed simultaneously at each site for a 24-h period. Captured kōura were measured for orbital carapace length (OCL) using a digital calliper (0.01 mm precision; 150 mm) and for wet mass using a digital scale (±1 g; 5 kg capacity, Anko Brand, Kmart Group, Mulgrave, VIC, Australia). Catfish and other fish species, including eels (*Anguilla* spp.), goldfish (*Carassius auratus* (Linnaeus, 1758)), common smelt (*Retropinna retropinna* (Richardson, 1848)), kōaro (*Galaxias brevipinnis* Günther, 1866), rainbow trout (*Oncorhynchus mykiss* Walbaum, 1792), common bully (*Gobiomorphus cotidianus* McDowall & Fulton, 1978), and mosquitofish (*Gambusia affinis* (S. F. Baird & Girard, 1853)), were recorded for abundance and measured for total length, and weighed for wet mass. Catch per unit effort (CPUE) and biomass per unit effort (BPUE) were calculated for all kōura and fish based on the number of nets and traps used at each site for each monitoring round [@Kusabs2015b]. Missing kōura weights due to failure of scale (n = `r predicted_n`) were estimated using a log₁₀–log₁₀ length–weight regression fitted to individuals with both measurements (n = `r measured_n`), following standard approaches for weight length relationships in aquatic organisms [@fig-length-weight; @Froese2006]. Predicted values were back-transformed with a lognormal bias correction factor \(10^{0.5 \cdot \sigma^2}\) [@Quinn2002].
+Kōura and fish were every monitoring round sampled using two single-winged, double-throated fyke nets (600 mm high D-shaped entrance hoop) and two collapsible bait traps (480 × 250 mm; two 50 mm entrance openings) baited with catfish flesh [@MacNeil2025]. Fyke nets were placed perpendicular to the shoreline outside of the stone pile structures or at 10 m intervals, with bait traps positioned between them. All equipment was deployed simultaneously at each site for a 24-h period. Captured kōura were measured for orbital carapace length (OCL) using a digital calliper (0.01 mm precision; 150 mm) and for wet mass using a digital scale (± 1 g; 5 kg capacity, Anko Brand, Kmart Group, Mulgrave, VIC, Australia). Catfish and other fish species, including eels (*Anguilla* spp.), goldfish (*Carassius auratus* (Linnaeus, 1758)), common smelt (*Retropinna retropinna* (Richardson, 1848)), kōaro (*Galaxias brevipinnis* Günther, 1866), rainbow trout (*Oncorhynchus mykiss* Walbaum, 1792), common bully (*Gobiomorphus cotidianus* McDowall & Fulton, 1978), and mosquitofish (*Gambusia affinis* (S. F. Baird & Girard, 1853)), were recorded for abundance and measured for total length, and weighed for wet mass. Catch per unit effort (CPUE) and biomass per unit effort (BPUE) were calculated for all kōura and fish based on the number of nets and traps used at each site for each monitoring round [@Kusabs2015b]. Missing kōura weights due to failure of scale (n = `r predicted_n`) were estimated using a log₁₀–log₁₀ length–weight regression fitted to individuals with both measurements (n = `r measured_n`), following standard approaches for weight length relationships in aquatic organisms [@fig-length-weight; @Froese2006]. Predicted values were back-transformed with a lognormal bias correction factor \(10^{0.5 \cdot \sigma^2}\) [@Quinn2002].
 
 $$
 \log_{10}(\text{Weight [g]}) = `r round(a, 3)` + `r round(b, 3)` \times \log_{10}(\text{OCL length [mm]})
 $$
 
-## Data analysis
-Site variation before stone pile construction was assessed using paired Wilcoxon signed-rank tests to compare stone pile sites with their paired control sites, and unpaired Wilcoxon rank-sum tests to compare stone pile sites with reference sites. This was done for all response variables and site characteristics to confirm that the stone pile and control sites were equivalent before construction, and to characterise the difference between stone pile and reference sites. We fitted three complementery generalised linear mixed effects models (GLMMs) to assess the effect of construction: a construction-effect model, testing whether kōura or catfish occupancy, abundance, and biomass responded to stone pile construction relatve to control sites in a before-after, control-impact (BACI) design [@Underwood1994]; a post-construction trend model, testing whether that response changed progressively over time at stone pile relative to control sites; and a convergence model, testing whether stone pile sites approached reference-sites densities over time. The construction-effect model combined all six post-construction monitoring rounds into one factor level, retaining each round as a separate observation. The occupancy response variable was fitted with a Binomial family with logit link and the abundance and biomass with a Tweedie familie loglink. In the model, period (before/after) and site were fitted as an interaction, with monitoring number and temperature as covariates and site nested within pair as a random effect. The post-construction trend model tested the response variables kōura catfish abundance or biomass fitted with Tweedie, site type and monitoring number as interaction, temperature and substrate index from before construction as covariates and site number as random effect. The convergence model tested the response variables kōura catfish abundance or biomass fitted with Tweedie, site type and monitoring number as interaction, season and substrate index from post-construction as covariates and site number as random effect. All models were fitted and validated in R (version 4.5.2; @RCoreTeam2025) using the glmmTMB, DHARMa, and emmeans packages [@Brooks2017; @Hartig2016; @Lenth2017]. Multiple-testing correction using Benjamini–Hochberg correction was applied separately for each model. Robustness of the models was further assessed via sensitivity analyses and colonisation driver comparison in supplementary material. 
+### Data analysis
+Site variation before stone pile construction was assessed using paired Wilcoxon signed-rank tests to compare stone pile sites with their paired control sites, and unpaired Wilcoxon rank-sum tests to compare stone pile sites with reference sites. This was done for all response variables and site characteristics to confirm that the stone pile and control sites were equivalent before construction, and to characterise the difference between stone pile and reference sites. We fitted four complementary generalised linear mixed effects models (GLMMs) to assess the effect of construction: a construction-effect model, testing whether kōura or catfish occupancy, abundance, and biomass responded to stone pile construction relatve to control sites in a before-after, control-impact (BACI) design [@Underwood1994]; a post-construction trend model, testing whether that response changed progressively over time at stone pile relative to control sites; a convergence model, testing whether stone pile sites approached reference-sites densities over time; and a baseline and equivalence model, testing whether treatment and reference sites were equivalent before construction and after construction.
+
+The construction-effect model combined all six post-construction monitoring rounds into one factor level, retaining each round as a separate observation. The occupancy response variable was fitted with a Binomial family with logit link and the abundance and biomass with a Tweedie familie loglink. In the model, period (before/after) and site were fitted as an interaction, with monitoring number and temperature as covariates and site nested within pair as a random effect. 
+
+The post-construction trend model tested the response variables kōura catfish abundance or biomass fitted with Tweedie, site type and monitoring number as interaction, temperature and substrate index from before construction as covariates and site number as random effect. 
+
+The convergence model tested the response variables kōura catfish abundance or biomass fitted with Tweedie, site type and monitoring number as interaction, season and substrate index from post-construction as covariates and site number as random effect. 
+
+The baseline and equivalent models tested the response variables kōura catfish abundance or biomass fitted with Tweedie, site type as fixed effect for the baseline and for the equivalente models the site type and monitoring number as interaction and temperature as covariate and site nested within pair as a random effect.
+
+All models were fitted and validated in R (version 4.5.2; @RCoreTeam2025) using the glmmTMB, DHARMa, and emmeans packages [@Brooks2017; @Hartig2016; @Lenth2017]. Multiple-testing correction using Benjamini–Hochberg correction was applied separately for each model. Robustness of the models was further assessed via sensitivity analyses and colonisation driver comparison in supplementary material. 
 
 
-# Results
+## Results
 Construction-effect model
 
 Post-construction trend model
@@ -140,7 +167,7 @@ Convergence model
 
 @fig-forest-plot
 
-# Discussion
+## Discussion
 
 Most kōura were found along the edges of the stone piles there for recommended future stone piles should be designed to create the most edges.  
 
@@ -149,45 +176,49 @@ Stone piles were constructed at the shore line to shallow to reach machrophyte b
 
 
 
-## Conclusion
+### Conclusion
 
 
-# Acknowledgements
+## Acknowledgements
 We thank Te Arawa Lakes Trust and Te Komiti Whakahaere for the opportunity to collect and study the treasured kōura. We are grateful to Soweeta Fort-D’ath and William Anaru (Te Arawa Lakes Trust), and Tihini Grant (Ngāti Pikiao). Also thanks to land owners Piripi Curtis, David McIlraith, Te Takinga Marae, Piki Thomas, Tāheke Opatia Marae, Haddon Lock, Barnett Vercoe, Richard Vercoe, Caroline Newton for access and allowing the build of the build of stone piles. And Martin Sarkezi, Mael Marguet, Ethan Morgan, Logan Kallam and Matt Prentice for assisting in with fieldwork and data collection.
 
-## Funding statement
+### Funding statement
 This research was supported by the Fish Futures programme funded through a Ministry of Business, Innovation and Employment grant (CAWX2101) with additional funding provided by the Bay of Plenty Regional Council under the Toihuarewa Waimāori - Bay of Plenty Regional Council Chair in Lake and Freshwater Science programme.
 
-## Authors’ contributions
+### Authors’ contributions
 Study conception and design were undertaken by O.V.R., I.A.K.K., R.H., F.J.B. and D.Ö. Fieldwork was executed by O.V.R. Data analysis was performed by O.V.R. I.A.K.K obtained council and iwi consent and provided local ecological knowledge. Manuscript drafting was led by O.V.R. All authors contributed to manuscript revision, approved the results, and the final manuscript.
 
-## Use of Artificial Intelligence
+### Use of Artificial Intelligence
 Use of Artificial Intelligence: Claude (Anthropic) was used to assist with manuscript editing and language refinement. All content was critically reviewed and the authors take full responsibility for the final manuscript.
 
-## Declarations
+### Declarations
 The corresponding author has declared that none of the authors has any competing interests.
 
-## Data availability statement
+### Data availability statement
 The code and derived data supporting the findings of this study are openly available on GitHub (https://github.com/OlivierRaven/Stone_Piles_Rotoiti)and a rendered version of the analysis is hosted at https://olivierraven.github.io/Stone_Piles_Rotoiti/. The primary raw dataset is archived on Zenodo (https://doi.org/......). Peer review documents, including the cover letter and reviewer responses, are available in the manuscript repository in the interest of open and transparent science.
 
-# Tables
-{{< embed analysis.qmd#tbl-baseline-combined >}}
+## Tables
+```{r}
+#| echo: false
+#| tbl-cap: "Baseline (pre-construction) comparability of stone pile, control, and reference sites. Values are mean ± SD; p-values test Stone pile vs Control (paired Wilcoxon signed-rank test, pairs matched by pair_id, supporting the BACI design) and Stone pile vs Reference (unpaired Wilcoxon rank-sum test, documenting the starting gap relative to natural conditions, motivating the convergence analysis). With only 5 paired sites, these are low-power checks — a non-significant result indicates no obvious gross imbalance, not formal proof of equivalence."
+knitr::kable(baseline_combined, digits = 3)
+```
 
 
-# Figures
+## Figures
 ![Map of the monitoring sites.](images/Rotoiti_monitoring_sites.png){#fig-sites}
 
-{{< embed analysis.qmd#fig-koura-trends >}}
+![Mean catch per monitoring round (± 95% CI) by site type for kōura.](outputs/fig-koura-trends.png){#fig-koura-trends width=5in}
 
-{{< embed analysis.qmd#fig-convergence-plot >}}
+![Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the RQ3 abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term (β ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).](outputs/fig-convergence-plot.png){#fig-convergence-plot width=6.5in}
 
-{{< embed analysis.qmd#fig-forest-plot >}}
+![Effect sizes (β ± 95% CI) for the key term of interest of every model in model_registry (kōura and catfish, RQ1–RQ4). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — β magnitudes are not directly comparable across panels because each RQ tests a different contrast (step-change, per-round slope, or simple group difference) and RQ1 occupancy is on the log-odds scale while all others use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded.](outputs/fig-forest-plot.png){#fig-forest-plot width=3in}
 
-# Supplementary information
+## Supplementary information
 
-{{< embed analysis.qmd#fig-length-weight >}}
+![Length–weight relationship for kōura, fitted on log₁₀–log₁₀ scale. Open points are weights predicted from the length–weight regression (used to fill missing scale measurements); filled points are directly measured weights.](outputs/fig-length-weight.png){#fig-length-weight width=6.5in}
 
-{{< embed analysis.qmd#fig-descriptive-context >}}
+![Descriptive context plots, combined. Left column (top to bottom): baseline habitat characteristics (mean ± SE by site type), stone pile structure dimensions (5 stone pile sites), chemical conditions over time (mean ± smoothed trend by site type). Right column: mean catch per monitoring round by site type, for catfish, kōaro, and goldfish. Site-type colours are shared across all panels — see the legend on the right. Background/methods-supporting figures, not primary results — see Results for the BACI, trend, and convergence models.](outputs/fig-descriptive-context.png){#fig-descriptive-context width=6.5in}
 
 ```{r}
 #| label: tbl-models-summary-full-supp
