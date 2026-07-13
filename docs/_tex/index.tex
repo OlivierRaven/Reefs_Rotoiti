@@ -228,7 +228,7 @@ restoration, Stone piles, Aotearoa New Zealand},
 freshwater crayfish habitat in an Aotearoa New Zealand lake}
 \author{Olivier V. Raven \and Ian A. K. Kusabs \and Robin
 Holmes \and Francis J. Burdon \and Deniz Özkundakci}
-\date{2026-07-10}
+\date{2026-07-13}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -241,9 +241,14 @@ Placeholder --- abstract to be written.
 \tableofcontents
 }
 
-\ifcsname c@chapter\endcsname \setcounter{chapter}{5}
+\clearpage
+\providecommand{\chaptermark}[1]{}
 
-\addcontentsline{toc}{chapter}{\protect\numberline{\thechapter}Rock Piles as K\={o}ura Habitat}
+\ifcsname c@chapter\endcsname \setcounter{chapter}{5}
+\setcounter{section}{0}
+
+\addcontentsline{toc}{chapter}{\protect\numberline{5}Rock Piles as K\={o}ura Habitat}
+
 \fi
 \providecommand{\thechapter}{5}
 \thispagestyle{empty}
@@ -253,7 +258,7 @@ Placeholder --- abstract to be written.
           rectangle ([yshift=4.5cm]current page.south east);
     \node[inner sep=0pt, anchor=north]
       at ([yshift=-7cm]current page.north)
-      {\includegraphics[width=\paperwidth]{images/ch5_cover.jpg}};
+      {\includegraphics[height=18.2cm]{images/ch5_cover.jpg}};
   \end{scope}
   \fill[black]
     (current page.north west) rectangle ([yshift=-7cm]current page.north east);

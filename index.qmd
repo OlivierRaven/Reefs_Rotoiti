@@ -79,9 +79,13 @@ knitr:
 ---
 
 ::: {.content-visible when-format="pdf"}
+\clearpage
+\providecommand{\chaptermark}[1]{}
 \ifcsname c@chapter\endcsname
 \setcounter{chapter}{5}
-\addcontentsline{toc}{chapter}{\protect\numberline{\thechapter}Rock Piles as K\={o}ura Habitat}
+\setcounter{section}{0}
+\addcontentsline{toc}{chapter}{\protect\numberline{5}Rock Piles as K\={o}ura Habitat}
+\chaptermark{Rock Piles as K\={o}ura Habitat}
 \fi
 \providecommand{\thechapter}{5}
 \thispagestyle{empty}
@@ -91,7 +95,7 @@ knitr:
           rectangle ([yshift=4.5cm]current page.south east);
     \node[inner sep=0pt, anchor=north]
       at ([yshift=-7cm]current page.north)
-      {\includegraphics[width=\paperwidth]{images/ch5_cover.jpg}};
+      {\includegraphics[height=18.2cm]{images/ch5_cover.jpg}};
   \end{scope}
   \fill[black]
     (current page.north west) rectangle ([yshift=-7cm]current page.north east);
@@ -128,11 +132,16 @@ Olivier V. Raven, Ian A. K. Kusabs, Robin Holmes, Francis J. Burdon & Deniz Özk
 {{< pagebreak >}}
 :::
 
+::: {.content-visible when-format="html"}
+# Rock Piles as Kōura Habitat {.unnumbered}
+:::
+
 ```{r}
 #| label: start-ch5
 #| include: false
 
-chapter_dir <- if (basename(normalizePath(getwd())) == "05_stone_piles_rotoiti") normalizePath(getwd()) else normalizePath(file.path(getwd(), "05_stone_piles_rotoiti"))
+chapter_dir <- normalizePath(file.path(dirname(knitr::current_input(dir = TRUE)), "05_stone_piles_rotoiti"))
+if (!dir.exists(chapter_dir)) chapter_dir <- normalizePath(dirname(knitr::current_input(dir = TRUE)))
 fig_labels <- c("fig-koura-trends", "fig-convergence-plot", "fig-forest-plot",
                  "fig-length-weight", "fig-descriptive-context")
 out_dir <- file.path(chapter_dir, "outputs")
@@ -140,11 +149,24 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 parent_knit_env <- knitr::knit_global()
 
-tmp_r <- tempfile(fileext = ".R")
-knitr::purl(file.path(chapter_dir, "analysis.qmd"), output = tmp_r, quiet = TRUE, documentation = 0)
-.old_wd <- setwd(chapter_dir)
-eval(parse(file = tmp_r), envir = parent_knit_env)
-setwd(.old_wd)
+qmd_lines <- readLines(file.path(chapter_dir, "analysis.qmd"), warn = FALSE)
+in_r_chunk <- FALSE
+r_lines <- character(0)
+for (ln in qmd_lines) {
+  if (grepl("^```\\{[rR]", ln)) { in_r_chunk <- TRUE; next }
+  if (grepl("^```", ln) && in_r_chunk) { in_r_chunk <- FALSE; next }
+  if (in_r_chunk) r_lines <- c(r_lines, ln)
+}
+r_lines <- c(
+  paste0(".chwd <- setwd(", deparse(chapter_dir), ")"),
+  r_lines,
+  "setwd(.chwd)", "rm(.chwd)"
+)
+tmp_r <- file.path(chapter_dir, ".analysis_tmp.R")
+writeLines(r_lines, tmp_r)
+eval(parse(file = tmp_r, encoding = "UTF-8"))
+unlink(tmp_r)
+out_dir <- file.path(chapter_dir, "outputs")
 
 if (!all(file.exists(file.path(out_dir, paste0(fig_labels, ".png"))))) {
   .old_wd <- setwd(chapter_dir)
@@ -155,6 +177,13 @@ if (!all(file.exists(file.path(out_dir, paste0(fig_labels, ".png"))))) {
     if (file.exists(src)) file.copy(src, file.path(out_dir, paste0(lbl, ".png")), overwrite = TRUE)
   }
 }
+input_dir <- normalizePath(dirname(knitr::current_input(dir = TRUE)))
+if (input_dir != chapter_dir) {
+  thesis_out <- file.path(input_dir, "outputs")
+  dir.create(thesis_out, showWarnings = FALSE, recursive = TRUE)
+  file.copy(list.files(out_dir, full.names = TRUE, pattern = "\\.(png|jpg)$"), thesis_out, overwrite = TRUE)
+}
+knitr::opts_knit$set(root.dir = chapter_dir)
 ```
 
 ## Abstract {.unnumbered}
@@ -171,7 +200,7 @@ In this study habitat enhancement structures in the shape of stone piles were de
 
 ## Materials and Methods
 ### Study location and construction
-Lake Rotoiti (-38.03, 176.42) is a warm monomictic mesotrophic lake located in the Rotorua Te Arawa Lakes region of the North Island of Aotearoa (34 km², maximum depth 128 m). The lake stratifies for approximately nine months a year. Since 2008, nutrient-rich inflows from Lake Rotorua have been diverted toward the Kaituna River via the Ōhau Channel diversion wall to improve water quality in Lake Rotoiti [@Hamilton2005; @Prentice2024]. Lake level is regulated by a weir at the outlet of the Kaituna River, providing a stable and controlled water level throughout the year. Catfish are present throughout the lake but occur in particularly high concentrations in Te Weta Bay on the North West side of the lake [@Francis2019]. Five stone pile sites were selected alongside the lake shoreline based on accessibility and land owner approval (@fig-sites). At each stone pile site, a paired control site was established 50 m along the shoreline in the same habitat type. Five naturally occurring rocky shoreline locations were selected as reference sites, each with two monitoring points 50 m apart. In total 20 sites of 150 m² (15 * 10 m) were monitored seasonally over 18 months. Baseline monitoring was conducted in February 2025 prior to stone pile deployment, which occurred the following week. Stone piles were constructed from locally sourced quarry rock (Manawahe Stone and Quarry, ~25 km from the lake) with a size range of 50 - 400 mm. At each of the five stone pile sites, three stone piles were arranged horizontally along the shoreline by hand from the shore. Stone pile design was informed by mesocosm experiments demonstrating kōura preference for enclosed stone structures [@Raveninreview]. Stone piles were positioned approximately `r round(mean_dist_shore, 1)` m from shore at a mean depth of `r round(mean_depth, 2)` m and with a mean area of `r round(mean_area, 1)` m².
+Lake Rotoiti (-38.03, 176.42) is a warm monomictic mesotrophic lake located in the Rotorua Te Arawa Lakes region of the North Island of Aotearoa (34 km², maximum depth 128 m). The lake stratifies for approximately nine months a year. Since 2008, nutrient-rich inflows from Lake Rotorua have been diverted toward the Kaituna River via the Ōhau Channel diversion wall to improve water quality in Lake Rotoiti [@Hamilton2005; @Prentice2024]. Lake level is regulated by a weir at the outlet of the Kaituna River, providing a stable and controlled water level throughout the year. Catfish are present throughout the lake but occur in particularly high concentrations in Te Weta Bay on the North West side of the lake [@Francis2019]. Five stone pile sites were selected alongside the lake shoreline based on accessibility and land owner approval (@fig-sites). At each stone pile site, a paired control site was established 50 m along the shoreline in the same habitat type. Five naturally occurring rocky shoreline locations were selected as reference sites, each with two monitoring points 50 m apart. In total 20 sites of 150 m² (15 * 10 m) were monitored seasonally over 18 months. Baseline monitoring was conducted in February 2025 prior to stone pile deployment, which occurred the following week. Stone piles were constructed from locally sourced quarry rock (Manawahe Stone and Quarry, ~25 km from the lake) with a size range of 85 - 315 mm mean 173 mm. At each of the five stone pile sites, three stone piles were arranged horizontally along the shoreline by hand from the shore. Stone pile design was informed by mesocosm experiments demonstrating kōura preference for enclosed stone structures [@Raveninreview]. Stone piles were positioned approximately `r round(mean_dist_shore, 1)` m from shore at a mean depth of `r round(mean_depth, 2)` m and with a mean area of `r round(mean_area, 1)` m².
 
 ### Monitoring
 Monitoring consisted of physical, chemical, and biological parameters recorded at each site during each monitoring round. Static site characteristics including substrate composition, slope to depth contour, riparian vegetation, overhanging tree cover and wood cover were visually estimated at baseline monitoring only, as these were not expected to change substantially over the monitoring period. Substrate composition was visually estimated using an underwater viewing chamber, categorising bedrock, boulders (>256 mm), cobble (64–256 mm), gravel (2–64 mm), sand (0.063–2 mm), mud (<0.063 mm), and organic matter. A substrate index was calculated from these estimates [@Jowett1990; @Jowett2008]:

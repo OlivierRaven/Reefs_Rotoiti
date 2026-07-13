@@ -1869,7 +1869,17 @@ forest_data <- tidy_all %>%
       RQ == "RQ3a" ~ "Recovery toward reference",
       RQ == "RQ3b" ~ "Reference stability",
       TRUE         ~ RQ),
-    significant = p.value < 0.05,
+    significant = p.value < 0.05) %>%
+  dplyr::arrange(
+    factor(group, levels = c(
+      "Baseline check",
+      "Construction impact (step-change)",
+      "Construction impact (trajectory)",
+      "Recovery toward reference",
+      "Reference stability")),
+    factor(species, levels = c("Kōura", "Catfish")),
+    response_type) %>%
+  dplyr::mutate(
     model_name  = factor(model_name, levels = rev(unique(model_name))),
     group       = factor(group, levels = c(
       "Baseline check",
