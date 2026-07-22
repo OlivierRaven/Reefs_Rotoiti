@@ -1,0 +1,5 @@
+## Chapter 5 — Supplementary information {.unnumbered}
+
+![Length–weight relationship for kōura, fitted on log₁₀–log₁₀ scale. Open points are weights predicted from the length–weight regression (used to fill missing scale measurements); filled points are directly measured weights.](outputs/fig-length-weight.png){#fig-length-weight-ch5 width=6.5in}
+
+![Descriptive context plots, combined. Left column (top to bottom): baseline habitat characteristics (mean ± SE by site type), stone pile structure dimensions (5 stone pile sites), chemical conditions over time (mean ± smoothed trend by site type). Right column: mean catch per monitoring round by site type, for catfish, kōaro, and goldfish. Site-type colours are shared across all panels — see the legend on the right. Background/methods-supporting figures, not primary results — see Results for the BACI, trend, and convergence models.](outputs/fig-descriptive-context.png){#fig-descriptive-context-ch5 width=6.5in}

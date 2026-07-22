@@ -59,8 +59,6 @@ author:
 
 date: today
 
-abstract: "Placeholder — abstract to be written."
- 
 keywords:
   - Paranephrops planifrons
   - Artificial reef
@@ -73,12 +71,14 @@ funding: "This research was supported by the Fish Futures programme funded throu
 citation:
   container-title: "..."
 
+title-block-style: none
+
 knitr:
   opts_chunk:
     dev: "ragg_png"
 ---
 
-::: {.content-visible when-format="pdf"}
+```{=latex}
 \clearpage
 \providecommand{\chaptermark}[1]{}
 \ifcsname c@chapter\endcsname
@@ -107,6 +107,10 @@ knitr:
         font=\fontsize{22}{28}\selectfont\bfseries\sffamily, anchor=west]
     at ([xshift=1.5cm, yshift=-4cm]current page.north west)
     {Rock Piles as K\={o}ura Habitat};
+  \node[color=white, text width=0.85\paperwidth, align=left,
+        font=\fontsize{10}{13}\selectfont\itshape\sffamily, anchor=north west]
+    at ([xshift=1.5cm, yshift=-5.0cm]current page.north west)
+    {Reinforcing k\={o}ura resilience using rock piles to enhance freshwater crayfish habitat in an Aotearoa New Zealand lake};
   \fill[black]
     (current page.south west) rectangle ([yshift=4.5cm]current page.south east);
   \node[color=white, text width=0.85\paperwidth, align=left,
@@ -120,9 +124,12 @@ knitr:
 \end{tikzpicture}
 \null
 \clearpage
-:::
+```
 
 ::: {.content-visible when-format="docx"}
+Chapter 5 Rock Piles as Kōura Habitat
+Reinforcing kōura resilience using rock piles to enhance freshwater crayfish habitat in an Aotearoa New Zealand lake
+
 ![](images/ch5_cover.jpg){fig-align="center" width=15cm}
 
 Olivier V. Raven, Ian A. K. Kusabs, Robin Holmes, Francis J. Burdon & Deniz Özkundakci
@@ -200,16 +207,20 @@ In this study habitat enhancement structures in the shape of stone piles were de
 
 ## Materials and Methods
 ### Study location and construction
-Lake Rotoiti (-38.03, 176.42) is a warm monomictic mesotrophic lake located in the Rotorua Te Arawa Lakes region of the North Island of Aotearoa (34 km², maximum depth 128 m). The lake stratifies for approximately nine months a year. Since 2008, nutrient-rich inflows from Lake Rotorua have been diverted toward the Kaituna River via the Ōhau Channel diversion wall to improve water quality in Lake Rotoiti [@Hamilton2005; @Prentice2024]. Lake level is regulated by a weir at the outlet of the Kaituna River, providing a stable and controlled water level throughout the year. Catfish are present throughout the lake but occur in particularly high concentrations in Te Weta Bay on the North West side of the lake [@Francis2019]. Five stone pile sites were selected alongside the lake shoreline based on accessibility and land owner approval (@fig-sites). At each stone pile site, a paired control site was established 50 m along the shoreline in the same habitat type. Five naturally occurring rocky shoreline locations were selected as reference sites, each with two monitoring points 50 m apart. In total 20 sites of 150 m² (15 * 10 m) were monitored seasonally over 18 months. Baseline monitoring was conducted in February 2025 prior to stone pile deployment, which occurred the following week. Stone piles were constructed from locally sourced quarry rock (Manawahe Stone and Quarry, ~25 km from the lake) with a size range of 50 - 400 mm. At each of the five stone pile sites, three stone piles were arranged horizontally along the shoreline by hand from the shore. Stone pile design was informed by mesocosm experiments demonstrating kōura preference for enclosed stone structures [@Raveninreview]. Stone piles were positioned approximately `r round(mean_dist_shore, 1)` m from shore at a mean depth of `r round(mean_depth, 2)` m and with a mean area of `r round(mean_area, 1)` m².
+Lake Rotoiti (-38.03, 176.42) is a warm monomictic mesotrophic lake located in the Rotorua Te Arawa Lakes region of the North Island of Aotearoa (34 km², maximum depth 128 m). The lake stratifies for approximately nine months a year. Since 2008, nutrient-rich inflows from Lake Rotorua have been diverted toward the Kaituna River via the Ōhau Channel diversion wall to improve water quality in Lake Rotoiti [@Hamilton2005; @Prentice2024]. Lake level is regulated by a weir at the outlet of the Kaituna River, providing a stable and controlled water level throughout the year. Catfish are present throughout the lake but occur in particularly high concentrations in Te Weta Bay on the North West side of the lake [@Francis2019]. Five stone pile sites were selected alongside the lake shoreline based on accessibility and land owner approval (@fig-sites). At each stone pile site, a paired control site was established 50 m along the shoreline in the same habitat type. Five naturally occurring rocky shoreline locations were selected as reference sites, each with two monitoring points 50 m apart. In total 20 sites of 150 m² (15 * 10 m) were monitored seasonally over 18 months. Baseline monitoring was conducted in February 2025 prior to stone pile deployment, which occurred the following week. Stone piles were constructed from locally sourced quarry rock (Manawahe Stone and Quarry, ~25 km from the lake) with a size range of 85 - 315 mm mean 173 mm. At each of the five stone pile sites, three stone piles were arranged horizontally along the shoreline by hand from the shore. Stone pile design was informed by mesocosm experiments demonstrating kōura preference for enclosed stone structures [@Raveninreview]. Stone piles were positioned approximately `r round(mean_dist_shore, 1)` m from shore at a mean depth of `r round(mean_depth, 2)` m and with a mean area of `r round(mean_area, 1)` m².
 
 ### Monitoring
 Monitoring consisted of physical, chemical, and biological parameters recorded at each site during each monitoring round. Static site characteristics including substrate composition, slope to depth contour, riparian vegetation, overhanging tree cover and wood cover were visually estimated at baseline monitoring only, as these were not expected to change substantially over the monitoring period. Substrate composition was visually estimated using an underwater viewing chamber, categorising bedrock, boulders (>256 mm), cobble (64–256 mm), gravel (2–64 mm), sand (0.063–2 mm), mud (<0.063 mm), and organic matter. A substrate index was calculated from these estimates [@Jowett1990; @Jowett2008]:
 $$
-\text{Substrate index} = 0.08 \times \text{bedrock} + 0.07 \times \text{boulders} + 0.06 \times \text{cobble} + 0.04 \times \text{gravel} + 0.03 \times \text{sand} + 0.02 \times \text{organic matter} + 0.01 \times \text{mud}
+\begin{aligned}
+\text{Substrate index} &= 0.08 \times \text{bedrock} + 0.07 \times \text{boulders} \\
+&\quad + 0.06 \times \text{cobble} + 0.04 \times \text{gravel} + 0.03 \times \text{sand} \\
+&\quad + 0.02 \times \text{organic matter} + 0.01 \times \text{mud}
+\end{aligned}
 $$
 Coarser substrates were assigned higher weights as they provide greater interstitial pore space and stable structures used by kōura as refuge [@Usio2000; @Nystrom2006]. After stone pile construction, measurements of the size and dimensions of each structure were taken. The post-construction substrate index for stone pile sites was recalculated using each site's combined stone-pile footprint area, expressed as a percentage of the 150 m² site area and treated as 80 % cobble and 20 % boulders displacing an equivalent area of sand, to reflect their contribution to substrate complexity. Slope was assessed as the horizontal distance from the shoreline to the 20 m depth contour, derived from bathymetric maps and measured in a projected coordinate system (NZTM2000; EPSG:2193).
 
-Seasonal variable parameters were recorded at every monitoring round, and included aquatic vegetation cover (emergent and submerged macrophytes) and chemical parameters included water temperature (°C), dissolved oxygen (mg L⁻¹), and conductivity (µS cm⁻¹) were measured using a YSI ProSolo meter (Pro2030, YSI Inc., Yellow Springs, OH, USA). pH was measured using a handheld pH meter (EC-PCTestr35, Eutech Instruments). 
+Seasonal variable parameters were recorded at every monitoring round, and included aquatic vegetation cover (emergent and submerged macrophytes) and chemical parameters included water temperature (°C), dissolved oxygen (mg L$^{-1}$), and conductivity ($\mu$S cm$^{-1}$) were measured using a YSI ProSolo meter (Pro2030, YSI Inc., Yellow Springs, OH, USA). pH was measured using a handheld pH meter (EC-PCTestr35, Eutech Instruments). 
 
 Kōura and fish were every monitoring round sampled using two single-winged, double-throated fyke nets (600 mm high D-shaped entrance hoop) and two collapsible bait traps (480 × 250 mm; two 50 mm entrance openings) baited with catfish flesh [@MacNeil2025]. Fyke nets were placed perpendicular to the shoreline outside of the stone pile structures or at 10 m intervals, with bait traps positioned between them. All equipment was deployed simultaneously at each site for a 24-h period. Captured kōura were measured for orbital carapace length (OCL) using a digital calliper (0.01 mm precision; 150 mm) and for wet mass using a digital scale (± 1 g; 5 kg capacity, Anko Brand, Kmart Group, Mulgrave, VIC, Australia). Catfish and other fish species, including eels (*Anguilla* spp.), goldfish (*Carassius auratus* (Linnaeus, 1758)), common smelt (*Retropinna retropinna* (Richardson, 1848)), kōaro (*Galaxias brevipinnis* Günther, 1866), rainbow trout (*Oncorhynchus mykiss* Walbaum, 1792), common bully (*Gobiomorphus cotidianus* McDowall & Fulton, 1978), and mosquitofish (*Gambusia affinis* (S. F. Baird & Girard, 1853)), were recorded for abundance and measured for total length, and weighed for wet mass. Catch per unit effort (CPUE) and biomass per unit effort (BPUE) were calculated for all kōura and fish based on the number of nets and traps used at each site for each monitoring round [@Kusabs2015b]. Missing kōura weights due to failure of scale (n = `r predicted_n`) were estimated using a log₁₀–log₁₀ length–weight regression fitted to individuals with both measurements (n = `r measured_n`), following standard approaches for weight length relationships in aquatic organisms [@fig-length-weight; @Froese2006]. Predicted values were back-transformed with a lognormal bias correction factor \(10^{0.5 \cdot \sigma^2}\) [@Quinn2002].
 
@@ -251,7 +262,7 @@ Multiple-testing correction using Benjamini–Hochberg correction was applied wi
 ### Convergence and recovery*
 
 ### Implications and future directions*
-
+For future studies it is recommended 
 
 
 Most kōura were found along the edges of the stone piles there for recommended future stone piles should be designed to create the most edges.  
@@ -262,7 +273,7 @@ Stone piles were constructed at the shore line to shallow to reach machrophyte b
 
 
 ## Acknowledgements
-We thank Te Arawa Lakes Trust and Te Komiti Whakahaere for the opportunity to collect and study the treasured kōura. We are grateful to Soweeta Fort-D’ath and William Anaru (Te Arawa Lakes Trust), and Tihini Grant (Ngāti Pikiao). Also thanks to land owners Piripi Curtis, David McIlraith, Te Takinga Marae, Piki Thomas, Tāheke Opatia Marae, Haddon Lock, Barnett Vercoe, Richard Vercoe, Caroline Newton for access and allowing the build of the build of stone piles. And Martin Sarkezi, Mael Marguet, Ethan Morgan, Logan Kallam and Matt Prentice for assisting in with fieldwork and data collection.
+We thank Te Arawa Lakes Trust and Te Komiti Whakahaere for the opportunity to study the treasured kōura. We are grateful to Soweeta Fort-D’ath and William Anaru (Te Arawa Lakes Trust), and Tihini Grant (Ngāti Pikiao).to the Tāheke Opatia Marae, Te Takinga Marae, and landowners, Piripi Curtis, David McIlraith, Piki Thomas, Haddon Lock, Barnett Vercoe, Richard Vercoe, and Caroline Newton, for granting access to monitoring sites and facilitating fieldwork in Lake Rotoiti. We thank of Joe Butterworth, Cory O’Neill, Alex Simes, Martin Sarkezi, Mael Marguet, Ethan Morgan, Logan Kallam, Calum MacNeil, and Matt Prentice for assisting with fieldwork and data collection.
 
 ::: {.chapter-only}
 ### Funding statement
@@ -294,42 +305,16 @@ knitr::kable(baseline_combined, digits = 3)
 
 ![Mean catch per monitoring round (± 95% CI) by site type for kōura.](outputs/fig-koura-trends.png){#fig-koura-trends width=5in}
 
-![Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the RQ3 abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term (β ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).](outputs/fig-convergence-plot.png){#fig-convergence-plot width=6.5in}
+![Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the RQ3 abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term ($\beta$ ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).](outputs/fig-convergence-plot.png){#fig-convergence-plot width=6.5in}
 
-![Effect sizes (β ± 95% CI) for the key term of interest of every model in model_registry (kōura and catfish, RQ1–RQ4). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — β magnitudes are not directly comparable across panels because each RQ tests a different contrast (step-change, per-round slope, or simple group difference) and RQ1 occupancy is on the log-odds scale while all others use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded.](outputs/fig-forest-plot.png){#fig-forest-plot width=3in}
+![Effect sizes ($\beta$ ± 95% CI) for the key term of interest of every model in model_registry (kōura and catfish, RQ1–RQ4). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — $\beta$ magnitudes are not directly comparable across panels because each RQ tests a different contrast (step-change, per-round slope, or simple group difference) and RQ1 occupancy is on the log-odds scale while all others use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded.](outputs/fig-forest-plot.png){#fig-forest-plot width=3in}
 
+::: {.supplementary}
 ## Supplementary information
 
-![Length–weight relationship for kōura, fitted on log₁₀–log₁₀ scale. Open points are weights predicted from the length–weight regression (used to fill missing scale measurements); filled points are directly measured weights.](outputs/fig-length-weight.png){#fig-length-weight width=6.5in}
+*Supplementary figures are provided in the appendices.*
+:::
 
-![Descriptive context plots, combined. Left column (top to bottom): baseline habitat characteristics (mean ± SE by site type), stone pile structure dimensions (5 stone pile sites), chemical conditions over time (mean ± smoothed trend by site type). Right column: mean catch per monitoring round by site type, for catfish, kōaro, and goldfish. Site-type colours are shared across all panels — see the legend on the right. Background/methods-supporting figures, not primary results — see Results for the BACI, trend, and convergence models.](outputs/fig-descriptive-context.png){#fig-descriptive-context width=6.5in}
 
-```{r}
-#| label: tbl-models-summary-full-supp
-#| echo: false
-#| tbl-cap: "Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model currently in model_registry. Unlike the interaction-only summary above, this surfaces covariate effects (e.g. Substrate_index_after, Season) directly rather than requiring a one-off check per model."
 
-# Read from CSV (embed fails on this chunk due to notebook size — see comment above)
-tbl_full <- read.csv("outputs/tbl-models-summary-full.csv")
-if (knitr::is_html_output()) {
-  DT::datatable(
-    tbl_full,
-    filter = "top",
-    options = list(pageLength = 20, dom = 'Bfrtip', buttons = c('csv', 'excel')),
-    extensions = 'Buttons',
-    rownames = FALSE
-  ) |>
-    DT::formatRound(columns = c("estimate","std.error","statistic","p.value","p_adj_BH","conf.low","conf.high"), digits = 3)
-} else {
-  knitr::kable(tbl_full, digits = 3)
-}
-```
-
-```{r}
-#| label: tbl-residual-diagnostics-supp
-#| echo: false
-#| tbl-cap: "DHARMa goodness-of-fit tests per model. p < 0.05 indicates a significant departure from model assumptions (uniformity of residuals, over/under-dispersion, or excess outliers) and warrants closer inspection of the corresponding diagnostic plot above."
-
-knitr::kable(read.csv("outputs/tbl-residual-diagnostics.csv"), digits = 3)
-```
 

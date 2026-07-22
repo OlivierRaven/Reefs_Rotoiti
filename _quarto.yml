@@ -2,6 +2,10 @@ project:
   type: manuscript
   output-dir: docs
   post-render: deploy.R
+  render:
+    - "index.qmd"
+    - "analysis.qmd"
+    - "supplementary.qmd"
 
 execute:
   freeze: false
@@ -34,7 +38,7 @@ format:
       text: |
         <style>#title-block-header .abstract { display: none; }</style>
   pdf:
-    toc: true
+    toc: false
     colorlinks: true
     link-citations: true
     include-in-header: references/header.tex
