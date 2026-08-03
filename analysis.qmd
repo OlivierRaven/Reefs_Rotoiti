@@ -53,10 +53,11 @@ write.csv(Weed_data,          file.path(der_data_dir, "Weed_data.csv"),         
 write.csv(Fish_data,          file.path(der_data_dir, "Fish_data.csv"),          row.names = FALSE)
 write.csv(Macroinvertebrates, file.path(der_data_dir, "Macroinvertebrates.csv"), row.names = FALSE)
 
+
+
 ### Reproducibility note 
-# The sections above require data/raw/Natural_habitat.xlsx (not tracked).
-# To reproduce analyses and figures without the raw Excel file,
-# run from here using the derived CSVs in data/derived/:
+# The sections above require data/raw/Natural_habitat.xlsx (if not tracked).
+# To reproduce analyses and figures without the raw Excel file, run from here using the derived CSVs in data/derived/:
 
 Site_info          <- read.csv(file.path(der_data_dir, "Site_info.csv"))
 Monitoring_data    <- read.csv(file.path(der_data_dir, "Monitoring_data.csv"))
@@ -78,7 +79,7 @@ conv_shapes  <- c("Stone_pile" = 21,"Reference" = 22)
 site_labels <- c("Stone_pile" = "Stone pile", "Control" = "Control", "Reference" = "Reference")
 conv_labels <- c("Stone_pile" = "Stone pile", "Reference" = "Reference")
 
-monitor_labels <- c("Pre/Summer\n2025", "Autumn\n2025", "Winter\n2025", "Spring\n2025", "Summer\n2026", "Autumn\n2026", "Winter\n(upcoming)")
+monitor_labels <- c("Pre/Summer\n2025", "Autumn\n2025", "Winter\n2025", "Spring\n2025", "Summer\n2026", "Autumn\n2026", "Winter\n2026")
 
 base_theme_bw <- theme_classic() +
   theme(text     = element_text(family = "Arial", size = 11),
@@ -360,17 +361,7 @@ Combined_data <- Combined_data %>%
       TRUE ~ site),
       levels = c("Stone_pile", "Control", "Reference_1", "Reference_2")))
 
-# Substrate_index_before above is fixed at the baseline (pre-construction) substrate
-# survey and never updated, even though the stone piles physically added new
-# rocky structure at Stone_pile sites. Rather than assume a flat added-cover
-# percentage for every site, use each site's own measured pile footprint:
-# total footprint area of the ~3 piles at that site, as a percentage of the
-# 10 m x 15 m (150 m^2) site survey area, classified 80% Cobble / 20%
-# Boulders (most stones were below boulder size) and displacing an equal
-# area of Sand (the pre-existing substrate at all 5 stone-pile sites).
-# Substrate_index_after equals the original Substrate_index_before
-# everywhere except Stone_pile sites at monitoring_int >= 1 (post-
-# construction), where it reflects this site-specific addition.
+# Substrate_index_update
 site_area_m2 <- 10 * 15
 
 pile_footprint_pct <- Stone_pile_data %>%
@@ -398,8 +389,6 @@ Combined_data <- Combined_data %>%
   dplyr::mutate(site_id = as.character(site_id)) %>%
   dplyr::left_join(substrate_updated, by = "site_id") %>%
   dplyr::mutate(
-    # as.factor() alone would sort "1","10","11",...,"2","20",...
-    # alphabetically — sort numerically first so site_id reads 1-20.
     site_id = factor(site_id, levels = as.character(sort(as.numeric(unique(site_id))))),
     Substrate_index_after = dplyr::if_else(
       site == "Stone_pile" & monitoring_int >= 1,
@@ -411,8 +400,82 @@ Combined_data <- Combined_data %>%
     lunar_illumination = (1 - cos(lunar.phase(Date))) / 2,  # 0=new, 1=full
     lunar_name = lunar.phase(Date, name = TRUE))     # "New", "Waxing", "Full", "Waning"
 
+# use buoy data to find stratification and habitat compression at monitoring period.
+CTD_buoy <- readRDS(file.path(raw_data_dir, "buoy_raw_data.rds"))
+
+Buoy_data_Rotoiti <- CTD_buoy |>
+    dplyr::select(Lake, DateTime, DptSns, TmpWtr, DOconc) |>
+    dplyr::filter(Lake == "Rotoiti") |>
+    dplyr::rename(Depth = DptSns, Temp = TmpWtr, DO = DOconc) |>
+    dplyr::mutate(DateTime = as.POSIXct(DateTime, format = "%Y-%m-%d %H:%M:%S")) |>
+    dplyr::distinct(Lake, DateTime, .keep_all = TRUE) |>
+    tidyr::drop_na(DateTime, Depth) |>
+    mutate(
+      Date  = as.Date(DateTime),
+      Time  = format(DateTime, "%H:%M:%S"),
+      Year  = lubridate::year(DateTime),
+      # Month label is locale-dependent (display only) — Season uses numeric month instead
+      Month = lubridate::month(DateTime, label = TRUE),
+      Day   = lubridate::day(DateTime),
+      Season = case_when(
+        lubridate::month(DateTime) %in% c(12, 1, 2) ~ "Summer",
+        lubridate::month(DateTime) %in% c(3, 4, 5)  ~ "Autumn",
+        lubridate::month(DateTime) %in% c(6, 7, 8)  ~ "Winter",
+        lubridate::month(DateTime) %in% c(9, 10, 11) ~ "Spring",
+        TRUE ~ NA_character_),
+      Date_Time_Numeric = as.numeric(DateTime),
+      Time_of_Day = case_when(
+        lubridate::hour(DateTime) >= 6  & lubridate::hour(DateTime) < 12 ~ "Morning",
+        lubridate::hour(DateTime) >= 12 & lubridate::hour(DateTime) < 18 ~ "Afternoon",
+        lubridate::hour(DateTime) >= 18 & lubridate::hour(DateTime) < 24 ~ "Evening",
+        TRUE ~ "Night"))
+
+# Filter to study period
+Buoy_study <- Buoy_data_Rotoiti |>
+    dplyr::filter(Date >= as.Date("2025-02-01"),
+                  Date <= as.Date("2026-07-31"))
+
+# Daily oxycline depth: shallowest depth where DO < 5 mg/L
+# Recalculate oxycline_daily with 5 mg/L threshold and habitable depth
+oxycline_daily <- Buoy_study |>
+    dplyr::group_by(Date) |>
+    dplyr::arrange(Depth, .by_group = TRUE) |>
+    dplyr::summarise(
+        habitable_depth_m = {
+            d <- Depth[DO >= 5 & is.finite(DO)]
+            if (length(d) == 0) NA_real_ else max(d, na.rm = TRUE)},
+        hypoxia_top_m = {
+            d <- Depth[DO < 5 & is.finite(DO)]
+            if (length(d) == 0) NA_real_ else min(d, na.rm = TRUE)},
+        surface_temp = mean(Temp[Depth < 5], na.rm = TRUE),
+        .groups = "drop" ) |>
+    dplyr::mutate(full_column = is.na(hypoxia_top_m))
+
+# Per-site visit date
+visit_dates <- Combined_data |>
+    dplyr::mutate(visit_date = as.Date(date_time)) |>
+    dplyr::select(site_id, monitoring, monitoring_id, visit_date)
+
+# For each visit, average habitable depth over ±14 day window
+visit_buoy <- visit_dates |>
+    dplyr::rowwise() |>
+    dplyr::mutate(buoy_slice = list(oxycline_daily |>
+     dplyr::filter(Date >= visit_date - 14, Date <= visit_date + 14)),
+        habitable_depth_m = mean(buoy_slice$habitable_depth_m, na.rm = TRUE),
+        hypoxia_top_m = mean(buoy_slice$hypoxia_top_m, na.rm = TRUE),
+        surface_temp_C = mean(buoy_slice$surface_temp, na.rm = TRUE),
+        full_column = all(buoy_slice$full_column, na.rm = TRUE)) |>
+    dplyr::select(-buoy_slice) |>
+    dplyr::ungroup()
+
+# Join to Combined_data
+Combined_data <- Combined_data |>
+    dplyr::left_join(visit_buoy |>
+    dplyr::select(monitoring_id, habitable_depth_m, hypoxia_top_m, surface_temp_C, full_column),
+        by = "monitoring_id")
+
 # Monitoring quality flag — based on known compromised events
-compromised_ids <- c("6_1", "13_1", "14_1", "1_2", "2_2", "19_2", "20_2", "1_3", "2_3", "6_5")
+compromised_ids <- c("6_1", "13_1", "14_1", "1_2", "2_2", "19_2", "20_2", "1_3", "2_3", "6_5", "5_6", "6_6")
 
 Combined_data <- Combined_data %>%
   mutate(monitoring_quality = case_when(monitoring_id %in% compromised_ids ~ "compromised", is.na(`Total_Individuals_Kōura`) ~ "missing", TRUE  ~ "complete"))
@@ -442,6 +505,20 @@ knitr::kable(missing_table,
 
 ```
 
+# Buoy data
+```{r}
+#| label: buoy-data-summary
+#| include: true
+
+
+
+
+
+
+
+
+
+```
 
 # Site overview
 ## Site overview table
@@ -672,9 +749,8 @@ make_trend_plot <- function(sp) {
     scale_shape_manual(values = site_shapes, labels = site_labels) +
     scale_x_continuous(breaks = 0:6, labels = monitor_labels, limits = c(-0.3, 6.3)) +
     scale_y_continuous(trans = "log1p") +
-    labs(title  = species_labels[[sp]], x = NULL, y = "Mean CPUE (± 95% CI, log scale)", colour = "Site type", shape = "Site type", fill = "Site type") +
-    theme(axis.text.x     = element_text(size = 7,
-        colour = c(rep("black", 6), "grey50")),
+    labs(title  = species_labels[[sp]], x = NULL, y = "Mean CPUE \n(± 95% CI, log scale)", colour = "Site type", shape = "Site type", fill = "Site type") +
+    theme(axis.text.x     = element_text(size = 7,),
       axis.text.y     = element_text(size = 8),
       axis.title.y    = element_text(size = 9),
       plot.title      = element_text(size = 10, face = "bold"),
@@ -692,6 +768,8 @@ combined_trends <- patchwork::wrap_plots(trend_plots, ncol = 1) +
 
 # Save combined
 ggsave(file.path(out_dir, "fig-all-species-trends.png"), combined_trends, width = 6, height = 6, dpi = 300)
+
+combined_trends
 
 # Also save individual plots if needed
 #purrr::iwalk(trend_plots, ~ ggsave(filename = file.path(out_dir, paste0("fig-trend-", .y, ".png")), plot= .x, width= 8, height = 4, units = "in", dpi = 300))
@@ -815,9 +893,7 @@ ratio_plot <- ggplot(ratio_summary,
   labs(x = NULL,
        y = "log(Kōura CPUE + 1) − log(Catfish CPUE + 1)",
        colour = "Site type", fill = "Site type", shape = "Site type") +
-  theme(axis.text.x = element_text(
-          colour = c(rep("black", 6), "grey50"), size = 9),
-        legend.position = "right")
+  theme(axis.text.x = element_text(size = 9), legend.position = "right")
 
 ggsave(file.path(out_dir, "fig-koura-catfish-ratio.png"), ratio_plot,
        width = 7, height = 4, dpi = 300)
@@ -1602,7 +1678,11 @@ emm_m3aak <- purrr::map_dfr(1:6, function(i) {
 # Clean numeric values for annotation
 beta_val <- round(glmmTMB::fixef(M3aak)$cond["siteStone_pile:monitoring_int"], 3)
 p_val    <- round(summary(M3aak)$coefficients$cond["siteStone_pile:monitoring_int", "Pr(>|z|)"], 3)
-r2_vals  <- MuMIn::r.squaredGLMM(M3aak)
+r2_vals  <- tryCatch(
+  MuMIn::r.squaredGLMM(M3aak),
+  error = function(e) matrix(c(NA_real_, NA_real_), nrow = 1,
+                              dimnames = list(NULL, c("R2m", "R2c")))
+)
 r2m_val  <- round(r2_vals[1, "R2m"], 2)
 r2c_val  <- round(r2_vals[1, "R2c"], 2)
 
@@ -1625,8 +1705,7 @@ convergence_plot <- ggplot() +
   scale_x_continuous(breaks = 0:6, labels = monitor_labels, limits = c(-0.3, 6.3)) +
   scale_y_continuous(trans = "log1p") +
   labs(x=NULL ,y= "Kōura CPUE (log scale)",colour = "Site type",fill= "Site type",shape  = "Site type") +
-  theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9), axis.title.y = element_text(size = 10), legend.position = "right")+
-  theme(axis.text.x = element_text(colour = c(rep("black", 6), "grey50")))
+  theme(axis.text.x = element_text(size = 9), axis.text.y = element_text(size = 9), axis.title.y = element_text(size = 10), legend.position = "right")
 
 ggsave(file.path(out_dir, "fig-convergence-plot.png"), convergence_plot, width = 6, height = 3, dpi = 300)
 

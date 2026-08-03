@@ -222,7 +222,7 @@ Coarser substrates were assigned higher weights as they provide greater intersti
 
 Seasonal variable parameters were recorded at every monitoring round, and included aquatic vegetation cover (emergent and submerged macrophytes) and chemical parameters included water temperature (°C), dissolved oxygen (mg L$^{-1}$), and conductivity ($\mu$S cm$^{-1}$) were measured using a YSI ProSolo meter (Pro2030, YSI Inc., Yellow Springs, OH, USA). pH was measured using a handheld pH meter (EC-PCTestr35, Eutech Instruments). 
 
-Kōura and fish were every monitoring round sampled using two single-winged, double-throated fyke nets (600 mm high D-shaped entrance hoop) and two collapsible bait traps (480 × 250 mm; two 50 mm entrance openings) baited with catfish flesh [@MacNeil2025]. Fyke nets were placed perpendicular to the shoreline outside of the stone pile structures or at 10 m intervals, with bait traps positioned between them. All equipment was deployed simultaneously at each site for a 24-h period. Captured kōura were measured for orbital carapace length (OCL) using a digital calliper (0.01 mm precision; 150 mm) and for wet mass using a digital scale (± 1 g; 5 kg capacity, Anko Brand, Kmart Group, Mulgrave, VIC, Australia). Catfish and other fish species, including eels (*Anguilla* spp.), goldfish (*Carassius auratus* (Linnaeus, 1758)), common smelt (*Retropinna retropinna* (Richardson, 1848)), kōaro (*Galaxias brevipinnis* Günther, 1866), rainbow trout (*Oncorhynchus mykiss* Walbaum, 1792), common bully (*Gobiomorphus cotidianus* McDowall & Fulton, 1978), and mosquitofish (*Gambusia affinis* (S. F. Baird & Girard, 1853)), were recorded for abundance and measured for total length, and weighed for wet mass. Catch per unit effort (CPUE) and biomass per unit effort (BPUE) were calculated for all kōura and fish based on the number of nets and traps used at each site for each monitoring round [@Kusabs2015b]. Missing kōura weights due to failure of scale (n = `r predicted_n`) were estimated using a log₁₀–log₁₀ length–weight regression fitted to individuals with both measurements (n = `r measured_n`), following standard approaches for weight length relationships in aquatic organisms [@fig-length-weight; @Froese2006]. Predicted values were back-transformed with a lognormal bias correction factor \(10^{0.5 \cdot \sigma^2}\) [@Quinn2002].
+Kōura and fish were every monitoring round sampled using two single-winged, double-throated fyke nets (600 mm high D-shaped entrance hoop) and two collapsible bait traps (480 × 250 mm; two 50 mm entrance openings) baited with catfish flesh [@MacNeil2025]. Fyke nets were placed perpendicular to the shoreline outside of the stone pile structures or at 10 m intervals, with bait traps positioned between them. All equipment was deployed simultaneously at each site for a 24-h period. Captured kōura were measured for orbital carapace length (OCL) using a digital calliper (0.01 mm precision; 150 mm) and for wet mass using a digital scale (± 1 g; 5 kg capacity, Anko Brand, Kmart Group, Mulgrave, VIC, Australia). Catfish and other fish species, including eels (*Anguilla* spp.), goldfish (*Carassius auratus* (Linnaeus, 1758)), common smelt (*Retropinna retropinna* (Richardson, 1848)), kōaro (*Galaxias brevipinnis* Günther, 1866), rainbow trout (*Oncorhynchus mykiss* Walbaum, 1792), common bully (*Gobiomorphus cotidianus* McDowall & Fulton, 1978), and mosquitofish (*Gambusia affinis* (S. F. Baird & Girard, 1853)), were recorded for abundance and measured for total length, and weighed for wet mass. Catch per unit effort (CPUE) and biomass per unit effort (BPUE) were calculated for all kōura and fish based on the number of nets and traps used at each site for each monitoring round [@Kusabs2015b]. Missing kōura weights due to failure of scale (n = `r predicted_n`) were estimated using a log₁₀–log₁₀ length–weight regression fitted to individuals with both measurements (n = `r measured_n`), following standard approaches for weight length relationships in aquatic organisms [[(@fig-length-weight-ch5)]{.content-visible when-profile="thesis"}[(Fig. S1)]{.content-visible unless-profile="thesis"}] [@Froese2006]. Predicted values were back-transformed with a lognormal bias correction factor \(10^{0.5 \cdot \sigma^2}\) [@Quinn2002].
 
 $$
 \log_{10}(\text{Weight [g]}) = `r round(a, 3)` + `r round(b, 3)` \times \log_{10}(\text{OCL length [mm]})
@@ -240,11 +240,15 @@ The third section of the analysis assessed whether stone pile sites converged to
 Multiple-testing correction using Benjamini–Hochberg correction was applied within each research sub-question across the set of models tested. Robustness of the models was further assessed via sensitivity analyses and all models were tested for uniform distribution, dispersion, and outlier rate using the DHARMa package [@Hartig2016]. Covariate selection for each model was preformend by comparing Corrected Akaike Information Criterion (AICc) of the base model against models with one additional covariate (temperature, season, or substrate index) added at a time. A covariate was retained only when it reduced AICc by more then 2 units relative to the base model [@Burnham2002]. Temperature was retained in in catfish models where it substantially improved model fit, consistent with catfish being associated with warmer water temperatures [@Scott1973]. For the two reference-site catfish models specifically, the base model failed to converge and temperature was required for numerical stability. Season was retained in the kōura abundance model for reference stability, reflecting the known seasonal variation in kōura abundance [@Kusabs2015b]. Season could not be evaluated for the BACI models as it is collinear with the before/after period contrast.
 
 ## Results
+*Baseline equivalence*
+Pre-construction baseline model showed no significant difference between stone pile sites and 
+
+
 @fig-koura-trends
 
 @fig-forest-plot
 
-*Baseline equivalence*
+
 
 *Construction impact relative to control sites*
 
@@ -252,12 +256,16 @@ Multiple-testing correction using Benjamini–Hochberg correction was applied wi
 
 @fig-convergence-plot
 
+@fig-descriptive-context-ch5
+
 ## Discussion
 *Opening*
 
 ### Baseline and site context*
 
 ### Construction impact*
+
+Trap catches alone cannot determine whether kōura are actively using stone piles or are simply present in the surrounding area. For Chapter 5 higher catches near stone piles were therefore interpreted as indicating greater habitat use of the structures. In structurally complex habitats, fyke nets must be placed flat on the sediment to fish effectively; on rocky substrates this is often not possible, and kōura may pass beneath the net opening entirely.
 
 ### Convergence and recovery*
 
@@ -289,7 +297,7 @@ Use of Artificial Intelligence: Claude (Anthropic) was used to assist with manus
 The corresponding author has declared that none of the authors has any competing interests.
 
 ### Data availability statement
-The code and derived data supporting the findings of this study are openly available on GitHub (https://github.com/OlivierRaven/Stone_Piles_Rotoiti)and a rendered version of the analysis is hosted at https://olivierraven.github.io/Stone_Piles_Rotoiti/. The primary raw dataset is archived on Zenodo (https://doi.org/......). Peer review documents, including the cover letter and reviewer responses, are available in the manuscript repository in the interest of open and transparent science.
+The code and derived data supporting the findings of this study are openly available on GitHub (https://github.com/OlivierRaven/Stone_Piles_Rotoiti)and a rendered version of the analysis is hosted at https://olivierraven.github.io/Stone_Piles_Rotoiti/. The primary raw dataset is archived on Zenodo (https://doi.org/...). Peer review documents, including the cover letter and reviewer responses, are available in the manuscript repository in the interest of open and transparent science.
 :::
 
 ## Tables

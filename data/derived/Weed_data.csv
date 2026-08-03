@@ -317,7 +317,7 @@
 6,"6_5","Emergent","Raupō_(Bulrush)","Typha orientalis","Native",10
 6,"6_5","Submerged","Hornwort","Ceratophyllum demersum","Non_Native",90
 6,"6_5","Turf",NA,NA,NA,0
-7,"7_5","Emergent",NA,NA,NA,1
+7,"7_5","Emergent",NA,NA,NA,0
 7,"7_5","Submerged","Red_luwigia","Ludwigia repens","Non_Native",5
 7,"7_5","Turf","Turf_Gloss","Glossostigma","Native",40
 8,"8_5","Emergent",NA,NA,NA,0
@@ -341,6 +341,66 @@
 14,"14_5","Emergent",NA,NA,NA,0
 14,"14_5","Submerged",NA,NA,NA,0
 14,"14_5","Turf","Turf_Gloss","Glossostigma","Native",20
+15,"15_5","Emergent",NA,NA,NA,0
+15,"15_5","Submerged",NA,NA,NA,0
+15,"15_5","Turf",NA,NA,NA,0
+16,"16_5","Emergent",NA,NA,NA,0
+16,"16_5","Submerged",NA,NA,NA,0
+16,"16_5","Turf",NA,NA,NA,0
+17,"17_5","Emergent",NA,NA,NA,0
+17,"17_5","Submerged",NA,NA,NA,0
+17,"17_5","Turf",NA,NA,NA,0
+18,"18_5","Emergent",NA,NA,NA,0
+18,"18_5","Submerged",NA,NA,NA,0
+18,"18_5","Turf",NA,NA,NA,0
+19,"19_5","Emergent",NA,NA,NA,0
+19,"19_5","Submerged",NA,NA,NA,0
+19,"19_5","Turf",NA,NA,NA,0
+20,"20_5","Emergent",NA,NA,NA,0
+20,"20_5","Submerged",NA,NA,NA,0
+20,"20_5","Turf",NA,NA,NA,0
+1,"1_5","Emergent",NA,NA,NA,0
+1,"1_5","Submerged",NA,NA,NA,0
+1,"1_5","Turf",NA,NA,NA,0
+2,"2_5","Emergent",NA,NA,NA,0
+2,"2_5","Submerged",NA,NA,NA,0
+2,"2_5","Turf",NA,NA,NA,0
+3,"3_5","Emergent",NA,NA,NA,0
+3,"3_5","Submerged",NA,NA,NA,0
+3,"3_5","Turf",NA,NA,NA,0
+4,"4_5","Emergent",NA,NA,NA,0
+4,"4_5","Submerged",NA,NA,NA,0
+4,"4_5","Turf",NA,NA,NA,0
+5,"5_5","Emergent","Water_lilies","Nymphaea spp.","Non_Native",0
+5,"5_5","Submerged","Hornwort","Ceratophyllum demersum","Non_Native",70
+5,"5_5","Turf",NA,NA,NA,0
+6,"6_5","Emergent","Raupō_(Bulrush)","Typha orientalis","Native",10
+6,"6_5","Submerged","Hornwort","Ceratophyllum demersum","Non_Native",100
+6,"6_5","Turf",NA,NA,NA,0
+7,"7_5","Emergent",NA,NA,NA,0
+7,"7_5","Submerged","Red_luwigia","Ludwigia repens","Non_Native",0
+7,"7_5","Turf","Turf_Gloss","Glossostigma","Native",40
+8,"8_5","Emergent",NA,NA,NA,0
+8,"8_5","Submerged","Red_luwigia","Ludwigia repens","Non_Native",0
+8,"8_5","Turf","Turf_Gloss","Glossostigma","Native",0
+9,"9_5","Emergent",NA,NA,NA,0
+9,"9_5","Submerged",NA,NA,NA,0
+9,"9_5","Turf","Turf_Gloss","Glossostigma","Native",10
+10,"10_5","Emergent",NA,NA,NA,0
+10,"10_5","Submerged",NA,NA,NA,0
+10,"10_5","Turf",NA,NA,NA,0
+11,"11_5","Emergent",NA,NA,NA,0
+11,"11_5","Submerged",NA,NA,NA,0
+11,"11_5","Turf",NA,NA,NA,0
+12,"12_5","Emergent",NA,NA,NA,0
+12,"12_5","Submerged",NA,NA,NA,0
+12,"12_5","Turf",NA,NA,NA,0
+13,"13_5","Emergent",NA,NA,NA,0
+13,"13_5","Submerged",NA,NA,NA,0
+13,"13_5","Turf",NA,NA,NA,0
+14,"14_5","Emergent",NA,NA,NA,0
+14,"14_5","Submerged",NA,NA,NA,0
+14,"14_5","Turf","Turf_Gloss","Glossostigma","Native",10
 15,"15_5","Emergent",NA,NA,NA,0
 15,"15_5","Submerged",NA,NA,NA,0
 15,"15_5","Turf",NA,NA,NA,0
