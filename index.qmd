@@ -140,7 +140,7 @@ Olivier V. Raven, Ian A. K. Kusabs, Robin Holmes, Francis J. Burdon & Deniz Özk
 :::
 
 ::: {.content-visible when-format="html"}
-# Rock Piles as Kōura Habitat {.unnumbered}
+# Chapter 5 Rock Piles as Kōura Habitat {.unnumbered}
 :::
 
 ```{r}
@@ -222,44 +222,89 @@ Coarser substrates were assigned higher weights as they provide greater intersti
 
 Seasonal variable parameters were recorded at every monitoring round, and included aquatic vegetation cover (emergent and submerged macrophytes) and chemical parameters included water temperature (°C), dissolved oxygen (mg L$^{-1}$), and conductivity ($\mu$S cm$^{-1}$) were measured using a YSI ProSolo meter (Pro2030, YSI Inc., Yellow Springs, OH, USA). pH was measured using a handheld pH meter (EC-PCTestr35, Eutech Instruments). 
 
-Kōura and fish were every monitoring round sampled using two single-winged, double-throated fyke nets (600 mm high D-shaped entrance hoop) and two collapsible bait traps (480 × 250 mm; two 50 mm entrance openings) baited with catfish flesh [@MacNeil2025]. Fyke nets were placed perpendicular to the shoreline outside of the stone pile structures or at 10 m intervals, with bait traps positioned between them. All equipment was deployed simultaneously at each site for a 24-h period. Captured kōura were measured for orbital carapace length (OCL) using a digital calliper (0.01 mm precision; 150 mm) and for wet mass using a digital scale (± 1 g; 5 kg capacity, Anko Brand, Kmart Group, Mulgrave, VIC, Australia). Catfish and other fish species, including eels (*Anguilla* spp.), goldfish (*Carassius auratus* (Linnaeus, 1758)), common smelt (*Retropinna retropinna* (Richardson, 1848)), kōaro (*Galaxias brevipinnis* Günther, 1866), rainbow trout (*Oncorhynchus mykiss* Walbaum, 1792), common bully (*Gobiomorphus cotidianus* McDowall & Fulton, 1978), and mosquitofish (*Gambusia affinis* (S. F. Baird & Girard, 1853)), were recorded for abundance and measured for total length, and weighed for wet mass. Catch per unit effort (CPUE) and biomass per unit effort (BPUE) were calculated for all kōura and fish based on the number of nets and traps used at each site for each monitoring round [@Kusabs2015b]. Missing kōura weights due to failure of scale (n = `r predicted_n`) were estimated using a log₁₀–log₁₀ length–weight regression fitted to individuals with both measurements (n = `r measured_n`), following standard approaches for weight length relationships in aquatic organisms [[(@fig-length-weight-ch5)]{.content-visible when-profile="thesis"}[(Fig. S1)]{.content-visible unless-profile="thesis"}] [@Froese2006]. Predicted values were back-transformed with a lognormal bias correction factor \(10^{0.5 \cdot \sigma^2}\) [@Quinn2002].
+Kōura and fish were every monitoring round sampled using two single-winged, double-throated fyke nets (600 mm high D-shaped entrance hoop) and two collapsible bait traps (480 × 250 mm; two 50 mm entrance openings) baited with catfish flesh [@MacNeil2025]. Fyke nets were placed perpendicular to the shoreline outside of the stone pile structures or at 10 m intervals, with bait traps positioned between them. All equipment was deployed simultaneously at each site for a 24-h period. Captured kōura were measured for orbital carapace length (OCL) using a digital calliper (0.01 mm precision; 150 mm) and for wet mass using a digital scale (± 1 g; 5 kg capacity, Anko Brand, Kmart Group, Mulgrave, VIC, Australia). Catfish and other fish species, including eels (*Anguilla* spp.), goldfish (*Carassius auratus* (Linnaeus, 1758)), common smelt (*Retropinna retropinna* (Richardson, 1848)), kōaro (*Galaxias brevipinnis* Günther, 1866), rainbow trout (*Oncorhynchus mykiss* Walbaum, 1792), common bully (*Gobiomorphus cotidianus* McDowall & Fulton, 1978), and mosquitofish (*Gambusia affinis* (S. F. Baird & Girard, 1853)), were recorded for abundance and measured for total length, and weighed for wet mass. Catch per unit effort (CPUE) and biomass per unit effort (BPUE) were calculated for all kōura and fish based on the number of nets and traps used at each site for each monitoring round [@Kusabs2015b]. Missing kōura weights due to failure of scale (n = `r predicted_n`) were estimated using a log₁₀–log₁₀ length–weight regression fitted to individuals with both measurements (n = `r measured_n`), following standard approaches for weight length relationships in aquatic organisms [[@fig-length-weight-ch5]{.content-visible when-format="pdf"}[Fig. S1]{.content-visible when-format="html"}] [@Froese2006]. Predicted values were back-transformed with a lognormal bias correction factor \(10^{0.5 \cdot \sigma^2}\) [@Quinn2002].
 
 $$
 \log_{10}(\text{Weight [g]}) = `r round(a, 3)` + `r round(b, 3)` \times \log_{10}(\text{OCL length [mm]})
 $$
 
 ### Data analysis
-Data analysis was divided into three sections, the first section assessed baseline equivalence between stone pile, control, and reference sites before construction, the second section assessed the impact of stone pile construction and after-construction trajectory on kōura and catfish occupancy, abundance, and biomass, and the third section assessed whether stone pile sites converged toward reference sites and if reference sites remained stable over time. All analysis was conducted in R (version 4.5.2; @RCoreTeam2025) using the glmmTMB and emmeans packages [@Brooks2017; @Lenth2017].
+Data analysis was divided into three sections, the first section assessed baseline equivalence between stone pile, control, and reference sites before construction, the second section assessed the impact of stone pile construction and after-construction trajectory on kōura and catfish occupancy, abundance, and biomass, and the third section assessed whether stone pile sites converged toward reference sites and if reference sites remained stable over time. All analysis was conducted in R (version 4.6.1; @RCoreTeam2025) using the glmmTMB and emmeans packages [@Brooks2017; @Lenth2017].
 
-Site variation before stone pile construction was assessed using paired Wilcoxon signed-rank tests to compare stone pile sites with their paired control sites, and unpaired Wilcoxon rank-sum tests to compare stone pile sites with reference sites. This was done for response variables (water quality, substrate, CPUE, BPUE) to confirm that the stone pile and control sites were equivalent before construction, and to characterise the difference between stone pile and reference sites. To further assess the baseline equivalence generalised linear models (GLMs) were fitted testing the CPUE and BPUE of kōura and catfish against site type (stone pile/control) and tested each of the two reference sites (reference 1/reference 2) with a Tweedie family and log link. The covariate temperature was included in the catfish abundance and biomass models testing the reference sites to allow model convergence.
+Site variation before stone pile construction was assessed using paired Wilcoxon signed-rank tests to compare stone pile sites with their paired control sites, and unpaired Wilcoxon rank-sum tests to compare stone pile sites with reference sites. This was done for response variables (water quality, substrate, CPUE, BPUE) to confirm that the stone pile and control sites were equivalent before construction, and to characterise the difference between stone pile and reference sites. To further assess the baseline equivalence generalised linear models (GLMs) were fitted testing the CPUE and BPUE of kōura and catfish against site type (stone pile / control) and tested each of the two reference sites (reference 1 / reference 2) with a Tweedie family and log link. The covariate temperature was included in the catfish abundance and biomass models testing the reference sites to allow model convergence.
 
-The second section of the analysis tested construction impact relative to control sites using a before-after, control-impact (BACI) design [@Underwood1994] and tested after-construction trajectory of kōura and catfish populations. The BACI design tested using generalised linear mixed effects models (GLMMs) the effect of stone pile construction on kōura and catfish occupancy, abundance, and biomass by comparing one pre-construction monitoring round with six post-construction monitoring rounds. The models tested period (before/after) and site type (stone pile/control) as an interaction term, with monitoring round as a covariate and site nested within pair as a random effect. Occupancy was tested with a Binomial family and abundance and biomass using a Tweedie family with log link. The after-construction trajectory models were tested using GLMMs with site type (stone pile/control) and monitoring round as interaction terms and site number as random effect using similar families as the BACI models.
+The second section of the analysis tested construction impact relative to control sites using a before-after, control-impact (BACI) design [@Underwood1994] and tested after-construction trajectory of kōura and catfish populations. The BACI design tested using generalised linear mixed effects models (GLMMs) the effect of stone pile construction on kōura and catfish occupancy, abundance, and biomass by comparing one pre-construction monitoring round with six post-construction monitoring rounds. The models tested period (before / after) and site type (stone pile / control) as an interaction term, with monitoring round as a covariate and site nested within pair as a random effect. Occupancy was tested with a Binomial family and abundance and biomass using a Tweedie family with log link. The after-construction trajectory models were tested using GLMMs with site type (stone pile / control) and monitoring round as interaction terms and site nested within pair as a random effect using similar families as the BACI models.
 
-The third section of the analysis assessed whether stone pile sites converged toward reference sites and if reference sites remained stable over time. Kōura and catfish abundance, and biomass were tested in GLMMs fitted with site type (stone pile/reference) and monitoring round as interaction terms with site number as random effect using a Tweedie family with log link. The catfish abundance model also included temperature as a covariate. The reference site stability was tested in GLMMs fitted with site type (reference 1/reference 2) and monitoring round as interaction terms with  site nested within pair as a random effect also using a Tweedie family with log link. Temperature was included in the catfish abundance and season was included in the kōura abundance as covariates. 
+The third section of the analysis assessed whether stone pile sites converged toward reference sites and if reference sites remained stable over time. Kōura and catfish abundance, and biomass were tested in GLMMs fitted with site type (stone pile / reference) and monitoring round as interaction terms with site number as random effect using a Tweedie family with log link. The catfish abundance model also included temperature as a covariate. The reference site stability was tested in GLMMs fitted with site type (reference 1 / reference 2) and monitoring round as interaction terms with site nested within pair as a random effect also using a Tweedie family with log link. Temperature was included in the catfish abundance and season was included in the kōura abundance as covariates. 
 
-Multiple-testing correction using Benjamini–Hochberg correction was applied within each research sub-question across the set of models tested. Robustness of the models was further assessed via sensitivity analyses and all models were tested for uniform distribution, dispersion, and outlier rate using the DHARMa package [@Hartig2016]. Covariate selection for each model was preformend by comparing Corrected Akaike Information Criterion (AICc) of the base model against models with one additional covariate (temperature, season, or substrate index) added at a time. A covariate was retained only when it reduced AICc by more then 2 units relative to the base model [@Burnham2002]. Temperature was retained in in catfish models where it substantially improved model fit, consistent with catfish being associated with warmer water temperatures [@Scott1973]. For the two reference-site catfish models specifically, the base model failed to converge and temperature was required for numerical stability. Season was retained in the kōura abundance model for reference stability, reflecting the known seasonal variation in kōura abundance [@Kusabs2015b]. Season could not be evaluated for the BACI models as it is collinear with the before/after period contrast.
+Multiple-testing correction using Benjamini–Hochberg correction was applied within each research sub-question across the set of models tested. Robustness of the models was further assessed via sensitivity analyses and all models were tested for uniform distribution, dispersion, and outlier rate using the DHARMa package [@Hartig2016]. Covariate selection for each model was preformend by comparing Corrected Akaike Information Criterion (AICc) of the base model against models with one additional covariate (temperature, season, or substrate index) added at a time. A covariate was retained only when it reduced AICc by more then 2 units relative to the base model [@Burnham2002]. Temperature was retained in catfish models where it substantially improved model fit, consistent with catfish being associated with warmer water temperatures [@Scott1973]. For the two reference-site catfish models specifically, the base model failed to converge and temperature was required for numerical stability. Season was retained in the kōura abundance model for reference stability, reflecting the known seasonal variation in kōura abundance [@Kusabs2015b]. Season could not be evaluated for the BACI models as it is collinear with the before/after period contrast.
 
 ## Results
+Results across all models and response variables are summarised in @fig-forest-plot.
+
 *Baseline equivalence*
-Pre-construction baseline model showed no significant difference between stone pile sites and 
+Pre-construction kōura abundance and biomass did not differ significantly between stone pile and control sites, confirming baseline equivalence of the paired design (`r fmt_p(stat("M1aak", "Site_type_detailStone_pile", "p_adj_BH"))` and `r fmt_p(stat("M1abk", "Site_type_detailStone_pile", "p_adj_BH"))`). The two reference sites differed in catfish abundance (`r fmt_p(stat("M1bac", "Reference_2", "p_adj_BH"))`) and biomass (`r fmt_p(stat("M1bbc", "Reference_2", "p_adj_BH"))`), reflecting natural diversity in rocky littoral habitat. Kōura abundance (`r fmt_p(stat("M1bak", "Site_type_detailReference_2", "p_adj_BH"))`) and biomass (`r fmt_p(stat("M1bbk", "Site_type_detailReference_2", "p_adj_BH"))`) did not differ between reference sites.
 
-
-@fig-koura-trends
-
-@fig-forest-plot
-
-
-
-*Construction impact relative to control sites*
+*Kōura response to stone pile construction*
+Stone pile construction produced no detectable step-change in kōura abundance, biomass, or occupancy relative to paired control sites in the 18 months following deployment (all *p*~adj~ = `r fmt_num(stat("M2aak", "PeriodAfter:siteStone_pile", "p_adj_BH"))`). A matched-season comparison, comparing Summer 2025 (before construction) with Summer 2026 (one year after construction), produced the same conclusion (kōura abundance: `r fmt_p(stat_ms("Kōura", "abundance", p.value))`). Post-construction trajectories did not diverge significantly between stone pile and control sites (all *p*~adj~ = `r fmt_num(stat("M2bak", "siteStone_pile:monitoring_int", "p_adj_BH"))`). Kōura abundance declined significantly across post-construction rounds at stone pile as control sites (β = `r fmt_b(stat("M2bak", "^monitoring_int$", "estimate"))`, `r fmt_p(stat("M2bak", "^monitoring_int$", "p.value"))`), with the sharpest decline observed in Winter 2026 (@fig-koura-trends). 
 
 *Recovery toward reference conditions*
+Stone pile sites maintained a consistently lower kōura abundance than reference sites throughout the post-construction period, with no significant change in this gap over time (β = `r fmt_b(stat("M3aak", "siteStone_pile:monitoring_int", "estimate"))`, `r fmt_p(stat("M3aak", "siteStone_pile:monitoring_int", "p.value"))`; @fig-convergence-plot). Kōura abundance declined across monitoring rounds at both stone pile and reference sites (β = `r fmt_b(stat("M3aak", "^monitoring_int$", "estimate"))`, `r fmt_p(stat("M3aak", "^monitoring_int$", "p.value"))`). The Winter 2026 monitoring round showed a pronounced decline at stone pile sites (CPUE ≈ 0.7) while reference sites maintained substantially higher abundance (CPUE ≈ 1.7; @fig-koura-trends), a within-round contrast not captured by the linear trajectory model. Water temperature at Winter 2026 was approximately 1.5°C lower than Winter 2025 but consistent across site types, rulling out temperature as a site specific driver.and therefore cannot explain the collapse at stone pile sites. Visual inspection of stone pile surfaces during Winter 2026 monitoring revealed substantially greater filamentous algal accumulation compared to earlier rounds (@fig-stone-piles).
 
-@fig-convergence-plot
+*Catfish*
+Stone pile construction produced no significant effect on catfish abundance, biomass, or occupancy relative to control sites across any model or time period (@fig-forest-plot), indicating stone piles did not attract more catfish. 
 
-@fig-descriptive-context-ch5
+
+@fig-descriptive-context
+
+
+
+### multi-scale hierarchical framework
+Lake scale:
+source population catfish (Te Weta Bay)
+
+Site scale:
+Substrate index
+Wood cover
+Slope
+Site type
+stone pile placement: depth, distance shore, volume (Depth: rho = 0.90, p = 0.083 — very strong positive correlation)
+
+Temporal scale:
+Season/ monitoring round
+Temperature
+DO/ pH/ conductivity
+Catfish CPUE
+Habitable depth
+Wind/ wave exposture
+
+
+
 
 ## Discussion
-*Opening*
+*Short-term construction effect*
+Stone pile constructionin the littoral zone of Lake Rotoiti porduced no detectable step-change in kōura abundance, biomass, or occupancy relative to paired control sites over an 18-month monitoring period. This outcome is most plausible explained by an insufficient monitoring window rather than ineffectiveness of the stone piles. Habitat establishmetn for freshwater crayfish is a slow process. @Johnsen2008 reported that crayfish abundance at a stone site addition site took 13 years to reach similar crayfish levels as a control site, and freshwater invertebrate colonisation studies generally show treatment effects emerging over two to three years of monitoring [@BRON]. Following reconstruction of the Rotorua lakefront (completed in July 2021), which included rocky kōura habitat only 17 kōura were recorded after 28 months, compared to 57 removed before construction, No kōura were observed 13 months after completion and slow recolonation was likely the effect of catfish predation [@Kusabs2023], suggesting that 18 months may represent a minimum rather tan sufficien monitoring duration for detecting population level responses to habitat addition.
+
+The Autumn 2025 monitoring round, the first after stone pile deployment, showed eleveted kōura CPUE across all site types, which may have obscured any early construction effects in th BACI design. This cross-site spike is consistent with 
+
+In Autumn 2025, the first monitoring after deployment, had a spike in kōura numbers acoss all sites masking geniun construction effect in the BACI design. Wide confidence intervals throughout the study reflect real biological variability as only five locations were modified the repetition is small.
+
+*Winter 2026*
+The second winter monitoring revealed a important pattern kōura catches collapsed on stone pile sites while maintaingn kōura abundance on reference sites. Kōura numbers after 18 months almost returned to similar numbers as Summer 2025 before stone pile deployment. During winter it is expected that kōura numbers in the littoral zone are lower than in summer or autumn as the lake mixes, and access to deep waters is not a limmiting factor anymore. Temperature in Winter 2026 was 1.5°C lower compared to Winter 2025 but this was consistent across all sites and therefore not explaining the drop in kōura CPUE on stone pile locations. Compared to the previous monitorings a greater presence of filamentous algae on the stone piles was observed during Winter 2026 (@fig-stone-piles). The presence of filamentous algae on hard substrates is more typical in winter periods as ... . Algal presence was not quantafiable due to practical constrains and turbidity of near-shore conditions. It is expected that when water temperatures rise [@BRON], increasing invertabrate activity [@BRON], and reduction in nutrient availability due to stratification[@BRON] the filamentous mats will break down and the stone piles become available for kōura again [@BRON]. During the winter of 2025 the growth was not observed as it takes time for 
+
+Kōura use of stone piles is probably more seasonal than year round due to avalablitiy to deep waters and inactivity when temperatures drop below 10 degrees
+
+*Reference sites as a benchmark*
+The reference sites confirmed the winter suppression in kōura CPUE as deep waters are available redistribution lowers the kōura numbers also on natural rocky habitats. However reference sites remained substantially more resilliant than stone piles in Winter 2026 probably due to habitat connectivity or connectivity to deep waters [@BRON]. Variation within the reference paires shown by catfish difference during baseline check shows that small local heterogeneity has influence on species abundance. 
+
+*Catfish*
+There is no evidence found that stone piles attract or accumulate catfish. The increase in catfish CPUE in Summer 2026 was a single site and is in line with seasonal use of shoreline habitats of catfish during summer periods as the increase in CPUE at reference sites also increased. Overall catfish catches during the study were low compared to targeted catfish removal netting mostly focussed in Te Wetta Bay where the highest population of catfish is present [@Francis2019]. Catfish have strong seasonal movement patterns with staying close to the shoreline during spring and summer probably looking for warmest waters to feed their young. While in winter movement increases and catfish spread across the lake swimming mid-water not going deeper than 15 m even when lake bottom is deeper [@Blanchfield2026]. For kōura this means that during spring and summer the threat of catfish is highest and habitat compression during this period also being greatest further limiting the survival chances of kōura [@BRON]. ...
+
+*Implications for restoration design and monitoring*
+Current stone pile design creates isolated islands of refuge rathere than connected habitats, for future designs placement of stone piles perundicular to the shore line extending trough the weed beds into the deeper waters would enable migration and access to variation in depth range refugia when deeper parts become anoxic and shallow sections become to warm [@BRON]. The need for removal of biofilm or cleaning of the chevecis from sediments could potentially restore structural complexity. Placement of stone piles on wave intensive locations might help with natural cleaning of the stone piles but could potentially be to rough as a shelter for kōura. A monitoring period of 18 months is not ideal to access the effectiveness of habitat restauraion and it is reomended to continue monitoring for a total of 3 years. Continue of monitoring will reveal of the crash of kōura CPUE in Winter 2026 was a individual occurrence and colonasation of kōura in the stone piles will pick up again in coming spring and summer when habitat becomes limited again and the filamentous algae densety is less. A standardes assessment of fouling is recommended with similar sides of the stones being photocraphed every monitoring to compare devalopment and seasonal variation. 
+
+As rocky environments are identified as refuges and important for multiple species and threats [@Selwood2020] the value of restoration and expanding the availability of this habitat can be very important 
+
 
 ### Baseline and site context*
 
@@ -268,12 +313,11 @@ Pre-construction baseline model showed no significant difference between stone p
 Trap catches alone cannot determine whether kōura are actively using stone piles or are simply present in the surrounding area. For Chapter 5 higher catches near stone piles were therefore interpreted as indicating greater habitat use of the structures. In structurally complex habitats, fyke nets must be placed flat on the sediment to fish effectively; on rocky substrates this is often not possible, and kōura may pass beneath the net opening entirely.
 
 ### Convergence and recovery*
+The last monitoring showed on the stone piles an increase in cover of biofilm with the stones being more covered than assessed before 
+
 
 ### Implications and future directions*
 For future studies it is recommended 
-
-
-Most kōura were found along the edges of the stone piles there for recommended future stone piles should be designed to create the most edges.  
 
 Stone piles were constructed at the shore line to shallow to reach machrophyte beds which are located further offshore. Future stone pile construction could be extended further offshore to reach the macrophyte beds and test if stone piles could suppress machrophyte growth and create pathways for kōura to move between the deeperparts of the lake and the shore.
 
@@ -281,7 +325,7 @@ Stone piles were constructed at the shore line to shallow to reach machrophyte b
 
 
 ## Acknowledgements
-We thank Te Arawa Lakes Trust and Te Komiti Whakahaere for the opportunity to study the treasured kōura. We are grateful to Soweeta Fort-D’ath and William Anaru (Te Arawa Lakes Trust), and Tihini Grant (Ngāti Pikiao).to the Tāheke Opatia Marae, Te Takinga Marae, and landowners, Piripi Curtis, David McIlraith, Piki Thomas, Haddon Lock, Barnett Vercoe, Richard Vercoe, and Caroline Newton, for granting access to monitoring sites and facilitating fieldwork in Lake Rotoiti. We thank of Joe Butterworth, Cory O’Neill, Alex Simes, Martin Sarkezi, Mael Marguet, Ethan Morgan, Logan Kallam, Calum MacNeil, and Matt Prentice for assisting with fieldwork and data collection.
+We thank Te Arawa Lakes Trust and Te Komiti Whakahaere for the opportunity to study the treasured kōura. We are grateful to Soweeta Fort-D’ath and William Anaru (Te Arawa Lakes Trust), and Tihini Grant (Ngāti Pikiao).to the Tāheke Opatia Marae, Te Takinga Marae, and landowners, Piripi Curtis, David McIlraith, Piki Thomas, Haddon Lock, Barnett Vercoe, Richard Vercoe, and Caroline Newton, for granting access to monitoring sites and facilitating fieldwork in Lake Rotoiti. We thank Alex Simes, Cory O’Neill, Joe Butterworth, Martin Sarkezi, Mael Marguet, Savio Dsouza, Ethan Morgan, Logan Kallam, Calum MacNeil, and Matt Prentice for assisting with fieldwork and data collection.
 
 ::: {.chapter-only}
 ### Funding statement
@@ -309,13 +353,16 @@ knitr::kable(baseline_combined, digits = 3)
 
 
 ## Figures
-![Map of the monitoring sites.](images/Rotoiti_monitoring_sites.png){#fig-sites}
+![Map of Lake Rotoiti in Bay of Plenty region of New Zealand. The monitoring sites are coloured by site type; stone pile sites red, control site yellow, and reference sites blue. Ten close-up maps show the placement of each of the sites.](images/Rotoiti_monitoring_sites.png){#fig-sites}
+
+![Effect sizes ($\beta$ ± 95% CI) for the key term of interest of every model in model_registry (kōura and catfish, RQ1–RQ4). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — $\beta$ magnitudes are not directly comparable across panels because each RQ tests a different contrast (step-change, per-round slope, or simple group difference) and RQ1 occupancy is on the log-odds scale while all others use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded.](outputs/fig-forest-plot.png){#fig-forest-plot width=3in}
 
 ![Mean catch per monitoring round (± 95% CI) by site type for kōura.](outputs/fig-koura-trends.png){#fig-koura-trends width=5in}
 
-![Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the RQ3 abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term ($\beta$ ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).](outputs/fig-convergence-plot.png){#fig-convergence-plot width=6.5in}
+![Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term ($\beta$ ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).](outputs/fig-convergence-plot.png){#fig-convergence-plot width=6.5in}
 
-![Effect sizes ($\beta$ ± 95% CI) for the key term of interest of every model in model_registry (kōura and catfish, RQ1–RQ4). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — $\beta$ magnitudes are not directly comparable across panels because each RQ tests a different contrast (step-change, per-round slope, or simple group difference) and RQ1 occupancy is on the log-odds scale while all others use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded.](outputs/fig-forest-plot.png){#fig-forest-plot width=3in}
+![Progressive algal biofouling at stone pile site 9 in Lake Rotoiti across three monitoring periods. Summer 2025 (top left, shortly after construction) shows clean stone surfaces with open interstitial spaces. By Summer 2026 (bottom left) moderate biofilm accumulation is visible. Winter 2026 (right) shows complete cover of stone surfaces by filamentous algae.](images/Stone_pile_devalopment.png){#fig-stone-piles}
+
 
 ::: {.supplementary}
 ## Supplementary information

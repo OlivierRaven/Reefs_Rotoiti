@@ -79,7 +79,7 @@ conv_shapes  <- c("Stone_pile" = 21,"Reference" = 22)
 site_labels <- c("Stone_pile" = "Stone pile", "Control" = "Control", "Reference" = "Reference")
 conv_labels <- c("Stone_pile" = "Stone pile", "Reference" = "Reference")
 
-monitor_labels <- c("Pre/Summer\n2025", "Autumn\n2025", "Winter\n2025", "Spring\n2025", "Summer\n2026", "Autumn\n2026", "Winter\n2026")
+monitor_labels <- c("Summer\n2025", "Autumn\n2025", "Winter\n2025", "Spring\n2025", "Summer\n2026", "Autumn\n2026", "Winter\n2026")
 
 base_theme_bw <- theme_classic() +
   theme(text     = element_text(family = "Arial", size = 11),
@@ -97,6 +97,47 @@ format_pval <- function(p, label = TRUE) {
   out <- if (p < 0.001) "< 0.001" else paste0("= ", format(round(p, 3), nsmall = 3))
   if (label) paste0("*p* ", out) else out
 }
+
+
+# Single lookup function — partial term matching so you don't need full term names
+stat <- function(mid, trm, col) {
+  tidy_all_full |>
+    dplyr::filter(model_id == mid,
+                  stringr::str_detect(term, trm)) |>
+    dplyr::pull({{ col }}) |>
+    dplyr::first()
+}
+
+# Formatting helpers
+fmt_p <- function(p) {
+  if (is.na(p)) return("NA")
+  if (p < 0.001) return("*p* < 0.001")
+  paste0("*p* = ", formatC(p, format = "f", digits = 3))
+}
+
+fmt_b <- function(x, digits = 2) {
+  formatC(x, format = "f", digits = digits)
+}
+
+fmt_num <- function(x, digits = 3) {
+  formatC(x, format = "f", digits = digits)
+}
+
+fmt_ci <- function(mid, trm, digits = 2) {
+  row <- tidy_all_full |>
+    dplyr::filter(model_id == mid, stringr::str_detect(term, trm))
+  lo <- formatC(dplyr::pull(row, conf.low),  format = "f", digits = digits)
+  hi <- formatC(dplyr::pull(row, conf.high), format = "f", digits = digits)
+  paste0("[", lo, ", ", hi, "]")
+}
+
+stat_ms <- function(sp, rt, col) {
+  matched_season_all |>
+    dplyr::filter(species == sp, response_type == rt) |>
+    dplyr::pull({{ col }}) |>
+    dplyr::first()
+}
+
 
 ```
 
@@ -430,9 +471,9 @@ Buoy_data_Rotoiti <- CTD_buoy |>
         lubridate::hour(DateTime) >= 18 & lubridate::hour(DateTime) < 24 ~ "Evening",
         TRUE ~ "Night"))
 
-# Filter to study period
+# Filter to study period — start from July 2024 to include full Before period
 Buoy_study <- Buoy_data_Rotoiti |>
-    dplyr::filter(Date >= as.Date("2025-02-01"),
+    dplyr::filter(Date >= as.Date("2024-07-01"),
                   Date <= as.Date("2026-07-31"))
 
 # Daily oxycline depth: shallowest depth where DO < 5 mg/L
@@ -488,6 +529,99 @@ all_data <- Combined_data
 
 ```
 
+## Lake conditions heatmap
+```{r}
+#| label: fig-lake-conditions
+#| fig-width: 12
+#| fig-height: 8
+#| fig-cap: "Lake Rotoiti dissolved oxygen (mg/L, top) and water temperature (°C, bottom) from the continuous buoy record across the study period. Vertical dashed lines mark each monitoring visit; the solid orange line marks stone pile completion (14 February 2025)."
+
+stone_pile_date <- as.Date("2025-02-14")
+
+# One median date per monitoring round across all sites
+monitoring_lines <- visit_dates |>
+  dplyr::group_by(monitoring) |>
+  dplyr::summarise(date = median(visit_date), .groups = "drop")
+
+# Daily mean per 1-m depth bin
+buoy_daily <- Buoy_study |>
+  dplyr::mutate(
+    Date      = as.Date(DateTime),
+    Depth_bin = round(Depth)
+  ) |>
+  dplyr::group_by(Date, Depth_bin) |>
+  dplyr::summarise(
+    DO_mean   = mean(DO,   na.rm = TRUE),
+    Temp_mean = mean(Temp, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# X limits: up to 2 weeks either side of the monitoring window,
+# clamped to the actual buoy record so no empty space appears
+x_lims <- c(
+  max(min(buoy_daily$Date), min(monitoring_lines$date) - 14),
+  min(max(buoy_daily$Date), max(monitoring_lines$date) + 14)
+)
+
+p_temp <- ggplot(buoy_daily, aes(x = Date, y = Depth_bin, fill = Temp_mean)) +
+  geom_tile() +
+  geom_vline(data = monitoring_lines, aes(xintercept = date),
+             colour = "black", linetype = "solid", linewidth = 1.2) +
+  geom_vline(data = monitoring_lines, aes(xintercept = date),
+             colour = "white", linetype = "dashed", linewidth = 0.5) +
+  geom_text(data = monitoring_lines, aes(x = date, label = paste0("R", monitoring)),
+            y = 2, colour = "white", size = 2.8, fontface = "bold",
+            hjust = -0.15, inherit.aes = FALSE) +
+  geom_vline(xintercept = stone_pile_date,
+             colour = "#39FF14", linetype = "solid", linewidth = 1.4) +
+  scale_y_reverse(expand = c(0, 0)) +
+  scale_x_date(limits = x_lims, expand = c(0, 0)) +
+  scale_fill_gradientn(
+    colours = c("#00008B", "#4B0082", "#9400D3", "#FF8C00", "#FFD700"),
+    values  = scales::rescale(c(10, 14, 17, 21, 25)),
+    limits  = c(10, 25),
+    oob     = scales::squish,
+    na.value = "grey85",
+    name    = "Temp\n(°C)",
+    breaks  = c(10, 14, 17, 20, 23)
+  ) +
+  labs(title = "Lake Rotoiti water temperature (°C)", x = NULL, y = "Depth (m)") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11))
+
+p_do <- ggplot(buoy_daily, aes(x = Date, y = Depth_bin, fill = DO_mean)) +
+  geom_tile() +
+  geom_vline(data = monitoring_lines, aes(xintercept = date),
+             colour = "black", linetype = "solid", linewidth = 1.2) +
+  geom_vline(data = monitoring_lines, aes(xintercept = date),
+             colour = "white", linetype = "dashed", linewidth = 0.5) +
+  geom_text(data = monitoring_lines, aes(x = date, label = paste0("R", monitoring)),
+            y = 2, colour = "white", size = 2.8, fontface = "bold",
+            hjust = -0.15, inherit.aes = FALSE) +
+  geom_vline(xintercept = stone_pile_date,
+             colour = "#39FF14", linetype = "solid", linewidth = 1.4) +
+  scale_y_reverse(expand = c(0, 0)) +
+  scale_x_date(limits = x_lims, expand = c(0, 0)) +
+  scale_fill_gradientn(
+    colours = c("grey15", "#8B0000", "#FF4500", "#FFA500", "#ADD8E6", "#00CED1", "#00FA9A"),
+    values  = scales::rescale(c(0, 1, 2, 4, 8, 12, 16)),
+    limits  = c(0, 16),
+    oob     = scales::squish,
+    na.value = "grey85",
+    name    = "DO\n(mg/L)",
+    breaks  = c(0, 4, 8, 12, 16)
+  ) +
+  labs(title = "Lake Rotoiti dissolved oxygen (mg/L)", x = NULL, y = "Depth (m)") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11))
+
+fig_lake_conditions <- p_temp / p_do
+fig_lake_conditions
+
+ggsave(file.path(out_dir, "fig-lake-conditions.png"),
+       fig_lake_conditions, width = 12, height = 8, dpi = 300)
+```
+
 ## Missing data summary
 ```{r}
 #| label: tbl-missing-data-summary
@@ -502,21 +636,6 @@ missing_table <- all_data %>%
 
 knitr::kable(missing_table,
              col.names = c("Site ID", "Site", "Monitoring label", "Monitoring ID", "Quality"))
-
-```
-
-# Buoy data
-```{r}
-#| label: buoy-data-summary
-#| include: true
-
-
-
-
-
-
-
-
 
 ```
 
@@ -697,6 +816,7 @@ chemical_var_labels <- c(
 # x-axis uses monitoring_int + monitor_labels, same as the species-trends
 # panel, so both panels read the same round labels.
 Chemical_plot <- ggplot(Chemical_data2, aes(monitoring_int, Values, colour = site)) +
+  geom_vline(xintercept = 0.25, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
   geom_point(alpha = 0.5, position = position_jitter(width = 0.1)) +
   geom_smooth(aes(group = site), se = FALSE) +
   facet_wrap(~ Variable, scales = "free", nrow = 2, labeller = as_labeller(chemical_var_labels)) +
@@ -741,6 +861,11 @@ make_trend_plot <- function(sp) {
 
   ggplot(summary_df,
       aes(monitoring_int, mean_n, colour = site, shape = site, fill = site)) +
+    geom_vline(xintercept = 0.25, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
+    annotate("text", x = -0.15, y = Inf, label = "Before", vjust = 1.5,
+             hjust = 0.5, size = 2.8, colour = "grey40") +
+    annotate("text", x = 3.5,   y = Inf, label = "After",  vjust = 1.5,
+             hjust = 0.5, size = 2.8, colour = "grey40") +
     geom_errorbar(aes(ymin = ci_low, ymax = ci_high), position = position_dodge(width = 0.4), width = 0.25, linewidth = 0.4, colour = "grey40") +
     geom_line(aes(group = site), position = position_dodge(width = 0.4), linewidth = 0.6) +
     geom_point(colour = "black", size = 2.5, stroke = 0.4, position = position_dodge(width = 0.4)) +
@@ -802,14 +927,48 @@ descriptive_context_plot
 ### Kōura trend plot
 ```{r}
 #| label: fig-koura-trends
-#| fig-width: 5
+#| fig-width: 6
 #| fig-height: 3
 #| dpi: 300
-#| fig-cap: "Mean catch per monitoring round (± 95% CI) by site type for kōura."
+#| fig-cap: "Mean kōura CPUE per monitoring round (± 95% CI, log scale) by site type. Shading distinguishes the pre-construction period (Before) from post-construction monitoring (After)."
 
-# kōura trend plot — more detail than combined figure
-koura_trend <- make_trend_plot("Kōura") +
-  labs(title = NULL) +   # remove title since it's obvious
+koura_summary <- all_data %>%
+  group_by(monitoring_int, site) %>%
+  summarise(
+    mean_n  = mean(`Weighted_CPUE_Kōura`, na.rm = TRUE),
+    se      = sd(`Weighted_CPUE_Kōura`, na.rm = TRUE) /
+              sqrt(sum(!is.na(`Weighted_CPUE_Kōura`))),
+    n       = sum(!is.na(`Weighted_CPUE_Kōura`)),
+    ci95    = qt(0.975, df = pmax(n - 1, 1)) * se,
+    .groups = "drop") %>%
+  mutate(
+    site    = factor(site, levels = c("Stone_pile", "Control", "Reference")),
+    ci_low  = pmax(mean_n - ci95, 0),
+    ci_high = mean_n + ci95)
+
+koura_trend <- ggplot(koura_summary,
+    aes(monitoring_int, mean_n, colour = site, shape = site, fill = site)) +
+  # Before/After separator
+  geom_vline(xintercept = 0.25, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
+  annotate("text", x = -0.15, y = Inf, label = "Before", vjust = 1.5,
+           hjust = 0.5, size = 3, colour = "grey40") +
+  annotate("text", x = 3.5, y = Inf, label = "After",  vjust = 1.5,
+           hjust = 0.5, size = 3, colour = "grey40") +
+  # Data layers
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high),
+                position = position_dodge(width = 0.4),
+                width = 0.25, linewidth = 0.4, colour = "grey40") +
+  geom_line(aes(group = site),
+            position = position_dodge(width = 0.4), linewidth = 0.6) +
+  geom_point(colour = "black", size = 2.5, stroke = 0.4,
+             position = position_dodge(width = 0.4)) +
+  scale_colour_manual(values = site_colours, labels = site_labels) +
+  scale_fill_manual(values   = site_fill,    labels = site_labels) +
+  scale_shape_manual(values  = site_shapes,  labels = site_labels) +
+  scale_x_continuous(breaks = 0:6, labels = monitor_labels, limits = c(-0.3, 6.3)) +
+  scale_y_continuous(trans = "log1p") +
+  labs(x = NULL, y = "Mean CPUE\n(± 95% CI, log scale)",
+       colour = "Site type", shape = "Site type", fill = "Site type") +
   theme(
     axis.text.x     = element_text(size = 9),
     axis.text.y     = element_text(size = 9),
@@ -836,6 +995,7 @@ koura_cpue_plot <- all_data %>%
     site    = factor(site, levels = c("Stone_pile", "Control", "Reference")),
     site_id = factor(as.numeric(as.character(site_id)), levels = site_id_order)) %>%
   ggplot(aes(monitoring_int, `Weighted_CPUE_Kōura`, shape = site, fill = site)) +
+  geom_vline(xintercept = 0.25, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
   geom_smooth(se = FALSE, aes(group = site, col = site)) +
   geom_point(size = 2, col = "black") +
   facet_wrap(~site_id, ncol = 4) +
@@ -880,6 +1040,11 @@ ratio_summary <- ratio_data %>%
 
 ratio_plot <- ggplot(ratio_summary,
     aes(monitoring_int, mean_ratio, colour = site, fill = site, shape = site)) +
+  geom_vline(xintercept = 0.25, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
+  annotate("text", x = -0.15, y = Inf, label = "Before", vjust = 1.5,
+           hjust = 0.5, size = 3, colour = "grey40") +
+  annotate("text", x = 3.5,   y = Inf, label = "After",  vjust = 1.5,
+           hjust = 0.5, size = 3, colour = "grey40") +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50", linewidth = 0.4) +
   geom_ribbon(aes(ymin = ci_low, ymax = ci_high), alpha = 0.15, colour = NA,
               position = position_dodge(width = 0.4)) +
@@ -1361,7 +1526,7 @@ rq1_full_tidy <- rq1_results %>%
                 term, estimate, std.error, statistic, p.value, p_adj_BH, conf.low, conf.high) %>%
   dplyr::mutate(across(where(is.numeric), ~ round(.x, 3)))
 
-print(rq1_full_tidy, n=16)
+print(rq1_full_tidy, n=18)
 
 DT::datatable(
   rq1_full_tidy,
@@ -1448,7 +1613,7 @@ fit_rq2b <- function(species, response_type) {
   zif     <- if (species == "Catfish" && response_type == "abundance") ~1 else ~0
   # Season collinear with Period in BACI context; all models → Base
   # (In RQ2b post-only data, Season appeared supported by AICc but model was degenerate)
-  form <- paste0("`", response_col, "` ~ site * monitoring_int + (1 | site_id)")
+  form <- paste0("`", response_col, "` ~ site * monitoring_int + (1 | pair_id/site_id)")
   m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = rq2b_data, REML = TRUE, family = fam_obj,
                   ziformula = zif),
                 error = function(e) NULL)
@@ -1650,6 +1815,7 @@ DT::datatable(
 
 ```
 
+
 ### Predicted trajectories (kōura abundance convergence)
 ```{r}
 #| label: fig-convergence-plot
@@ -1693,12 +1859,26 @@ convergence_data_plot <- rq3a_data %>%
   filter(!is.na(`Weighted_CPUE_Kōura`)) %>%
   mutate(site = factor(site, levels = c("Stone_pile", "Reference")))
 
+pre_data_plot <- all_data %>%
+  dplyr::filter(site %in% c("Stone_pile", "Reference"),
+                monitoring_int == 0,
+                !is.na(`Weighted_CPUE_Kōura`)) %>%
+  dplyr::mutate(site = factor(site, levels = c("Stone_pile", "Reference")))
+
 convergence_plot <- ggplot() +
+  geom_vline(xintercept = 0.25, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
+  annotate("text", x = -0.15, y = Inf, label = "Before", vjust = 1.5,
+           hjust = 0.5, size = 3, colour = "grey40") +
+  annotate("text", x = 3.5, y = Inf, label = "After", vjust = 1.5,
+           hjust = 0.5, size = 3, colour = "grey40") +
+  geom_point(data = pre_data_plot, aes(monitoring_int, `Weighted_CPUE_Kōura`, fill = site, shape = site),
+             colour = "black", alpha = 0.2, size = 1.8, stroke = 0.5,
+             position = position_jitter(width = 0.08, seed = 42), show.legend = FALSE) +
   geom_point(data = convergence_data_plot, aes(monitoring_int, `Weighted_CPUE_Kōura`,  fill = site, shape = site),  colour = "black",  alpha = 0.4, size = 1.8, stroke = 0.5, position = position_jitter(width = 0.08, seed = 42),show.legend = FALSE) +
   geom_ribbon(data = emm_m3aak, aes(monitoring_int, response,  ymin = lower.CL, ymax = upper.CL, fill = site),  alpha = 0.15, colour = NA,  show.legend = FALSE) +
   geom_line(data = emm_m3aak,  aes(monitoring_int, response,  colour = site, group = site), linewidth = 1.1) +
   geom_point(data = emm_m3aak, aes(monitoring_int, response,  fill = site, shape = site), colour = "black", size = 3, stroke = 0.4) +
-  annotate("text", x = 0, y = Inf, label = model_label, parse = TRUE,  hjust = 0, vjust = 1.4, size = 3.2, colour = "grey30") +
+  annotate("text", x = 0.5, y = Inf, label = model_label, parse = TRUE,  hjust = 0, vjust = 1.8, size = 3.2, colour = "grey30") +
   scale_colour_manual(values = conv_colours, labels = conv_labels) +
   scale_fill_manual(  values = conv_fill,    labels = conv_labels) +
   scale_shape_manual( values = conv_shapes,  labels = conv_labels) +
@@ -1713,7 +1893,7 @@ convergence_plot
 ```
 
 
-### before after Model figure
+### Before after Model figure
 ```{r}
 #| label: fig-before-after-models
 #| fig-width: 8
@@ -1767,8 +1947,6 @@ ggplot2::ggplot(before_after_long,
     axis.text.x     = ggplot2::element_text(angle = 35, hjust = 1),
     legend.position = "bottom")
 ```
-
-
 
 ## Model diagnostics 
 ```{r}
@@ -1926,7 +2104,7 @@ DT::datatable(
 ```{r}
 #| label: fig-forest-plot
 #| fig-width: 3
-#| fig-height: 12
+#| fig-height: 14
 #| dpi: 300
 #| fig-cap: "Effect sizes (β ± 95% CI) for the key term of interest of every model in model_registry (kōura and catfish, RQ1–RQ4). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — β magnitudes are not directly comparable across panels because each RQ tests a different contrast (step-change, per-round slope, or simple group difference) and RQ1 occupancy is on the log-odds scale while all others use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded."
 
@@ -1942,7 +2120,8 @@ forest_data <- tidy_all %>%
       TRUE ~ comparison),
     model_name = paste0(model_id, " ", species, " (", response_type, ")\n(", comparison_label, ")"),
     group = dplyr::case_when(
-      RQ == "RQ1"  ~ "Baseline check",
+      RQ == "RQ1"  & comparison %in% c("vs_control", "treatment") ~ "Baseline check (Stone pile vs Control)",
+      RQ == "RQ1"  & comparison == "reference"                    ~ "Baseline check (Ref 1 vs Ref 2)",
       RQ == "RQ2a" ~ "Construction impact (step-change)",
       RQ == "RQ2b" ~ "Construction impact (trajectory)",
       RQ == "RQ3a" ~ "Recovery toward reference",
@@ -1951,7 +2130,8 @@ forest_data <- tidy_all %>%
     significant = p.value < 0.05) %>%
   dplyr::arrange(
     factor(group, levels = c(
-      "Baseline check",
+      "Baseline check (Stone pile vs Control)",
+      "Baseline check (Ref 1 vs Ref 2)",
       "Construction impact (step-change)",
       "Construction impact (trajectory)",
       "Recovery toward reference",
@@ -1961,7 +2141,8 @@ forest_data <- tidy_all %>%
   dplyr::mutate(
     model_name  = factor(model_name, levels = rev(unique(model_name))),
     group       = factor(group, levels = c(
-      "Baseline check",
+      "Baseline check (Stone pile vs Control)",
+      "Baseline check (Ref 1 vs Ref 2)",
       "Construction impact (step-change)",
       "Construction impact (trajectory)",
       "Recovery toward reference",
@@ -1998,7 +2179,7 @@ forest_plot <- ggplot(forest_data,
     legend.position    = "bottom",
     panel.grid.major.x = element_line(colour = "grey92", linewidth = 0.3))
 
-ggsave(file.path(out_dir, "fig-forest-plot.png"), forest_plot, width = 4, height = 12, dpi = 300)
+ggsave(file.path(out_dir, "fig-forest-plot.png"), forest_plot, width = 4, height = 14, dpi = 300)
 
 forest_plot
 ```
@@ -2322,6 +2503,317 @@ print(rq3_cov_summary, n = 28)
 DT::datatable(rq3_cov_summary, filter = "top",
   options = list(pageLength = 30, dom = 'Bfrtip', buttons = c('csv', 'excel')),
   extensions = 'Buttons', rownames = FALSE)
+```
+
+## Habitat compression model
+```{r}
+#| label: tbl-habitat-compression
+# Does kōura abundance at stone pile sites increase relative to control/reference
+# sites as habitable depth decreases (thermal compression hypothesis)?
+
+hc_data <- Combined_data |>
+  dplyr::filter(
+    monitoring > 0,
+    is.finite(habitable_depth_m),
+    !is.na(`Weighted_CPUE_Kōura`)) |>
+  dplyr::mutate(
+    site = factor(site, levels = c("Control", "Stone_pile", "Reference")),
+    habitable_depth_c = habitable_depth_m - mean(habitable_depth_m, na.rm = TRUE)  )
+
+m_hc_koura <- glmmTMB::glmmTMB(
+  `Weighted_CPUE_Kōura` ~ site * habitable_depth_c + monitoring_int + (1 | site_id),
+  data   = hc_data,
+  family = glmmTMB::tweedie(link = "log"))
+
+summary(m_hc_koura)
+
+# Tidy results for inline use
+hc_tidy <- broom.mixed::tidy(m_hc_koura, conf.int = TRUE, exponentiate = FALSE) |>
+  dplyr::filter(effect == "fixed") |>
+  dplyr::select(term, estimate, std.error, statistic, p.value, conf.low, conf.high)
+
+hc_tidy
+```
+
+## Habitat predictor variables
+```{r}
+# Habitat predictor model — all sites, post-construction
+hab_model_data <- all_data |>
+  dplyr::filter(monitoring_int >= 1, !is.na(`Weighted_CPUE_Kōura`)) |>
+  dplyr::mutate(
+    site_id = factor(site_id),
+    # centre continuous predictors
+    wood_c       = scale(Wood_cover)[,1],
+    trees_c      = scale(Overhanging_trees)[,1],
+    riparian_c   = scale(Riparian_vegetation)[,1],
+    substrate_c  = scale(Substrate_index_after)[,1],
+    slope5_c     = scale(Slope_0_5m)[,1],
+    slope20_c    = scale(Slope_0_20m)[,1])
+
+# Fit each habitat variable individually (AICc comparison)
+library(glmmTMB)
+
+hab_vars <- c("wood_c", "trees_c", "riparian_c", "substrate_c", "slope5_c", "slope20_c")
+
+hab_null <- glmmTMB(`Weighted_CPUE_Kōura` ~ monitoring_int + (1 | site_id),
+                    data = hab_model_data, REML = FALSE, family = tweedie())
+
+hab_fits <- purrr::map(hab_vars, \(v) {
+  form <- paste0("`Weighted_CPUE_Kōura` ~ ", v, " + monitoring_int + (1 | site_id)")
+  glmmTMB(as.formula(form), data = hab_model_data, REML = FALSE, family = tweedie())
+}) |> purrr::set_names(hab_vars)
+
+# AICc table
+purrr::map_dfr(hab_vars, \(v) {
+  m <- hab_fits[[v]]
+  tibble::tibble(
+    variable   = v,
+    AICc       = MuMIn::AICc(m),
+    delta_AICc = MuMIn::AICc(m) - MuMIn::AICc(hab_null),
+    beta       = broom.mixed::tidy(m, effects = "fixed") |>
+                   dplyr::filter(stringr::str_detect(term, v)) |>
+                   dplyr::pull(estimate),
+    p          = broom.mixed::tidy(m, effects = "fixed") |>
+                   dplyr::filter(stringr::str_detect(term, v)) |>
+                   dplyr::pull(p.value))
+}) |> dplyr::arrange(AICc)
+
+
+
+# One row per site — clean site-level summary
+site_summary <- all_data |>
+  dplyr::filter(monitoring_int >= 1, !is.na(`Weighted_CPUE_Kōura`)) |>
+  dplyr::group_by(site_id, site, pair_id) |>
+  dplyr::summarise(
+    mean_cpue          = mean(`Weighted_CPUE_Kōura`, na.rm = TRUE),
+    substrate_after    = max(Substrate_index_after),
+    wood_cover         = mean(Wood_cover, na.rm = TRUE),
+    overhanging_trees  = mean(Overhanging_trees, na.rm = TRUE),
+    riparian_veg       = mean(Riparian_vegetation, na.rm = TRUE),
+    slope_20           = mean(Slope_0_20m, na.rm = TRUE),
+    slope_5            = mean(Slope_0_5m, na.rm = TRUE),
+    .groups = "drop")
+
+# Correlate everything
+site_summary |>
+  dplyr::select(mean_cpue, substrate_after, wood_cover, 
+                overhanging_trees, riparian_veg, slope_20, slope_5) |>
+  cor(method = "spearman")
+
+# Scale predictors
+site_scaled <- site_summary |>
+  dplyr::mutate(across(substrate_after:slope_5, scale))
+
+# Full model
+m_full <- lm(log1p(mean_cpue) ~ substrate_after + wood_cover + 
+               overhanging_trees + riparian_veg + slope_20, 
+             data = site_scaled,
+             na.action = na.fail)
+
+MuMIn::dredge(m_full)
+
+
+
+
+
+
+
+
+
+
+
+```
+
+## Bayesian models
+```{r}
+#| label: bayesian-hierarchical-model
+
+library(brms)
+
+m_bayes <- brm(
+  `Weighted_CPUE_Kōura` ~ site * monitoring_int + (1 | pair_id/site_id),
+  data   = rq2b_data,
+  family = hurdle_gamma(),
+  chains = 4,
+  iter   = 2000,
+  cores  = 4,
+  seed   = 42,
+  prior  = c(prior(normal(0, 2), class = b),
+     prior(normal(0, 2), class = Intercept),
+     prior(exponential(1), class = sd)))
+
+
+summary(m_bayes)
+ 
+hypothesis(m_bayes, "siteStone_pile:monitoring_int > 0")
+```
+
+```{r}
+library(unmarked)
+
+# Step 1: detection per site × round × net type
+koura_det <- Fish_data |>
+  dplyr::mutate(
+    monitoring_int = as.integer(stringr::str_extract(monitoring_id, "(?<=_)\\d+"))
+  ) |>
+  dplyr::group_by(site_id, monitoring_int, net_type) |>
+  dplyr::summarise(
+    detected = as.integer(any(is_koura, na.rm = TRUE)),
+    .groups = "drop"
+  )
+
+# Step 2: wide format — one column per net type per round
+det_wide <- koura_det |>
+  tidyr::pivot_wider(
+    names_from  = net_type,
+    values_from = detected,
+    values_fill = 0)
+
+# Step 3: join site covariates
+site_covs <- Combined_data |>
+  dplyr::distinct(site_id, site, pair_id) |>
+  dplyr::mutate(site_id = as.character(site_id),
+                site     = factor(site, levels = c("Control", "Stone_pile", "Reference")))
+
+occ_data <- det_wide |>
+  dplyr::mutate(site_id = as.character(site_id)) |>
+  dplyr::left_join(site_covs, by = "site_id") |>
+  dplyr::arrange(site_id, monitoring_int)
+
+# Step 4: build unmarked frame
+# detection matrix: Box and Fyke as two occasions
+y_mat <- occ_data |>
+  dplyr::select(Box, Fyke) |>
+  as.matrix()
+
+site_df <- occ_data |>
+  dplyr::select(site, pair_id, monitoring_int) |>
+  dplyr::mutate(across(everything(), as.factor))
+
+umf <- unmarkedFrameOccu(
+  y        = y_mat,
+  siteCovs = site_df)
+
+# occupancy ~ site type + monitoring round
+# detection ~ net type (estimated from Box vs Fyke difference)
+m_occ <- occu(~ 1 ~ site + monitoring_int, data = umf)
+summary(m_occ)
+
+# predicted occupancy by site type
+predict(m_occ, type = "state",
+        newdata = data.frame(
+          site           = factor(c("Control","Stone_pile","Reference"),
+                                  levels = c("Control","Stone_pile","Reference")),
+          monitoring_int = factor("1")))
+
+```
+
+# Multi-scale hierarchical framework
+```{r}
+#| label: Multi-scale-hierarchical-framework
+
+library(vegan)
+
+# Two-scale variance partition (Scale 1: location, Scale 2: habitat)
+vp_data <- site_summary |>
+  dplyr::mutate(pair_id = as.factor(pair_id)) |>
+  dplyr::filter(!is.na(substrate_after))
+
+nrow(vp_data)
+
+# X1 — lake/location scale: pair identity as spatial block
+X1 <- model.matrix(~ pair_id - 1, data = vp_data)
+
+# X2 — site/habitat scale: substrate index only
+X2 <- vp_data |>
+  dplyr::select(substrate_after) |>
+  dplyr::mutate(across(everything(), scale)) |>
+  as.data.frame()
+
+Y <- log1p(vp_data$mean_cpue)
+
+# Variance partition
+vp <- vegan::varpart(Y, X1, X2)
+vp
+plot(vp, digits = 2, bg = c("#E8A598", "#A8C5A0"))
+
+# Partial RDA significance tests
+# [a] pure location: X1 | X2
+rda_a <- vegan::rda(Y ~ pair_id + Condition(substrate_after), data = vp_data)
+anova(rda_a, permutations = 9999)
+
+# [b] pure habitat: X2 | X1
+rda_b <- vegan::rda(Y ~ substrate_after + Condition(pair_id), data = vp_data)
+anova(rda_b, permutations = 9999)
+
+```
+
+## Dynamic model — Scale 3 temporal/biotic predictors
+```{r}
+#| label: dynamic-model
+
+# ── Data preparation ───────────────────────────────────────────────────────
+# Size-weighted catfish predation pressure (Barnes & Hicks 2003):
+# large >250mm = 64% kōura in gut, small <150mm = 15%, medium = 35%
+catfish_pressure <- Fish_data |>
+  dplyr::filter(species == "Catfish", !is.na(length_mm)) |>
+  dplyr::mutate(
+    site_id          = as.factor(site_id),
+    predation_weight = dplyr::case_when(
+      length_mm > 250 ~ 0.64,
+      length_mm < 150 ~ 0.15,
+      TRUE            ~ 0.35)) |>
+  dplyr::group_by(site_id, monitoring_id) |>
+  dplyr::summarise(
+    weighted_catfish_cpue = sum(predation_weight) / dplyr::n(),
+    .groups = "drop")
+
+dynamic_data <- all_data |>
+  dplyr::filter(monitoring_int >= 1, !is.na(`Weighted_CPUE_Kōura`)) |>
+  dplyr::left_join(catfish_pressure, by = c("site_id", "monitoring_id")) |>
+  dplyr::mutate(
+    site_id        = factor(site_id),
+    catfish_cpue_c = scale(`Weighted_CPUE_Catfish`)[,1],
+    temp_c         = scale(Temperature)[,1])
+
+# ── Global model: only time-varying predictors as fixed effects ────────────
+# substrate, wood, site type absorbed by (1|site_id) random intercept
+m_dynamic <- glmmTMB::glmmTMB(
+  `Weighted_CPUE_Kōura` ~ Season + temp_c + catfish_cpue_c + (1 | site_id),
+  data      = dynamic_data,
+  REML      = FALSE,
+  family    = glmmTMB::tweedie(),
+  na.action = na.fail)
+
+summary(m_dynamic)
+
+# ── Model selection ────────────────────────────────────────────────────────
+dredge_dynamic <- MuMIn::dredge(m_dynamic)
+dredge_dynamic
+
+# Model-averaged coefficients (models within 4 AICc of top)
+avg_dynamic <- MuMIn::model.avg(dredge_dynamic, subset = delta < 4)
+summary(avg_dynamic)
+
+# ── Site-level random effects (BLUPs) ─────────────────────────────────────
+# Residual between-site variation after accounting for temporal predictors
+site_ranef <- glmmTMB::ranef(m_dynamic)$cond$site_id |>
+  tibble::rownames_to_column("site_id") |>
+  dplyr::rename(site_effect = `(Intercept)`)
+
+site_ranef |> dplyr::arrange(dplyr::desc(site_effect))
+
+# ── Catfish × habitable depth interaction ──────────────────────────────────
+# Tests whether catfish predation pressure depends on habitat depth
+# (requires habitable_depth_m — check if column exists in all_data)
+m_interaction <- glmmTMB::glmmTMB(
+  `Weighted_CPUE_Kōura` ~ scale(`Weighted_CPUE_Catfish`) * scale(habitable_depth_m) +
+    Season + (1 | site_id),
+  data   = dynamic_data |> dplyr::filter(!is.na(habitable_depth_m)),
+  REML   = FALSE,
+  family = glmmTMB::tweedie())
+
+summary(m_interaction)
 ```
 
 # Session info

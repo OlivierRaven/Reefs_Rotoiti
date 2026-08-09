@@ -1,0 +1,1157 @@
+---
+title: "Kōura two-method occupancy analysis — Lake Rotoiti stone-pile BACI"
+format: html
+execute:
+  message: false
+  warning: false
+---
+
+# Setup
+```{r}
+#| label: setup
+library(brms)
+library(cmdstanr)
+library(tidyverse)
+library(tidybayes)
+library(posterior)
+library(bayesplot)
+
+
+options(brms.backend = "cmdstanr")
+options(mc.cores = parallel::detectCores())
+
+occ_dir <- file.path("outputs", "occupancy")
+dir.create(occ_dir, showWarnings = FALSE, recursive = TRUE)
+
+location_levels <- c("Control", "Stone_pile", "Reference1", "Reference2")
+period_levels   <- c("Before", "After")
+season_levels   <- c("Summer", "Autumn", "Winter", "Spring")
+block_levels    <- c("Impact", "Reference")
+
+round_lookup <- tibble(
+  round  = 0:6,
+  period = c("Before", rep("After", 6)),
+  season = c("Summer", "Autumn", "Winter", "Spring", "Summer", "Autumn", "Winter"),
+  year   = c(1, 1, 1, 1, 2, 2, 2)
+) |>
+  mutate(
+    period = factor(period, levels = period_levels),
+    season = factor(season, levels = season_levels)
+  )
+
+print(round_lookup)
+```
+
+# Custom two-method occupancy family
+
+Two detection methods deployed at every site every round:
+
+- **Method A** — Box traps (~32 % detection probability)
+- **Method B** — Fyke nets (~63 % detection probability)
+
+The custom brms/Stan family marginalises the latent occupancy state *z* over both
+methods jointly, and tolerates partial missingness (one trap lost to storms) via
+four `vint()` helper columns per occasion: `yA_obs`, `yB_obs` (trap retrieved?),
+`yA`, `yB` (kōura detected?).
+
+```{r}
+#| label: occupancy-family
+stan_funs_occ <- "
+  real occ2_lpmf(int y, real psi, real pA, real pB,
+                  int yA_obs, int yB_obs, int yA, int yB) {
+    real ll_given_occ = 0;
+    int any_detect = 0;
+
+    if (yA_obs == 1) {
+      ll_given_occ += yA * log(pA) + (1 - yA) * log1m(pA);
+      if (yA == 1) any_detect = 1;
+    }
+    if (yB_obs == 1) {
+      ll_given_occ += yB * log(pB) + (1 - yB) * log1m(pB);
+      if (yB == 1) any_detect = 1;
+    }
+
+    if (any_detect == 1) {
+      return log(psi) + ll_given_occ;
+    } else {
+      return log_sum_exp(log(psi) + ll_given_occ, log1m(psi));
+    }
+  }
+"
+
+stanvars_occ <- brms::stanvar(scode = stan_funs_occ, block = "functions")
+
+# brms custom family — dpars must start with "mu" (brms >= 2.21)
+# mu maps to psi (true occupancy); pA and pB are detection submodels
+# vars must use brms internal vint names matching vint() order in formula
+occ2 <- custom_family(
+  name  = "occ2",
+  dpars = c("mu", "pA", "pB"),
+  links = c("logit", "logit", "logit"),
+  lb    = c(0, 0, 0),
+  ub    = c(1, 1, 1),
+  type  = "int",
+  vars  = c("vint1[n]", "vint2[n]", "vint3[n]", "vint4[n]")
+)
+
+log_lik_occ2 <- function(i, prep) {
+  psi    <- brms::get_dpar(prep, "mu", i = i)
+  pA     <- brms::get_dpar(prep, "pA", i = i)
+  pB     <- brms::get_dpar(prep, "pB", i = i)
+  yA_obs <- prep$data$vint1[i]; yB_obs <- prep$data$vint2[i]
+  yA     <- prep$data$vint3[i]; yB     <- prep$data$vint4[i]
+  ll_given_occ <- 0; any_detect <- 0
+  if (yA_obs == 1) {
+    ll_given_occ <- ll_given_occ + yA * log(pA) + (1 - yA) * log1p(-pA)
+    if (yA == 1) any_detect <- 1
+  }
+  if (yB_obs == 1) {
+    ll_given_occ <- ll_given_occ + yB * log(pB) + (1 - yB) * log1p(-pB)
+    if (yB == 1) any_detect <- 1
+  }
+  if (any_detect == 1) log(psi) + ll_given_occ
+  else log(psi * exp(ll_given_occ) + (1 - psi))
+}
+
+posterior_predict_occ2 <- function(i, prep, ...) {
+  psi    <- brms::get_dpar(prep, "mu", i = i)
+  pA     <- brms::get_dpar(prep, "pA", i = i)
+  pB     <- brms::get_dpar(prep, "pB", i = i)
+  yA_obs <- prep$data$vint1[i]; yB_obs <- prep$data$vint2[i]
+  z      <- rbinom(length(psi), 1, psi)
+  yA_sim <- ifelse(yA_obs == 1, rbinom(length(psi), 1, z * pA), NA_integer_)
+  yB_sim <- ifelse(yB_obs == 1, rbinom(length(psi), 1, z * pB), NA_integer_)
+  rowSums(cbind(yA_sim, yB_sim), na.rm = TRUE)
+}
+
+# posterior_epred returns psi (true occupancy), not detection-weighted catch
+posterior_epred_occ2 <- function(prep) {
+  brms::get_dpar(prep, "mu")
+}
+
+cat("Custom family 'occ2' defined.\n")
+```
+
+# Import and prepare data
+```{r}
+#| label: import-data
+model_data_path <- file.path("outputs", "occupancy", "model_data.rds")
+
+if (!file.exists(model_data_path)) {
+
+  combined <- readr::read_csv(file.path("data", "derived", "Combined_data.csv"),
+                               show_col_types = FALSE)
+  fish     <- readr::read_csv(file.path("data", "derived", "Fish_data.csv"),
+                               show_col_types = FALSE)
+
+  backbone <- combined |>
+    dplyr::transmute(
+      site_id            = as.integer(site_id),
+      round              = as.integer(monitoring),
+      monitoring_id      = monitoring_id,
+      location_type      = dplyr::case_when(
+        Site_type_detail == "Stone_pile"  ~ "Stone_pile",
+        Site_type_detail == "Control"     ~ "Control",
+        Site_type_detail == "Reference_1" ~ "Reference1",
+        Site_type_detail == "Reference_2" ~ "Reference2",
+        TRUE                              ~ NA_character_),
+      block              = dplyr::case_when(
+        Site_type_detail %in% c("Stone_pile", "Control")      ~ "Impact",
+        Site_type_detail %in% c("Reference_1", "Reference_2") ~ "Reference",
+        TRUE                                                    ~ NA_character_),
+      temperature        = as.numeric(Temperature),
+      monitoring_quality = as.character(monitoring_quality),
+      pair_id            = pair_id
+    ) |>
+    dplyr::filter(!is.na(location_type))
+
+  # One row per kōura individual → collapse to presence per site×round×method
+  koura_by_method <- fish |>
+    dplyr::filter(species == "Kōura") |>
+    dplyr::group_by(site_id, monitoring_id, net_type) |>
+    dplyr::summarise(detected = 1L, .groups = "drop") |>
+    dplyr::mutate(site_id = as.integer(site_id))
+
+  # Cross all valid site×round combinations with both methods; fill 0 for no-catch
+  all_combos <- backbone |>
+    dplyr::select(site_id, monitoring_id) |>
+    tidyr::crossing(net_type = c("Box", "Fyke"))
+
+  detection_wide <- all_combos |>
+    dplyr::left_join(
+      koura_by_method |> dplyr::select(site_id, monitoring_id, net_type, detected),
+      by = c("site_id", "monitoring_id", "net_type")) |>
+    dplyr::mutate(detected = tidyr::replace_na(detected, 0L)) |>
+    tidyr::pivot_wider(names_from = net_type, values_from = detected) |>
+    dplyr::rename(yA = Box, yB = Fyke)
+
+  real_data <- backbone |>
+    dplyr::left_join(detection_wide, by = c("site_id", "monitoring_id")) |>
+    dplyr::mutate(
+      # monitoring_quality == "complete" → both traps usable
+      usable = monitoring_quality == "complete",
+      yA_obs = as.integer(usable),
+      yB_obs = as.integer(usable),
+      yA     = dplyr::if_else(usable, yA, NA_integer_),
+      yB     = dplyr::if_else(usable, yB, NA_integer_)
+    ) |>
+    dplyr::filter(!(yA_obs == 0 & yB_obs == 0)) |>   # drop zero-info occasions
+    dplyr::left_join(round_lookup, by = "round") |>
+    dplyr::mutate(
+      location_type = factor(location_type, levels = location_levels),
+      block         = factor(block, levels = block_levels),
+      location_id   = paste(site_id, location_type, sep = "_"),
+      temp_z        = as.numeric(scale(temperature))  # global standardisation
+    ) |>
+    dplyr::select(site_id, block, location_type, location_id, round,
+                  period, season, year, temperature, temp_z,
+                  yA_obs, yB_obs, yA, yB, pair_id, monitoring_quality)
+
+  # Stan requires no NAs: replace NA detection with 0 (yA_obs/yB_obs flags
+  # tell Stan to ignore the value when the trap was lost)
+  model_data <- real_data |>
+    dplyr::mutate(
+      y_dummy = 0L,
+      yA = dplyr::if_else(is.na(yA), 0L, yA),
+      yB = dplyr::if_else(is.na(yB), 0L, yB)
+    )
+
+  # Validation
+  stopifnot(
+    all(model_data$yA %in% c(0L, 1L)),
+    all(model_data$yB %in% c(0L, 1L)),
+    all(model_data$round %in% 0:6),
+    all(model_data$yA_obs == 1 | model_data$yB_obs == 1)
+  )
+
+  saveRDS(model_data, model_data_path)
+  cat("Imported and saved:", nrow(model_data), "occasions\n")
+
+} else {
+  model_data <- readRDS(model_data_path)
+  cat("Loaded cached model data:", nrow(model_data), "occasions\n")
+}
+
+cat("\nOccasions by location × period × season:\n")
+print(dplyr::count(model_data, location_type, period, season))
+
+cat("\nKōura detection rates by method:\n")
+cat("  Box trap (yA):", round(mean(model_data$yA), 3), "\n")
+cat("  Fyke net (yB):", round(mean(model_data$yB), 3), "\n")
+```
+
+# Priors
+
+Weakly informative normal(0, 1.5) priors on log-odds scale for fixed effects
+(allows ±3 units ≈ occupancy/detection probability ranging ~0.05–0.95).
+Normal(0, 1) on random-effect SDs.
+
+```{r}
+#| label: priors
+priors_occ <- c(
+  prior(normal(0, 1.5), class = "b"),
+  prior(normal(0, 1.5), class = "b", dpar = "pA"),
+  prior(normal(0, 1.5), class = "b", dpar = "pB"),
+  prior(normal(0, 1),   class = "sd"),
+  prior(normal(0, 1),   class = "sd", dpar = "pA"),
+  prior(normal(0, 1),   class = "sd", dpar = "pB")
+)
+```
+
+# Model 1: Full model (all seasons)
+
+Primary model using all 128 occasions. Tests `location_type × period × season`
+interaction. Provides whole-study headline occupancy estimates and uses the full
+data to estimate variance components (site random effects, detection–temperature
+slope) most precisely.
+
+```{r}
+#| label: fit-full
+full_path <- file.path("outputs", "occupancy", "fit_full.rds")
+
+if (!file.exists(full_path)) {
+
+  bf_full <- bf(
+    y_dummy | vint(yA_obs, yB_obs, yA, yB) ~
+      location_type * period * season + (1 | site_id),
+    pA ~ 1 + temp_z + (1 | site_id),
+    pB ~ 1 + temp_z + (1 | site_id),
+    family = occ2
+  )
+
+  fit_full <- brm(
+    bf_full,
+    data     = model_data,
+    prior    = priors_occ,
+    stanvars = stanvars_occ,
+    chains   = 4, iter = 4000, warmup = 1500,
+    seed     = 2026,
+    control  = list(adapt_delta = 0.97, max_treedepth = 13)
+  )
+
+  saveRDS(fit_full, full_path)
+  cat("Fitted and saved full model.\n")
+
+} else {
+  fit_full <- readRDS(full_path)
+  cat("Loaded cached full model.\n")
+}
+
+summary(fit_full)
+cat("\nMax Rhat:   ", max(brms::rhat(fit_full), na.rm = TRUE), "\n")
+cat("Min ESS:    ", min(posterior::summarise_draws(fit_full)$ess_bulk, na.rm = TRUE), "\n")
+cat("Divergences:", sum(brms::nuts_params(fit_full, pars = "divergent__")$Value), "\n")
+```
+
+```{r}
+#| label: traceplots-full
+bayesplot::mcmc_trace(fit_full, regex_pars = "^b_") +
+  labs(title = "Full model — fixed-effect trace plots")
+```
+
+# Model 2: Summer-only model
+
+Confirmatory model restricted to Summer rounds (R0 Before, R4 After). Targets
+the a-priori hypothesis that refuge value is greatest in summer when catfish
+pressure and thermal stratification are highest. Treated as a robustness check
+on the summer cells of the full model, not a replacement for it.
+
+```{r}
+#| label: fit-summer
+summer_path <- file.path("outputs", "occupancy", "fit_summer.rds")
+summer_data <- model_data |> dplyr::filter(season == "Summer")
+
+cat("Summer subset:", nrow(summer_data), "occasions\n")
+print(dplyr::count(summer_data, location_type, period))
+
+if (!file.exists(summer_path)) {
+
+  bf_summer <- bf(
+    y_dummy | vint(yA_obs, yB_obs, yA, yB) ~
+      location_type * period + (1 | site_id),
+    pA ~ 1 + temp_z + (1 | site_id),
+    pB ~ 1 + temp_z + (1 | site_id),
+    family = occ2
+  )
+
+  fit_summer <- brm(
+    bf_summer,
+    data     = summer_data,
+    prior    = priors_occ,
+    stanvars = stanvars_occ,
+    chains   = 4, iter = 4000, warmup = 1500,
+    seed     = 2026,
+    control  = list(adapt_delta = 0.97, max_treedepth = 13)
+  )
+
+  saveRDS(fit_summer, summer_path)
+  cat("Fitted and saved summer model.\n")
+
+} else {
+  fit_summer <- readRDS(summer_path)
+  cat("Loaded cached summer model.\n")
+}
+
+summary(fit_summer)
+cat("\nMax Rhat:   ", max(brms::rhat(fit_summer), na.rm = TRUE), "\n")
+cat("Min ESS:    ", min(posterior::summarise_draws(fit_summer)$ess_bulk, na.rm = TRUE), "\n")
+cat("Divergences:", sum(brms::nuts_params(fit_summer, pars = "divergent__")$Value), "\n")
+```
+
+```{r}
+#| label: traceplots-summer
+bayesplot::mcmc_trace(fit_summer, regex_pars = "^b_") +
+  labs(title = "Summer model — fixed-effect trace plots")
+```
+
+# Model 3: Warm-season model (Summer + Autumn)
+
+Ecological rationale: thermal stratification in Lake Rotoiti peaks in summer and
+persists through autumn, compressing kōura into the oxygenated nearshore zone
+where stone piles sit. Catfish predation pressure is also highest in these two
+seasons. This model tests the restoration signal in the combined warm season
+(76 occasions) with more power than summer-only (40 occasions).
+
+Season is included as an additive covariate — not a full three-way interaction —
+because the data support estimating seasonal baseline differences in occupancy
+but not the full `location_type × period × season` interaction in this subset.
+
+```{r}
+#| label: fit-warm
+warm_path <- file.path("outputs", "occupancy", "fit_warm.rds")
+warm_data <- model_data |>
+  dplyr::filter(season %in% c("Summer", "Autumn")) |>
+  dplyr::mutate(season = droplevels(season))
+
+cat("Warm subset:", nrow(warm_data), "occasions\n")
+print(dplyr::count(warm_data, location_type, period, season))
+
+if (!file.exists(warm_path)) {
+
+  bf_warm <- bf(
+    y_dummy | vint(yA_obs, yB_obs, yA, yB) ~
+      location_type * period + season + (1 | site_id),
+    pA ~ 1 + temp_z + (1 | site_id),
+    pB ~ 1 + temp_z + (1 | site_id),
+    family = occ2
+  )
+
+  fit_warm <- brm(
+    bf_warm,
+    data     = warm_data,
+    prior    = priors_occ,
+    stanvars = stanvars_occ,
+    chains   = 4, iter = 4000, warmup = 1500,
+    seed     = 2026,
+    control  = list(adapt_delta = 0.99, max_treedepth = 13)
+  )
+
+  saveRDS(fit_warm, warm_path)
+  cat("Fitted and saved warm model.\n")
+
+} else {
+  fit_warm <- readRDS(warm_path)
+  cat("Loaded cached warm model.\n")
+}
+
+summary(fit_warm)
+cat("\nMax Rhat:   ", max(brms::rhat(fit_warm), na.rm = TRUE), "\n")
+cat("Min ESS:    ", min(posterior::summarise_draws(fit_warm)$ess_bulk, na.rm = TRUE), "\n")
+cat("Divergences:", sum(brms::nuts_params(fit_warm, pars = "divergent__")$Value), "\n")
+```
+
+```{r}
+#| label: traceplots-warm
+bayesplot::mcmc_trace(fit_warm, regex_pars = "^b_") +
+  labs(title = "Warm model — fixed-effect trace plots")
+```
+
+# Extract posterior contrasts
+
+Four contrasts of ecological interest, evaluated in the After period:
+
+1. **Stone_pile − Control** — did rocks help, relative to the paired control?
+2. **Reference1 − Reference2** — spatial noise floor (how similar are reference sites?)
+3. **Control − Reference (mean)** — how far below reference quality is the control?
+4. **Stone_pile − Reference (mean)** — how close to optimal did stone piles get?
+
+Plus the **BACI double-difference**: `(Stone_pile After−Before) − (Control After−Before)` —
+the most defensible causal estimate, as it removes any pre-existing gap between site types.
+
+```{r}
+#| label: contrast-functions
+summarise_draws_vec <- function(x, label) {
+  tibble(
+    contrast     = label,
+    mean         = mean(x),
+    median       = median(x),
+    lower95      = quantile(x, 0.025),
+    upper95      = quantile(x, 0.975),
+    p_direction  = mean(x > 0)
+  )
+}
+
+get_psi_draws <- function(fit, model_data, include_season = TRUE) {
+  grid_vars <- if (include_season) {
+    model_data |> dplyr::distinct(location_type, period, season)
+  } else {
+    model_data |> dplyr::distinct(location_type, period)
+  }
+  newdata <- grid_vars |>
+    dplyr::mutate(
+      site_id  = model_data$site_id[1],
+      temp_z   = 0, yA_obs = 1, yB_obs = 1, yA = 0, yB = 0, y_dummy = 0
+    )
+  draws <- posterior_epred(fit, newdata = newdata, re_formula = NA, dpar = "mu")
+  colnames(draws) <- if (include_season) {
+    paste(newdata$location_type, newdata$period, newdata$season, sep = "|")
+  } else {
+    paste(newdata$location_type, newdata$period, sep = "|")
+  }
+  list(draws = draws, grid = newdata)
+}
+
+build_contrasts <- function(draws, grid, period_val, season_val = NULL) {
+  key <- function(loc) {
+    if (is.null(season_val)) paste(loc, period_val, sep = "|")
+    else paste(loc, period_val, season_val, sep = "|")
+  }
+  d_add      <- draws[, key("Stone_pile")]
+  d_ctrl     <- draws[, key("Control")]
+  d_ref1     <- draws[, key("Reference1")]
+  d_ref2     <- draws[, key("Reference2")]
+  d_ref_mean <- (d_ref1 + d_ref2) / 2
+  bind_rows(
+    summarise_draws_vec(d_add  - d_ctrl,      "Stone_pile - Control"),
+    summarise_draws_vec(d_ref1 - d_ref2,      "Reference1 - Reference2"),
+    summarise_draws_vec(d_ctrl - d_ref_mean,  "Control - Reference (mean)"),
+    summarise_draws_vec(d_add  - d_ref_mean,  "Stone_pile - Reference (mean)")
+  ) |>
+    dplyr::mutate(period = period_val,
+                  season = if (is.null(season_val)) NA_character_ else season_val)
+}
+
+build_baci <- function(draws, include_season, season_val = NULL) {
+  key <- function(loc, period) {
+    if (include_season) paste(loc, period, season_val, sep = "|")
+    else paste(loc, period, sep = "|")
+  }
+  d <- (draws[, key("Stone_pile", "After")] - draws[, key("Stone_pile", "Before")]) -
+       (draws[, key("Control",    "After")] - draws[, key("Control",    "Before")])
+  summarise_draws_vec(d, "BACI: (Stone_pile After-Before) - (Control After-Before)") |>
+    dplyr::mutate(period = "Before-vs-After",
+                  season = if (include_season) season_val else NA_character_)
+}
+
+run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
+  psi_out <- get_psi_draws(fit, model_data, include_season)
+  draws   <- psi_out$draws
+  grid    <- psi_out$grid
+
+  cell_summary <- tibble(
+    location_type = grid$location_type,
+    period        = grid$period,
+    season        = if (include_season) grid$season else NA
+  ) |>
+    dplyr::mutate(
+      psi_mean = apply(draws, 2, mean),
+      psi_lwr  = apply(draws, 2, quantile, 0.025),
+      psi_upr  = apply(draws, 2, quantile, 0.975)
+    )
+
+  if (include_season) {
+    seasons_present      <- unique(grid$season)
+    contrasts_after      <- purrr::map_dfr(seasons_present,
+                              ~ build_contrasts(draws, grid, "After", .x))
+    seasons_with_before  <- grid |>
+      dplyr::filter(period == "Before") |> dplyr::pull(season) |> unique()
+    baci <- purrr::map_dfr(seasons_with_before,
+               ~ build_baci(draws, include_season = TRUE, season_val = .x))
+  } else {
+    contrasts_after <- build_contrasts(draws, grid, "After")
+    baci            <- build_baci(draws, include_season = FALSE)
+  }
+
+  contrasts_all <- dplyr::bind_rows(contrasts_after, baci) |>
+    dplyr::mutate(model = model_label)
+
+  readr::write_csv(cell_summary,
+    file.path("outputs", "occupancy", paste0(model_label, "_psi_estimates.csv")))
+  readr::write_csv(contrasts_all,
+    file.path("outputs", "occupancy", paste0(model_label, "_contrasts.csv")))
+
+  # Shared display helpers
+  site_labels  <- c(Control = "Control", Stone_pile = "Stone pile",
+                    Reference1 = "Reference 1", Reference2 = "Reference 2")
+  site_colours <- c(Control = "#E69F00", Stone_pile = "#009E73",
+                    Reference1 = "#56B4E9", Reference2 = "#CC79A7")
+  season_colours <- c(Summer = "#D55E00", Autumn = "#E69F00",
+                      Winter = "#56B4E9", Spring = "#009E73")
+
+  # Tidy contrast labels for display
+  contrasts_plot <- contrasts_all |>
+    dplyr::mutate(
+      contrast = dplyr::recode(contrast,
+        "Stone_pile - Control"                                         = "Stone pile vs Control",
+        "Reference1 - Reference2"                                      = "Reference 1 vs Reference 2",
+        "Control - Reference (mean)"                                   = "Control vs Reference",
+        "Stone_pile - Reference (mean)"                                = "Stone pile vs Reference",
+        "BACI: (Stone_pile After-Before) - (Control After-Before)"     = "BACI (Stone pile − Control)",
+        "BACI interaction: (Stone_pile After-Before) - (Control After-Before)" = "BACI (Stone pile − Control)"
+      ),
+      period = dplyr::recode(period,
+        "After"          = "After treatment",
+        "Before-vs-After"= "BACI"
+      )
+    )
+
+  # ---- Plot 1: occupancy probability ----------------------------------------
+  # Only draw connecting lines for location × season groups that have
+  # both Before and After estimates (avoids geom_line warning in Autumn panel)
+  lines_data <- cell_summary |>
+    dplyr::group_by(location_type, if (include_season) season else NULL) |>
+    dplyr::filter(dplyr::n_distinct(period) > 1) |>
+    dplyr::ungroup()
+
+  p1 <- ggplot(cell_summary,
+               aes(x = period, y = psi_mean,
+                   colour = location_type, group = location_type)) +
+    geom_line(data = lines_data,
+              position = position_dodge(0.35), linewidth = 0.7, alpha = 0.6) +
+    geom_pointrange(aes(ymin = psi_lwr, ymax = psi_upr),
+                    position = position_dodge(0.35),
+                    size = 0.5, linewidth = 0.8, fatten = 3) +
+    {if (include_season) facet_wrap(~season, nrow = 1)} +
+    scale_colour_manual(values = site_colours, labels = site_labels,
+                        name = "Site type") +
+    scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25),
+                       labels = scales::percent_format(accuracy = 1)) +
+    scale_x_discrete(labels = c(Before = "Before", After = "After")) +
+    labs(y = "Occupancy probability (ψ)", x = NULL) +
+    theme_bw(base_size = 12) +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.background = element_rect(fill = "grey92", colour = NA),
+      strip.text       = element_text(face = "bold"),
+      legend.position  = "right"
+    )
+  ggsave(file.path("outputs", "occupancy", paste0(model_label, "_psi_plot.png")),
+         p1, width = 10, height = 5, dpi = 300)
+
+  # ---- Plot 2: contrast forest plot -----------------------------------------
+  # Separate panels for After and BACI; fix x range symmetrically around 0
+  x_lim <- max(abs(c(contrasts_plot$lower95, contrasts_plot$upper95)),
+               na.rm = TRUE) * 1.05
+
+  p2 <- ggplot(contrasts_plot,
+               aes(x = mean, y = forcats::fct_rev(factor(contrast)),
+                   colour = if (include_season) season else NULL)) +
+    geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50", linewidth = 0.6) +
+    geom_pointrange(aes(xmin = lower95, xmax = upper95),
+                    position = position_dodge(0.6),
+                    size = 0.4, linewidth = 0.8, fatten = 3) +
+    facet_wrap(~period, scales = "free_y", nrow = 1) +
+    {if (include_season)
+        scale_colour_manual(values = season_colours, name = "Season")
+      else
+        scale_colour_manual(values = c("After treatment" = "grey30"), guide = "none")} +
+    scale_x_continuous(limits = c(-x_lim, x_lim),
+                       labels = scales::label_number(accuracy = 0.1)) +
+    labs(x = "Posterior contrast (probability scale)", y = NULL) +
+    theme_bw(base_size = 12) +
+    theme(
+      panel.grid.minor   = element_blank(),
+      panel.grid.major.y = element_blank(),
+      strip.background   = element_rect(fill = "grey92", colour = NA),
+      strip.text         = element_text(face = "bold"),
+      axis.text.y        = element_text(size = 10),
+      legend.position    = "right"
+    )
+  ggsave(file.path("outputs", "occupancy", paste0(model_label, "_contrasts_plot.png")),
+         p2, width = 10, height = 5, dpi = 300)
+
+  cat("\n====", model_label, "====\n")
+  print(contrasts_all |>
+    dplyr::select(model, contrast, period, season, mean, lower95, upper95, p_direction))
+
+  list(cell_summary = cell_summary, contrasts = contrasts_all,
+       psi_plot = p1, contrast_plot = p2)
+}
+```
+
+```{r}
+#| label: contrasts-full
+results_full <- run_contrasts(fit_full, model_data,
+                               model_label    = "full_model",
+                               include_season = TRUE)
+results_full$psi_plot
+results_full$contrast_plot
+```
+
+```{r}
+#| label: contrasts-summer
+results_summer <- run_contrasts(fit_summer, summer_data,
+                                 model_label    = "summer_model",
+                                 include_season = FALSE)
+results_summer$psi_plot
+results_summer$contrast_plot
+```
+
+```{r}
+#| label: contrasts-warm
+results_warm <- run_contrasts(fit_warm, warm_data,
+                               model_label    = "warm_model",
+                               include_season = TRUE)
+results_warm$psi_plot
+results_warm$contrast_plot
+```
+
+# Combined contrast summary
+```{r}
+#| label: combined-summary
+all_contrasts <- dplyr::bind_rows(
+  results_full$contrasts,
+  results_summer$contrasts,
+  results_warm$contrasts
+)
+
+readr::write_csv(all_contrasts,
+  file.path("outputs", "occupancy", "all_models_contrasts.csv"))
+
+all_contrasts |>
+  dplyr::select(model, contrast, period, season, mean, lower95, upper95, p_direction) |>
+  dplyr::mutate(across(where(is.numeric), ~ round(.x, 3))) |>
+  knitr::kable(caption = "Posterior contrasts across all three occupancy models (95 % CrI).")
+```
+
+# Power analysis — sites and rounds needed for statistical detection
+
+The current study shows a consistent positive direction for the stone pile effect
+but wide credible intervals due to limited site replication. This simulation-based
+power analysis asks: **how many site pairs, or how many additional monitoring rounds,
+would be needed to reliably detect the observed effect size?**
+
+**Method:** Parameters (occupancy probabilities, detection rates, site-level variance)
+are drawn from the posterior means of the warm-season model. For each combination
+of site pairs and After rounds, 300 datasets are simulated and a logistic GLMM
+is fitted as a fast surrogate. Power = proportion of simulations where the 95 % CI
+of the BACI term (Stone pile × Period interaction) excludes zero.
+
+```{r}
+#| label: power-extract-params
+# Extract posterior means from the warm model
+fe         <- brms::fixef(fit_warm)[, "Estimate"]
+draws_warm <- posterior::as_draws_df(fit_warm)
+
+logit_psi_ctrl_before <- fe["Intercept"]
+b_period_after        <- fe["periodAfter"]
+b_sp                  <- fe["location_typeStone_pile"]
+b_sp_after            <- fe["location_typeStone_pile:periodAfter"]
+logit_pA              <- fe["pA_Intercept"]
+logit_pB              <- fe["pB_Intercept"]
+
+# Site-level random effect SD (occupancy submodel)
+sigma_site <- posterior::summarise_draws(fit_warm) |>
+  dplyr::filter(variable == "sd_site_id__Intercept") |>
+  dplyr::pull(mean)
+
+# Report the key parameters being used
+cat("Parameters extracted from warm model posterior means:\n")
+cat("  ψ Control  Before:", round(plogis(logit_psi_ctrl_before), 3), "\n")
+cat("  ψ Control  After: ", round(plogis(logit_psi_ctrl_before + b_period_after), 3), "\n")
+cat("  ψ Stone pile Before:", round(plogis(logit_psi_ctrl_before + b_sp), 3), "\n")
+cat("  ψ Stone pile After: ", round(plogis(logit_psi_ctrl_before + b_sp + b_period_after + b_sp_after), 3), "\n")
+cat("  pA (box trap): ", round(plogis(logit_pA), 3), "\n")
+cat("  pB (fyke net): ", round(plogis(logit_pB), 3), "\n")
+cat("  Site SD (logit): ", round(sigma_site, 3), "\n")
+cat("  BACI log-odds:  ", round(b_sp_after, 3),
+    "≈", round(plogis(logit_psi_ctrl_before + b_sp + b_period_after + b_sp_after) -
+               plogis(logit_psi_ctrl_before + b_period_after), 3),
+    "probability units\n")
+```
+
+```{r}
+#| label: power-simulation
+power_cache <- file.path("outputs", "occupancy", "power_analysis.rds")
+
+if (!file.exists(power_cache)) {
+
+  # Simulate one dataset and test if the BACI term's 95% CI excludes zero
+  one_sim <- function(n_pairs, n_after_rounds,
+                      logit_psi_ctrl_before, b_period_after, b_sp, b_sp_after,
+                      logit_pA, logit_pB, sigma_site) {
+
+    pA <- plogis(logit_pA)
+    pB <- plogis(logit_pB)
+    n_before_rounds <- 1L   # matches study design: 1 Before round
+
+    site_re <- rnorm(n_pairs * 2, 0, sigma_site)
+    rows    <- vector("list", n_pairs * 2 * (n_before_rounds + n_after_rounds))
+    idx     <- 0L
+
+    for (pair in seq_len(n_pairs)) {
+      for (st in c("Control", "Stone_pile")) {
+        site_idx <- (pair - 1L) * 2L + if (st == "Control") 1L else 2L
+        re_i     <- site_re[site_idx]
+
+        for (period in c("Before", "After")) {
+          n_rounds <- if (period == "Before") n_before_rounds else n_after_rounds
+          for (r in seq_len(n_rounds)) {
+            logit_psi <- logit_psi_ctrl_before +
+              (if (period == "After")      b_period_after else 0) +
+              (if (st == "Stone_pile")     b_sp           else 0) +
+              (if (st == "Stone_pile" && period == "After") b_sp_after else 0) +
+              re_i
+            psi <- plogis(logit_psi)
+            z   <- rbinom(1L, 1L, psi)
+            yA  <- rbinom(1L, 1L, z * pA)
+            yB  <- rbinom(1L, 1L, z * pB)
+            idx <- idx + 1L
+            rows[[idx]] <- data.frame(
+              pair_id   = pair,
+              site_id   = site_idx,
+              site_type = st,
+              period    = period,
+              detected  = as.integer(yA | yB)
+            )
+          }
+        }
+      }
+    }
+
+    sim_data <- dplyr::bind_rows(rows) |>
+      dplyr::mutate(
+        period    = factor(period,    levels = c("Before", "After")),
+        site_type = factor(site_type, levels = c("Control", "Stone_pile")),
+        site_id   = factor(site_id),
+        pair_id   = factor(pair_id)
+      )
+
+    # Fast logistic GLMM surrogate — skip if data is perfectly separated
+    m <- tryCatch(
+      lme4::glmer(detected ~ period * site_type + (1 | pair_id / site_id),
+                  data = sim_data, family = binomial,
+                  control = lme4::glmerControl(optimizer = "bobyqa")),
+      error   = function(e) NULL,
+      warning = function(w) NULL
+    )
+    if (is.null(m)) return(NA)
+
+    coef_name <- grep("periodAfter:site_typeStone_pile",
+                      names(lme4::fixef(m)), value = TRUE)
+    if (length(coef_name) == 0) return(NA)
+    est <- lme4::fixef(m)[coef_name]
+    se  <- sqrt(diag(vcov(m)))[coef_name]
+    # Wald 95% CI lower bound > 0 → BACI effect detected
+    (est - 1.96 * se) > 0
+  }
+
+  run_power <- function(n_pairs, n_after_rounds, n_sims = 300) {
+    results <- vapply(seq_len(n_sims), function(i)
+      one_sim(n_pairs, n_after_rounds,
+              logit_psi_ctrl_before, b_period_after, b_sp, b_sp_after,
+              logit_pA, logit_pB, sigma_site),
+      logical(1))
+    mean(results, na.rm = TRUE)
+  }
+
+  set.seed(2026)
+  power_grid <- tidyr::crossing(
+    n_pairs        = c(3, 5, 7, 10, 15, 20, 30),
+    n_after_rounds = c(2, 4, 6, 8, 10, 12)
+  ) |>
+    dplyr::mutate(
+      power = purrr::map2_dbl(n_pairs, n_after_rounds, run_power,
+                               .progress = TRUE)
+    )
+
+  saveRDS(power_grid, power_cache)
+  cat("Power analysis complete and cached.\n")
+
+} else {
+  power_grid <- readRDS(power_cache)
+  cat("Loaded cached power analysis.\n")
+}
+
+print(power_grid |> tidyr::pivot_wider(names_from = n_after_rounds,
+                                        values_from = power,
+                                        names_prefix = "rounds_"))
+```
+
+```{r}
+#| label: power-plots
+# ---- Heatmap ----------------------------------------------------------------
+p_heat <- ggplot(power_grid,
+                 aes(x = factor(n_after_rounds), y = factor(n_pairs),
+                     fill = power)) +
+  geom_tile(colour = "white", linewidth = 0.5) +
+  geom_text(aes(label = scales::percent(power, accuracy = 1)),
+            size = 3.2, colour = ifelse(power_grid$power > 0.6, "white", "grey20")) +
+  geom_contour(aes(x = as.numeric(factor(n_after_rounds)),
+                   y = as.numeric(factor(n_pairs)),
+                   z = power),
+               breaks = 0.8, colour = "black", linewidth = 1, linetype = "dashed",
+               inherit.aes = FALSE) +
+  scale_fill_gradientn(
+    colours = c("#d73027", "#fc8d59", "#fee090", "#e0f3f8", "#74add1", "#313695"),
+    values  = scales::rescale(c(0, 0.2, 0.4, 0.6, 0.8, 1)),
+    limits  = c(0, 1),
+    labels  = scales::percent_format(accuracy = 1),
+    name    = "Power"
+  ) +
+  scale_x_discrete(name = "Number of After-period monitoring rounds") +
+  scale_y_discrete(name = "Number of site pairs\n(Stone pile + Control)") +
+  theme_bw(base_size = 12) +
+  theme(
+    panel.grid    = element_blank(),
+    legend.position = "right"
+  )
+
+ggsave(file.path("outputs", "occupancy", "power_heatmap.png"),
+       p_heat, width = 8, height = 6, dpi = 300)
+
+# ---- Lines by n_after_rounds ------------------------------------------------
+p_lines <- power_grid |>
+  dplyr::mutate(n_after_rounds = factor(n_after_rounds,
+                  labels = paste0(c(2,4,6,8,10,12), " After rounds"))) |>
+  ggplot(aes(x = n_pairs, y = power, colour = n_after_rounds,
+             group = n_after_rounds)) +
+  geom_hline(yintercept = 0.8, linetype = "dashed", colour = "grey40") +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 2.5) +
+  annotate("text", x = max(power_grid$n_pairs) * 0.98, y = 0.82,
+           label = "80 % power", hjust = 1, colour = "grey40", size = 3.5) +
+  scale_colour_manual(
+    values = c("#313695","#4575b4","#74add1","#f46d43","#d73027","#a50026"),
+    name   = NULL
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1),
+                     limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = c(3, 5, 7, 10, 15, 20, 30)) +
+  labs(x = "Number of site pairs (Stone pile + Control)",
+       y = "Statistical power") +
+  theme_bw(base_size = 12) +
+  theme(
+    panel.grid.minor = element_blank(),
+    legend.position  = "right"
+  )
+
+ggsave(file.path("outputs", "occupancy", "power_curves.png"),
+       p_lines, width = 8, height = 5, dpi = 300)
+
+p_heat
+p_lines
+```
+
+```{r}
+#| label: power-summary
+# What does it take to hit 80% power at the current effect size?
+power_grid |>
+  dplyr::filter(power >= 0.8) |>
+  dplyr::group_by(n_after_rounds) |>
+  dplyr::slice_min(n_pairs, n = 1) |>
+  dplyr::ungroup() |>
+  dplyr::transmute(
+    `After rounds` = n_after_rounds,
+    `Site pairs needed` = n_pairs,
+    `Power achieved` = scales::percent(power, accuracy = 1)
+  ) |>
+  knitr::kable(caption = paste0(
+    "Minimum site pairs required to reach 80 % power at the observed effect size ",
+    "(BACI ≈ ", round(b_sp_after, 2), " log-odds), by number of After-period rounds."))
+```
+
+---
+
+# CPUE-based Power Analysis (M2aak — Kōura abundance BACI)
+
+The occupancy analysis sits near a ceiling (ψ ≈ 0.81–0.95) so the detectable
+BACI signal is compressed. CPUE captures the abundance dimension that occupancy
+misses. M2aak (Kōura CPUE, Stone_pile vs Control, full BACI) shows a positive
+but non-significant BACI of 0.311 log-units (×1.36 on the ratio scale, p = 0.800).
+This power analysis asks: how many site pairs and monitoring rounds would be
+needed to detect an effect of that size at 80% power?
+
+**Model structure simulated:**
+`log(CPUE) ~ period * site_type + monitoring_int + (1|pair_id) + (1|site_id)`
+
+Fixed effects come directly from M2aak. Random effect SDs and the log-scale
+residual SD are set to ecologically plausible defaults — update them from
+`VarCorr(M2aak)` and `sigma(M2aak)` if you want exact values.
+
+```{r}
+#| label: cpue-params
+library(lme4)
+
+# Fixed effects from M2aak (tbl-models-summary-full.csv)
+cpue_b0      <- -2.753   # Intercept: log CPUE, Control, Before, monitoring_int = 0
+cpue_b_after <-  2.374   # PeriodAfter step-change (large: kōura increase after construction)
+cpue_b_sp    <-  0.751   # Stone_pile vs Control baseline difference
+cpue_b_time  <- -0.253   # monitoring_int slope (per round; both sites declining over time)
+cpue_b_baci  <-  0.311   # BACI: extra Stone_pile gain in After period — the detection target
+
+# Random effects — update from VarCorr(M2aak) once available
+sigma_pair_cpue  <- 1.2999  # pair-level intercept SD (from VarCorr(M2aak))
+sigma_site_cpue  <- 0.8087  # site-within-pair SD (from VarCorr(M2aak))
+sigma_resid_cpue <- 0.9611  # Tweedie dispersion phi (from sigma(M2aak))
+
+cat("M2aak parameters:\n")
+cat(sprintf("  BACI estimate:   %.3f (SE = 1.232, p = 0.800)\n", cpue_b_baci))
+cat(sprintf("  95%% CI on BACI: [%.2f, %.2f]\n", -2.104, 2.727))
+cat(sprintf("  Ratio scale:     exp(%.3f) = %.2f×\n", cpue_b_baci, exp(cpue_b_baci)))
+cat(sprintf("  PeriodAfter:     %.3f (strong time effect; both sites gain)\n", cpue_b_after))
+cat(sprintf("  monitoring_int:  %.3f (declining trend over rounds)\n", cpue_b_time))
+```
+
+```{r}
+#| label: cpue-power-sim
+
+one_sim_cpue <- function(n_pairs, n_after_rounds) {
+
+  dat <- tidyr::crossing(
+    pair_idx  = seq_len(n_pairs),
+    site_type = c("Control", "Stone_pile"),
+    round_no  = 0L:as.integer(n_after_rounds)
+  ) |>
+    dplyr::mutate(
+      pair_id        = factor(paste0("p", pair_idx)),
+      site_id        = factor(paste0("p", pair_idx, "_", site_type)),
+      period         = factor(ifelse(round_no == 0L, "Before", "After"),
+                              levels = c("Before", "After")),
+      monitoring_int = as.numeric(round_no),
+      is_sp          = as.integer(site_type == "Stone_pile"),
+      is_after       = as.integer(period == "After")
+    )
+
+  # Sample random effects for this iteration
+  re_pair <- stats::setNames(
+    rnorm(n_pairs, 0, sigma_pair_cpue),
+    paste0("p", seq_len(n_pairs))
+  )
+  re_site <- stats::setNames(
+    rnorm(n_pairs * 2L, 0, sigma_site_cpue),
+    paste0("p", rep(seq_len(n_pairs), each = 2L), "_",
+           c("Control", "Stone_pile"))
+  )
+
+  dat <- dat |>
+    dplyr::mutate(
+      eta  = cpue_b0 +
+             cpue_b_after * is_after +
+             cpue_b_sp    * is_sp +
+             cpue_b_time  * monitoring_int +
+             cpue_b_baci  * (is_after * is_sp) +
+             re_pair[as.character(pair_id)] +
+             re_site[as.character(site_id)],
+      cpue = exp(stats::rnorm(dplyr::n(), eta, sigma_resid_cpue))
+    )
+
+  fit <- tryCatch(
+    suppressWarnings(
+      lme4::lmer(log(cpue) ~ period * site_type + monitoring_int +
+                   (1 | pair_id) + (1 | site_id),
+                 data = dat, REML = FALSE)
+    ),
+    error = function(e) NULL
+  )
+
+  if (is.null(fit)) return(NA_real_)
+
+  cf  <- lme4::fixef(fit)
+  vcv <- as.matrix(vcov(fit))
+  nm  <- "periodAfter:site_typeStone_pile"
+  if (!nm %in% names(cf)) return(NA_real_)
+
+  est <- cf[nm]
+  se  <- sqrt(vcv[nm, nm])
+  if (is.na(se) || se < 1e-9) return(NA_real_)
+
+  # Two-sided 95% CI must exclude zero in positive direction
+  as.numeric((est - 1.96 * se) > 0)
+}
+
+run_power_cpue <- function(n_pairs, n_after_rounds, n_sims = 200L) {
+  results <- vapply(
+    seq_len(n_sims),
+    function(s) {
+      set.seed(s * 100L + n_pairs * 10L + n_after_rounds)
+      one_sim_cpue(n_pairs, n_after_rounds)
+    },
+    numeric(1L)
+  )
+  mean(results, na.rm = TRUE)
+}
+
+cpue_power_cache <- file.path("outputs", "occupancy", "cpue_power_analysis.rds")
+
+if (!file.exists(cpue_power_cache)) {
+  cat("Running CPUE power analysis (200 sims × 42 scenarios)...\n")
+
+  cpue_power_grid <- tidyr::crossing(
+    n_pairs        = c(3L, 5L, 7L, 10L, 15L, 20L, 30L),
+    n_after_rounds = c(2L, 4L, 6L, 8L, 10L, 12L)
+  ) |>
+    dplyr::mutate(
+      power = purrr::map2_dbl(n_pairs, n_after_rounds, run_power_cpue,
+                              .progress = TRUE)
+    )
+
+  saveRDS(cpue_power_grid, cpue_power_cache)
+  cat("CPUE power analysis complete and cached.\n")
+
+} else {
+  cpue_power_grid <- readRDS(cpue_power_cache)
+  cat("Loaded cached CPUE power analysis.\n")
+}
+
+print(cpue_power_grid |>
+        tidyr::pivot_wider(names_from = n_after_rounds, values_from = power,
+                           names_prefix = "rounds_"))
+```
+
+```{r}
+#| label: cpue-power-plots
+
+p_heat_cpue <- ggplot(cpue_power_grid,
+                      aes(x = factor(n_after_rounds), y = factor(n_pairs),
+                          fill = power)) +
+  geom_tile(colour = "white", linewidth = 0.5) +
+  geom_text(aes(label = scales::percent(power, accuracy = 1)),
+            size = 3.2, colour = "grey20") +
+  scale_fill_gradientn(
+    colours = c("#d73027", "#fc8d59", "#fee090", "#e0f3f8", "#74add1", "#313695"),
+    values  = scales::rescale(c(0, 0.2, 0.4, 0.6, 0.8, 1)),
+    limits  = c(0, 1),
+    labels  = scales::percent_format(accuracy = 1),
+    name    = "Power"
+  ) +
+  scale_x_discrete(name = "Number of After-period monitoring rounds") +
+  scale_y_discrete(name = "Number of site pairs\n(Stone pile + Control)") +
+  theme_bw(base_size = 12) +
+  theme(panel.grid = element_blank(), legend.position = "right")
+
+ggsave(file.path("outputs", "occupancy", "cpue_power_heatmap.png"),
+       p_heat_cpue, width = 8, height = 6, dpi = 300)
+
+p_lines_cpue <- cpue_power_grid |>
+  dplyr::mutate(n_after_rounds = factor(n_after_rounds,
+                  labels = paste0(c(2, 4, 6, 8, 10, 12), " After rounds"))) |>
+  ggplot(aes(x = n_pairs, y = power, colour = n_after_rounds,
+             group = n_after_rounds)) +
+  geom_hline(yintercept = 0.8, linetype = "dashed", colour = "grey40") +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 2.5) +
+  annotate("text", x = max(cpue_power_grid$n_pairs) * 0.98, y = 0.82,
+           label = "80 % power", hjust = 1, colour = "grey40", size = 3.5) +
+  scale_colour_manual(
+    values = c("#313695", "#4575b4", "#74add1", "#f46d43", "#d73027", "#a50026"),
+    name   = NULL
+  ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1),
+                     limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  scale_x_continuous(breaks = c(3, 5, 7, 10, 15, 20, 30)) +
+  labs(x = "Number of site pairs (Stone pile + Control)",
+       y = "Statistical power") +
+  theme_bw(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), legend.position = "right")
+
+ggsave(file.path("outputs", "occupancy", "cpue_power_curves.png"),
+       p_lines_cpue, width = 8, height = 5, dpi = 300)
+
+p_heat_cpue
+p_lines_cpue
+```
+
+```{r}
+#| label: cpue-power-summary
+at_80 <- cpue_power_grid |>
+  dplyr::filter(power >= 0.8) |>
+  dplyr::group_by(n_after_rounds) |>
+  dplyr::slice_min(n_pairs, n = 1) |>
+  dplyr::ungroup() |>
+  dplyr::transmute(
+    `After rounds`      = n_after_rounds,
+    `Site pairs needed` = n_pairs,
+    `Power achieved`    = scales::percent(power, accuracy = 1)
+  )
+
+cap <- paste0(
+  "CPUE BACI power (M2aak: exp(BACI) = ", round(exp(cpue_b_baci), 2), "×; ",
+  "σ_pair = ", sigma_pair_cpue, ", σ_site = ", sigma_site_cpue,
+  ", σ_resid = ", sigma_resid_cpue, "). ",
+  "Log-normal surrogate (lmer)."
+)
+
+if (nrow(at_80) == 0) {
+  cat("No scenario in the grid reaches 80% power.\n")
+  cat(sprintf("Maximum power achieved: %.0f%% (n_pairs = 30, rounds = 8).\n",
+              100 * max(cpue_power_grid$power)))
+  cat("The between-pair variance (σ_pair = 1.30) dominates, matching the\n")
+  cat("occupancy result: more rounds do not compensate for too few pairs.\n")
+  cpue_power_grid |>
+    dplyr::filter(power == max(power)) |>
+    knitr::kable(caption = cap)
+} else {
+  knitr::kable(at_80, caption = cap)
+}
+```

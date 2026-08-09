@@ -21,3 +21,6 @@ _freeze/
 
 /.quarto/
 **/*.quarto_ipynb
+
+# Franks pipeline and all other scripts — kept locally only
+scripts/
