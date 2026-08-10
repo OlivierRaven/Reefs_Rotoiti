@@ -229,7 +229,7 @@ $$
 $$
 
 ### Data analysis
-Data analysis was divided into three sections, the first section assessed baseline equivalence between stone pile, control, and reference sites before construction, the second section assessed the impact of stone pile construction and after-construction trajectory on kōura and catfish occupancy, abundance, and biomass, and the third section assessed whether stone pile sites converged toward reference sites and if reference sites remained stable over time. All analysis was conducted in R (version 4.6.1; @RCoreTeam2025) using the glmmTMB and emmeans packages [@Brooks2017; @Lenth2017].
+Data analysis was divided into three sections, the first section assessed baseline equivalence between stone pile, control, and reference sites before construction, the second section assessed the impact of stone pile construction and after-construction trajectory on kōura and catfish occupancy, abundance, and biomass, and the third section assessed whether stone pile sites converged toward reference sites and if reference sites remained stable over time. All analyses were conducted in R (version 4.6.1; @RCoreTeam2025) using the glmmTMB and emmeans packages [@Brooks2017; @Lenth2017].
 
 Site variation before stone pile construction was assessed using paired Wilcoxon signed-rank tests to compare stone pile sites with their paired control sites, and unpaired Wilcoxon rank-sum tests to compare stone pile sites with reference sites. This was done for response variables (water quality, substrate, CPUE, BPUE) to confirm that the stone pile and control sites were equivalent before construction, and to characterise the difference between stone pile and reference sites. To further assess the baseline equivalence generalised linear models (GLMs) were fitted testing the CPUE and BPUE of kōura and catfish against site type (stone pile / control) and tested each of the two reference sites (reference 1 / reference 2) with a Tweedie family and log link. The covariate temperature was included in the catfish abundance and biomass models testing the reference sites to allow model convergence.
 
@@ -237,18 +237,33 @@ The second section of the analysis tested construction impact relative to contro
 
 The third section of the analysis assessed whether stone pile sites converged toward reference sites and if reference sites remained stable over time. Kōura and catfish abundance, and biomass were tested in GLMMs fitted with site type (stone pile / reference) and monitoring round as interaction terms with site number as random effect using a Tweedie family with log link. The catfish abundance model also included temperature as a covariate. The reference site stability was tested in GLMMs fitted with site type (reference 1 / reference 2) and monitoring round as interaction terms with site nested within pair as a random effect also using a Tweedie family with log link. Temperature was included in the catfish abundance and season was included in the kōura abundance as covariates. 
 
-Multiple-testing correction using Benjamini–Hochberg correction was applied within each research sub-question across the set of models tested. Robustness of the models was further assessed via sensitivity analyses and all models were tested for uniform distribution, dispersion, and outlier rate using the DHARMa package [@Hartig2016]. Covariate selection for each model was preformend by comparing Corrected Akaike Information Criterion (AICc) of the base model against models with one additional covariate (temperature, season, or substrate index) added at a time. A covariate was retained only when it reduced AICc by more then 2 units relative to the base model [@Burnham2002]. Temperature was retained in catfish models where it substantially improved model fit, consistent with catfish being associated with warmer water temperatures [@Scott1973]. For the two reference-site catfish models specifically, the base model failed to converge and temperature was required for numerical stability. Season was retained in the kōura abundance model for reference stability, reflecting the known seasonal variation in kōura abundance [@Kusabs2015b]. Season could not be evaluated for the BACI models as it is collinear with the before/after period contrast.
+Multiple-testing correction using Benjamini–Hochberg correction was applied within each research sub-question across the set of models tested. Robustness of the models was further assessed via sensitivity analyses and all models were tested for uniform distribution, dispersion, and outlier rate using the DHARMa package [@Hartig2016]. Covariate selection for each model was performed by comparing Corrected Akaike Information Criterion (AICc) of the base model against models with one additional covariate (temperature, season, or substrate index) added at a time. A covariate was retained only when it reduced AICc by more than 2 units relative to the base model [@Burnham2002]. Temperature was retained in catfish models where it substantially improved model fit, consistent with catfish being associated with warmer water temperatures [@Scott1973]. For the two reference-site catfish models specifically, the base model failed to converge and temperature was required for numerical stability. Season was retained in the kōura abundance model for reference stability, reflecting the known seasonal variation in kōura abundance [@Kusabs2015b]. Season could not be evaluated for the BACI models as it is collinear with the before/after period contrast.
+
+To complement the GLMM abundance analysis, kōura site-level occupancy was estimated using a two-method occupancy model fitted within a Bayesian framework. Because bait traps and fyke nets provide independent and simultaneous detection opportunities at each site, true site occupancy could be separated from imperfect and method-specific detection probabilities. A custom Stan observation model was implemented using the brms package [@Burkner2017; @Burkner2018] using cmdstanr [@Gabry2025] to estimate true occupancy and detection probabilities for baited traps and fyke nets via logit links. Standardised water temperature was included as the covarient for detection probability. Three occupancy sub-models were fitted. A full model across all monitoring rounds served as baseline comparison. A summer-only model and a warm-season model (summer and autumn combined) were fitted to focus on the period of highest thermal stratification, compressing kōura into the nearshore zone where catfish predation pressure is highest and the stone piles are located. The warm-season model maximimises ecological relevance monitoring rounds and retained a tractable formula with season as an additive covariate. All models were run with four chains of 4000 iterations (1500 warmup) and convergence was assessed using R̂ values (threshold < 1.01) and bulk effective sample sizes (threshold > 400) [@Vehtari2021].
+
+A simulation-based power analysis was conducted to quantify the sample size required for statistical detection of the BACI effect under the observed effect size and variance structure, and to put the non-significant results in perspective relative to study design rather than true absence of effect. For each analysis the occupancy and abundance, datasets were simulated across a grid of scenarios varying in number of site pairs (3-30) and after-period monitoring rounds (2-12). For the occupancy BACI, simulated binary detection data were generated using values from the warm-season occupancy model posterior means, and each simulated dataset was analysed using a logistic GLMM (lme4; @Bates2015). For the CPUE BACI, simulated abundance data were generated using fixed effects and variance components from the kōura abundance BACI model, using a log-normal approximation to the Tweedie distribution, and each dataset was analysed using a linear mixed model fitted to a log-transformed CPUE. Statistical power as estimated as the proportion of simulations (300 per scenario) in which the model's 95 % confidence interval for the BACI coefficient excluded zero in the positive direction.
+
 
 ## Results
-Results across all models and response variables are summarised in @fig-forest-plot.
+Results across all models and response variables are summarised in @fig-forest-plot and @tbl-models-summary-full.
 
-*Baseline equivalence*
-Pre-construction kōura abundance and biomass did not differ significantly between stone pile and control sites, confirming baseline equivalence of the paired design (`r fmt_p(stat("M1aak", "Site_type_detailStone_pile", "p_adj_BH"))` and `r fmt_p(stat("M1abk", "Site_type_detailStone_pile", "p_adj_BH"))`). The two reference sites differed in catfish abundance (`r fmt_p(stat("M1bac", "Reference_2", "p_adj_BH"))`) and biomass (`r fmt_p(stat("M1bbc", "Reference_2", "p_adj_BH"))`), reflecting natural diversity in rocky littoral habitat. Kōura abundance (`r fmt_p(stat("M1bak", "Site_type_detailReference_2", "p_adj_BH"))`) and biomass (`r fmt_p(stat("M1bbk", "Site_type_detailReference_2", "p_adj_BH"))`) did not differ between reference sites.
+### Baseline equivalence
+Pre-construction kōura abundance and biomass did not differ significantly between stone pile and control sites (@tbl-baseline-combined), confirming baseline equivalence of the paired design (`r fmt_p(stat("M1aak", "Site_type_detailStone_pile", "p_adj_BH"))` and `r fmt_p(stat("M1abk", "Site_type_detailStone_pile", "p_adj_BH"))`). The two reference sites differed in catfish abundance (`r fmt_p(stat("M1bac", "Reference_2", "p_adj_BH"))`) and biomass (`r fmt_p(stat("M1bbc", "Reference_2", "p_adj_BH"))`), reflecting natural diversity in rocky littoral habitat. Kōura abundance (`r fmt_p(stat("M1bak", "Site_type_detailReference_2", "p_adj_BH"))`) and biomass (`r fmt_p(stat("M1bbk", "Site_type_detailReference_2", "p_adj_BH"))`) did not differ between reference sites.
 
-*Kōura response to stone pile construction*
+### Construction impact (BACI) and post-construction trajectory
 Stone pile construction produced no detectable step-change in kōura abundance, biomass, or occupancy relative to paired control sites in the 18 months following deployment (all *p*~adj~ = `r fmt_num(stat("M2aak", "PeriodAfter:siteStone_pile", "p_adj_BH"))`). A matched-season comparison, comparing Summer 2025 (before construction) with Summer 2026 (one year after construction), produced the same conclusion (kōura abundance: `r fmt_p(stat_ms("Kōura", "abundance", p.value))`). Post-construction trajectories did not diverge significantly between stone pile and control sites (all *p*~adj~ = `r fmt_num(stat("M2bak", "siteStone_pile:monitoring_int", "p_adj_BH"))`). Kōura abundance declined significantly across post-construction rounds at stone pile as control sites (β = `r fmt_b(stat("M2bak", "^monitoring_int$", "estimate"))`, `r fmt_p(stat("M2bak", "^monitoring_int$", "p.value"))`), with the sharpest decline observed in Winter 2026 (@fig-koura-trends). 
 
-*Recovery toward reference conditions*
+Kōura site occupancy was high across all sites types before and after construction. Warm-season occupancy estimats (summer and autumn combined) ranged from `r...` to `r...` across site type and periods  
+
+@fig-occ-warm-contrasts
+
+@tbl-psi-warm
+
+@fig-trajectory-projection
+
+@fig-cpue-power-plots + @fig-power-plots
+
+### Convergence toward reference sites and reference stability
 Stone pile sites maintained a consistently lower kōura abundance than reference sites throughout the post-construction period, with no significant change in this gap over time (β = `r fmt_b(stat("M3aak", "siteStone_pile:monitoring_int", "estimate"))`, `r fmt_p(stat("M3aak", "siteStone_pile:monitoring_int", "p.value"))`; @fig-convergence-plot). Kōura abundance declined across monitoring rounds at both stone pile and reference sites (β = `r fmt_b(stat("M3aak", "^monitoring_int$", "estimate"))`, `r fmt_p(stat("M3aak", "^monitoring_int$", "p.value"))`). The Winter 2026 monitoring round showed a pronounced decline at stone pile sites (CPUE ≈ 0.7) while reference sites maintained substantially higher abundance (CPUE ≈ 1.7; @fig-koura-trends), a within-round contrast not captured by the linear trajectory model. Water temperature at Winter 2026 was approximately 1.5°C lower than Winter 2025 but consistent across site types, rulling out temperature as a site specific driver.and therefore cannot explain the collapse at stone pile sites. Visual inspection of stone pile surfaces during Winter 2026 monitoring revealed substantially greater filamentous algal accumulation compared to earlier rounds (@fig-stone-piles).
 
 *Catfish*
@@ -256,27 +271,6 @@ Stone pile construction produced no significant effect on catfish abundance, bio
 
 
 @fig-descriptive-context
-
-
-
-### multi-scale hierarchical framework
-Lake scale:
-source population catfish (Te Weta Bay)
-
-Site scale:
-Substrate index
-Wood cover
-Slope
-Site type
-stone pile placement: depth, distance shore, volume (Depth: rho = 0.90, p = 0.083 — very strong positive correlation)
-
-Temporal scale:
-Season/ monitoring round
-Temperature
-DO/ pH/ conductivity
-Catfish CPUE
-Habitable depth
-Wind/ wave exposture
 
 
 
@@ -368,6 +362,14 @@ knitr::kable(baseline_combined, digits = 3)
 ## Supplementary information
 
 *Supplementary figures are provided in the appendices.*
+
+```{r}
+#| echo: false
+#| tbl-cap: "Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model currently in model_registry. Unlike the interaction-only summary above, this surfaces covariate effects (e.g. Substrate_index_after, Season) directly rather than requiring a one-off check per model."
+knitr::kable(tidy_all_full, digits = 3)
+```
+
+
 :::
 
 

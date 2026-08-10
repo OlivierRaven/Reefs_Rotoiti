@@ -5,6 +5,7 @@ project:
   render:
     - "index.qmd"
     - "analysis.qmd"
+    - "occupancy_analysis.qmd"
     - "supplementary.qmd"
 
 execute:
@@ -20,6 +21,8 @@ manuscript:
   notebooks:
     - notebook: analysis.qmd
       title: "Analysis Notebook"
+    - notebook: occupancy_analysis.qmd
+      title: "Occupancy Analysis Notebook"
     - notebook: supplementary.qmd
       title: "Supplementary Information"
 

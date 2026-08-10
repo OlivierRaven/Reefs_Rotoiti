@@ -204,11 +204,16 @@
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
 \hypersetup{
   pdftitle={Rock Piles as Kōura Habitat},
   pdfauthor={Olivier V. Raven; Ian A. K. Kusabs; Robin Holmes; Francis J. Burdon; Deniz Özkundakci},
-  pdfkeywords={Paranephrops planifrons, Artificial reef, Habitat
-restoration, Stone piles, Aotearoa New Zealand},
+  pdfkeywords={\xmpquote{Paranephrops planifrons}, \xmpquote{Artificial
+reef}, \xmpquote{Habitat restoration}, \xmpquote{Stone
+piles}, \xmpquote{Aotearoa New Zealand}},
   colorlinks=true,
   linkcolor={blue},
   filecolor={Maroon},
@@ -228,7 +233,7 @@ restoration, Stone piles, Aotearoa New Zealand},
 freshwater crayfish habitat in an Aotearoa New Zealand lake}
 \author{Olivier V. Raven \and Ian A. K. Kusabs \and Robin
 Holmes \and Francis J. Burdon \and Deniz Özkundakci}
-\date{2026-08-04}
+\date{2026-08-11}
 \begin{document}
 \maketitle
 
@@ -514,10 +519,10 @@ monitoring round (\citeproc{ref-Kusabs2015b}{Kusabs \emph{et al.},
 estimated using a log₁₀--log₁₀ length--weight regression fitted to
 individuals with both measurements (n = 840), following standard
 approaches for weight length relationships in aquatic organisms
-{[}{(Fig. S1)}{]} (\citeproc{ref-Froese2006}{Froese, 2006}). Predicted
-values were back-transformed with a lognormal bias correction factor
-(10\^{}\{0.5 \cdot \sigma\^{}2\}) (\citeproc{ref-Quinn2002}{Quinn \&
-Keough, 2002}).
+{[}{\textbf{?@fig-length-weight-ch5}}{]}
+(\citeproc{ref-Froese2006}{Froese, 2006}). Predicted values were
+back-transformed with a lognormal bias correction factor (10\^{}\{0.5
+\cdot \sigma\^{}2\}) (\citeproc{ref-Quinn2002}{Quinn \& Keough, 2002}).
 
 \[
 \log_{10}(\text{Weight [g]}) = -2.67 + 2.684 \times \log_{10}(\text{OCL length [mm]})
@@ -531,11 +536,11 @@ sites before construction, the second section assessed the impact of
 stone pile construction and after-construction trajectory on kōura and
 catfish occupancy, abundance, and biomass, and the third section
 assessed whether stone pile sites converged toward reference sites and
-if reference sites remained stable over time. All analysis was conducted
-in R (version 4.5.2; R Core Team (\citeproc{ref-RCoreTeam2025}{2025}))
-using the glmmTMB and emmeans packages (\citeproc{ref-Brooks2017}{Brooks
-\emph{et al.}, 2017}; \citeproc{ref-Lenth2017}{Lenth \& Piaskowski,
-2017}).
+if reference sites remained stable over time. All analyses were
+conducted in R (version 4.6.1; R Core Team
+(\citeproc{ref-RCoreTeam2025}{2025})) using the glmmTMB and emmeans
+packages (\citeproc{ref-Brooks2017}{Brooks \emph{et al.}, 2017};
+\citeproc{ref-Lenth2017}{Lenth \& Piaskowski, 2017}).
 
 Site variation before stone pile construction was assessed using paired
 Wilcoxon signed-rank tests to compare stone pile sites with their paired
@@ -546,8 +551,8 @@ and control sites were equivalent before construction, and to
 characterise the difference between stone pile and reference sites. To
 further assess the baseline equivalence generalised linear models (GLMs)
 were fitted testing the CPUE and BPUE of kōura and catfish against site
-type (stone pile/control) and tested each of the two reference sites
-(reference 1/reference 2) with a Tweedie family and log link. The
+type (stone pile / control) and tested each of the two reference sites
+(reference 1 / reference 2) with a Tweedie family and log link. The
 covariate temperature was included in the catfish abundance and biomass
 models testing the reference sites to allow model convergence.
 
@@ -559,23 +564,23 @@ design tested using generalised linear mixed effects models (GLMMs) the
 effect of stone pile construction on kōura and catfish occupancy,
 abundance, and biomass by comparing one pre-construction monitoring
 round with six post-construction monitoring rounds. The models tested
-period (before/after) and site type (stone pile/control) as an
+period (before / after) and site type (stone pile / control) as an
 interaction term, with monitoring round as a covariate and site nested
 within pair as a random effect. Occupancy was tested with a Binomial
 family and abundance and biomass using a Tweedie family with log link.
 The after-construction trajectory models were tested using GLMMs with
-site type (stone pile/control) and monitoring round as interaction terms
-and site number as random effect using similar families as the BACI
-models.
+site type (stone pile / control) and monitoring round as interaction
+terms and site nested within pair as a random effect using similar
+families as the BACI models.
 
 The third section of the analysis assessed whether stone pile sites
 converged toward reference sites and if reference sites remained stable
 over time. Kōura and catfish abundance, and biomass were tested in GLMMs
-fitted with site type (stone pile/reference) and monitoring round as
+fitted with site type (stone pile / reference) and monitoring round as
 interaction terms with site number as random effect using a Tweedie
 family with log link. The catfish abundance model also included
 temperature as a covariate. The reference site stability was tested in
-GLMMs fitted with site type (reference 1/reference 2) and monitoring
+GLMMs fitted with site type (reference 1 / reference 2) and monitoring
 round as interaction terms with site nested within pair as a random
 effect also using a Tweedie family with log link. Temperature was
 included in the catfish abundance and season was included in the kōura
@@ -587,12 +592,12 @@ tested. Robustness of the models was further assessed via sensitivity
 analyses and all models were tested for uniform distribution,
 dispersion, and outlier rate using the DHARMa package
 (\citeproc{ref-Hartig2016}{Hartig, 2016}). Covariate selection for each
-model was preformend by comparing Corrected Akaike Information Criterion
+model was performed by comparing Corrected Akaike Information Criterion
 (AICc) of the base model against models with one additional covariate
 (temperature, season, or substrate index) added at a time. A covariate
-was retained only when it reduced AICc by more then 2 units relative to
+was retained only when it reduced AICc by more than 2 units relative to
 the base model (\citeproc{ref-Burnham2002}{Burnham \& R., 2002}).
-Temperature was retained in in catfish models where it substantially
+Temperature was retained in catfish models where it substantially
 improved model fit, consistent with catfish being associated with warmer
 water temperatures (\citeproc{ref-Scott1973}{Scott \& Crossman, 1973}).
 For the two reference-site catfish models specifically, the base model
@@ -603,26 +608,235 @@ stability, reflecting the known seasonal variation in kōura abundance
 not be evaluated for the BACI models as it is collinear with the
 before/after period contrast.
 
+To complement the GLMM abundance analysis, kōura site-level occupancy
+was estimated using a two-method occupancy model fitted within a
+Bayesian framework. Because bait traps and fyke nets provide independent
+and simultaneous detection opportunities at each site, true site
+occupancy could be separated from imperfect and method-specific
+detection probabilities. A custom Stan observation model was implemented
+using the brms package (\citeproc{ref-Burkner2017}{Bürkner, 2017},
+\citeproc{ref-Burkner2018}{2018}) using cmdstanr
+(\citeproc{ref-Gabry2025}{Gabry \emph{et al.}, 2025}) to estimate true
+occupancy and detection probabilities for baited traps and fyke nets via
+logit links. Standardised water temperature was included as the
+covarient for detection probability. Three occupancy sub-models were
+fitted. A full model across all monitoring rounds served as baseline
+comparison. A summer-only model and a warm-season model (summer and
+autumn combined) were fitted to focus on the period of highest thermal
+stratification, compressing kōura into the nearshore zone where catfish
+predation pressure is highest and the stone piles are located. The
+warm-season model maximimises ecological relevance monitoring rounds and
+retained a tractable formula with season as an additive covariate. All
+models were run with four chains of 4000 iterations (1500 warmup) and
+convergence was assessed using R̂ values (threshold \textless{} 1.01) and
+bulk effective sample sizes (threshold \textgreater{} 400)
+(\citeproc{ref-Vehtari2021}{Vehtari \emph{et al.}, 2021}).
+
+A simulation-based power analysis was conducted to quantify the sample
+size required for statistical detection of the BACI effect under the
+observed effect size and variance structure, and to put the
+non-significant results in perspective relative to study design rather
+than true absence of effect. For each analysis the occupancy and
+abundance, datasets were simulated across a grid of scenarios varying in
+number of site pairs (3-30) and after-period monitoring rounds (2-12).
+For the occupancy BACI, simulated binary detection data were generated
+using values from the warm-season occupancy model posterior means, and
+each simulated dataset was analysed using a logistic GLMM (lme4; Bates
+\emph{et al.} (\citeproc{ref-Bates2015}{2015})). For the CPUE BACI,
+simulated abundance data were generated using fixed effects and variance
+components from the kōura abundance BACI model, using a log-normal
+approximation to the Tweedie distribution, and each dataset was analysed
+using a linear mixed model fitted to a log-transformed CPUE. Statistical
+power as estimated as the proportion of simulations (300 per scenario)
+in which the model's 95 \% confidence interval for the BACI coefficient
+excluded zero in the positive direction.
+
 \subsection{Results}\label{results}
 
-\emph{Baseline equivalence} Pre-construction baseline model showed no
-significant difference between stone pile sites and
+Results across all models and response variables are summarised in
+Figure~\ref{fig-forest-plot} and \textbf{?@tbl-models-summary-full}.
 
-Figure~\ref{fig-koura-trends}
+\subsubsection{Baseline equivalence}\label{baseline-equivalence}
 
-Figure~\ref{fig-forest-plot}
+Pre-construction kōura abundance and biomass did not differ
+significantly between stone pile and control sites
+(\textbf{?@tbl-baseline-combined}), confirming baseline equivalence of
+the paired design (\emph{p} = 0.783 and \emph{p} = 0.571). The two
+reference sites differed in catfish abundance (\emph{p} = 0.004) and
+biomass (\emph{p} = 0.002), reflecting natural diversity in rocky
+littoral habitat. Kōura abundance (\emph{p} = 0.968) and biomass
+(\emph{p} = 0.968) did not differ between reference sites.
 
-\emph{Construction impact relative to control sites}
+\subsubsection{Construction impact (BACI) and post-construction
+trajectory}\label{construction-impact-baci-and-post-construction-trajectory}
 
-\emph{Recovery toward reference conditions}
+Stone pile construction produced no detectable step-change in kōura
+abundance, biomass, or occupancy relative to paired control sites in the
+18 months following deployment (all \emph{p}\textsubscript{adj} =
+0.861). A matched-season comparison, comparing Summer 2025 (before
+construction) with Summer 2026 (one year after construction), produced
+the same conclusion (kōura abundance: \emph{p} = 0.582).
+Post-construction trajectories did not diverge significantly between
+stone pile and control sites (all \emph{p}\textsubscript{adj} = 0.224).
+Kōura abundance declined significantly across post-construction rounds
+at stone pile as control sites (β = -0.41, \emph{p} = 0.004), with the
+sharpest decline observed in Winter 2026
+(Figure~\ref{fig-koura-trends}).
 
-Figure~\ref{fig-convergence-plot}
+Kōura site occupancy was high across all sites types before and after
+construction. Warm-season occupancy estimats (summer and autumn
+combined) ranged from \texttt{r...\ to}r\ldots{}
 
-\textbf{?@fig-descriptive-context-ch5}
+\textbf{?@fig-occ-warm-contrasts}
+
+\textbf{?@tbl-psi-warm}
+
+\textbf{?@fig-trajectory-projection}
+
+\textbf{?@fig-cpue-power-plots} + \textbf{?@fig-power-plots}
+
+\subsubsection{Convergence toward reference sites and reference
+stability}\label{convergence-toward-reference-sites-and-reference-stability}
+
+Stone pile sites maintained a consistently lower kōura abundance than
+reference sites throughout the post-construction period, with no
+significant change in this gap over time (β = -0.09, \emph{p} = 0.429;
+Figure~\ref{fig-convergence-plot}). Kōura abundance declined across
+monitoring rounds at both stone pile and reference sites (β = -0.09,
+\emph{p} = 0.107). The Winter 2026 monitoring round showed a pronounced
+decline at stone pile sites (CPUE ≈ 0.7) while reference sites
+maintained substantially higher abundance (CPUE ≈ 1.7;
+Figure~\ref{fig-koura-trends}), a within-round contrast not captured by
+the linear trajectory model. Water temperature at Winter 2026 was
+approximately 1.5°C lower than Winter 2025 but consistent across site
+types, rulling out temperature as a site specific driver.and therefore
+cannot explain the collapse at stone pile sites. Visual inspection of
+stone pile surfaces during Winter 2026 monitoring revealed substantially
+greater filamentous algal accumulation compared to earlier rounds
+(Figure~\ref{fig-stone-piles}).
+
+\emph{Catfish} Stone pile construction produced no significant effect on
+catfish abundance, biomass, or occupancy relative to control sites
+across any model or time period (Figure~\ref{fig-forest-plot}),
+indicating stone piles did not attract more catfish.
+
+\textbf{?@fig-descriptive-context}
 
 \subsection{Discussion}\label{discussion}
 
-\emph{Opening}
+\emph{Short-term construction effect} Stone pile constructionin the
+littoral zone of Lake Rotoiti porduced no detectable step-change in
+kōura abundance, biomass, or occupancy relative to paired control sites
+over an 18-month monitoring period. This outcome is most plausible
+explained by an insufficient monitoring window rather than
+ineffectiveness of the stone piles. Habitat establishmetn for freshwater
+crayfish is a slow process. Johnsen \& Taugbøl
+(\citeproc{ref-Johnsen2008}{2008}) reported that crayfish abundance at a
+stone site addition site took 13 years to reach similar crayfish levels
+as a control site, and freshwater invertebrate colonisation studies
+generally show treatment effects emerging over two to three years of
+monitoring (\citeproc{ref-BRON}{\textbf{BRON?}}). Following
+reconstruction of the Rotorua lakefront (completed in July 2021), which
+included rocky kōura habitat only 17 kōura were recorded after 28
+months, compared to 57 removed before construction, No kōura were
+observed 13 months after completion and slow recolonation was likely the
+effect of catfish predation (\citeproc{ref-Kusabs2023}{Kusabs, 2023}),
+suggesting that 18 months may represent a minimum rather tan sufficien
+monitoring duration for detecting population level responses to habitat
+addition.
+
+The Autumn 2025 monitoring round, the first after stone pile deployment,
+showed eleveted kōura CPUE across all site types, which may have
+obscured any early construction effects in th BACI design. This
+cross-site spike is consistent with
+
+In Autumn 2025, the first monitoring after deployment, had a spike in
+kōura numbers acoss all sites masking geniun construction effect in the
+BACI design. Wide confidence intervals throughout the study reflect real
+biological variability as only five locations were modified the
+repetition is small.
+
+\emph{Winter 2026} The second winter monitoring revealed a important
+pattern kōura catches collapsed on stone pile sites while maintaingn
+kōura abundance on reference sites. Kōura numbers after 18 months almost
+returned to similar numbers as Summer 2025 before stone pile deployment.
+During winter it is expected that kōura numbers in the littoral zone are
+lower than in summer or autumn as the lake mixes, and access to deep
+waters is not a limmiting factor anymore. Temperature in Winter 2026 was
+1.5°C lower compared to Winter 2025 but this was consistent across all
+sites and therefore not explaining the drop in kōura CPUE on stone pile
+locations. Compared to the previous monitorings a greater presence of
+filamentous algae on the stone piles was observed during Winter 2026
+(Figure~\ref{fig-stone-piles}). The presence of filamentous algae on
+hard substrates is more typical in winter periods as \ldots{} . Algal
+presence was not quantafiable due to practical constrains and turbidity
+of near-shore conditions. It is expected that when water temperatures
+rise (\citeproc{ref-BRON}{\textbf{BRON?}}), increasing invertabrate
+activity (\citeproc{ref-BRON}{\textbf{BRON?}}), and reduction in
+nutrient availability due to
+stratification(\citeproc{ref-BRON}{\textbf{BRON?}}) the filamentous mats
+will break down and the stone piles become available for kōura again
+(\citeproc{ref-BRON}{\textbf{BRON?}}). During the winter of 2025 the
+growth was not observed as it takes time for
+
+Kōura use of stone piles is probably more seasonal than year round due
+to avalablitiy to deep waters and inactivity when temperatures drop
+below 10 degrees
+
+\emph{Reference sites as a benchmark} The reference sites confirmed the
+winter suppression in kōura CPUE as deep waters are available
+redistribution lowers the kōura numbers also on natural rocky habitats.
+However reference sites remained substantially more resilliant than
+stone piles in Winter 2026 probably due to habitat connectivity or
+connectivity to deep waters (\citeproc{ref-BRON}{\textbf{BRON?}}).
+Variation within the reference paires shown by catfish difference during
+baseline check shows that small local heterogeneity has influence on
+species abundance.
+
+\emph{Catfish} There is no evidence found that stone piles attract or
+accumulate catfish. The increase in catfish CPUE in Summer 2026 was a
+single site and is in line with seasonal use of shoreline habitats of
+catfish during summer periods as the increase in CPUE at reference sites
+also increased. Overall catfish catches during the study were low
+compared to targeted catfish removal netting mostly focussed in Te Wetta
+Bay where the highest population of catfish is present
+(\citeproc{ref-Francis2019}{Francis, 2019}). Catfish have strong
+seasonal movement patterns with staying close to the shoreline during
+spring and summer probably looking for warmest waters to feed their
+young. While in winter movement increases and catfish spread across the
+lake swimming mid-water not going deeper than 15 m even when lake bottom
+is deeper (\citeproc{ref-Blanchfield2026}{\textbf{Blanchfield2026?}}).
+For kōura this means that during spring and summer the threat of catfish
+is highest and habitat compression during this period also being
+greatest further limiting the survival chances of kōura
+(\citeproc{ref-BRON}{\textbf{BRON?}}). \ldots{}
+
+\emph{Implications for restoration design and monitoring} Current stone
+pile design creates isolated islands of refuge rathere than connected
+habitats, for future designs placement of stone piles perundicular to
+the shore line extending trough the weed beds into the deeper waters
+would enable migration and access to variation in depth range refugia
+when deeper parts become anoxic and shallow sections become to warm
+(\citeproc{ref-BRON}{\textbf{BRON?}}). The need for removal of biofilm
+or cleaning of the chevecis from sediments could potentially restore
+structural complexity. Placement of stone piles on wave intensive
+locations might help with natural cleaning of the stone piles but could
+potentially be to rough as a shelter for kōura. A monitoring period of
+18 months is not ideal to access the effectiveness of habitat
+restauraion and it is reomended to continue monitoring for a total of 3
+years. Continue of monitoring will reveal of the crash of kōura CPUE in
+Winter 2026 was a individual occurrence and colonasation of kōura in the
+stone piles will pick up again in coming spring and summer when habitat
+becomes limited again and the filamentous algae densety is less. A
+standardes assessment of fouling is recommended with similar sides of
+the stones being photocraphed every monitoring to compare devalopment
+and seasonal variation.
+
+As rocky environments are identified as refuges and important for
+multiple species and threats
+(\citeproc{ref-Selwood2020}{\textbf{Selwood2020?}}) the value of
+restoration and expanding the availability of this habitat can be very
+important
 
 \subsubsection{Baseline and site
 context*}\label{baseline-and-site-context}
@@ -640,14 +854,13 @@ the net opening entirely.
 \subsubsection{Convergence and
 recovery*}\label{convergence-and-recovery}
 
+The last monitoring showed on the stone piles an increase in cover of
+biofilm with the stones being more covered than assessed before
+
 \subsubsection{Implications and future
 directions*}\label{implications-and-future-directions}
 
 For future studies it is recommended
-
-Most kōura were found along the edges of the stone piles there for
-recommended future stone piles should be designed to create the most
-edges.
 
 Stone piles were constructed at the shore line to shallow to reach
 machrophyte beds which are located further offshore. Future stone pile
@@ -667,9 +880,9 @@ Fort-D'ath and William Anaru (Te Arawa Lakes Trust), and Tihini Grant
 landowners, Piripi Curtis, David McIlraith, Piki Thomas, Haddon Lock,
 Barnett Vercoe, Richard Vercoe, and Caroline Newton, for granting access
 to monitoring sites and facilitating fieldwork in Lake Rotoiti. We thank
-of Joe Butterworth, Cory O'Neill, Alex Simes, Martin Sarkezi, Mael
-Marguet, Ethan Morgan, Logan Kallam, Calum MacNeil, and Matt Prentice
-for assisting with fieldwork and data collection.
+Alex Simes, Cory O'Neill, Joe Butterworth, Martin Sarkezi, Mael Marguet,
+Savio Dsouza, Ethan Morgan, Logan Kallam, Calum MacNeil, and Matt
+Prentice for assisting with fieldwork and data collection.
 
 \subsubsection{Funding statement}\label{funding-statement}
 
@@ -801,7 +1014,30 @@ Notebook}}
 
 }
 
-\caption{\label{fig-sites}Map of the monitoring sites.}
+\caption{\label{fig-sites}Map of Lake Rotoiti in Bay of Plenty region of
+New Zealand. The monitoring sites are coloured by site type; stone pile
+sites red, control site yellow, and reference sites blue. Ten close-up
+maps show the placement of each of the sites.}
+
+\end{figure}%
+
+\begin{figure}
+
+\centering{
+
+\includegraphics[width=3in,height=\textheight,keepaspectratio]{outputs/fig-forest-plot.png}
+
+}
+
+\caption{\label{fig-forest-plot}Effect sizes (\(\beta\) ± 95\% CI) for
+the key term of interest of every model in model\_registry (kōura and
+catfish, RQ1--RQ4). Filled points indicate significant effects (p
+\textless{} 0.05). Each panel has its own x-axis scale --- \(\beta\)
+magnitudes are not directly comparable across panels because each RQ
+tests a different contrast (step-change, per-round slope, or simple
+group difference) and RQ1 occupancy is on the log-odds scale while all
+others use the Tweedie log link. Models with degenerate confidence
+intervals (non-positive-definite Hessian) are excluded.}
 
 \end{figure}%
 
@@ -827,7 +1063,7 @@ CI) by site type for kōura.}
 }
 
 \caption{\label{fig-convergence-plot}Predicted kōura CPUE trajectories
-over monitoring rounds at stone pile and reference sites from the RQ3
+over monitoring rounds at stone pile and reference sites from the
 abundance convergence model. Shaded ribbons represent 95\% confidence
 intervals. The annotation shows the key interaction term (\(\beta\) ±
 p-value) and model R² values for fixed effects (R²m) and conditional
@@ -839,25 +1075,372 @@ p-value) and model R² values for fixed effects (R²m) and conditional
 
 \centering{
 
-\includegraphics[width=3in,height=\textheight,keepaspectratio]{outputs/fig-forest-plot.png}
+\pandocbounded{\includegraphics[keepaspectratio]{images/Stone_pile_devalopment.png}}
 
 }
 
-\caption{\label{fig-forest-plot}Effect sizes (\(\beta\) ± 95\% CI) for
-the key term of interest of every model in model\_registry (kōura and
-catfish, RQ1--RQ4). Filled points indicate significant effects (p
-\textless{} 0.05). Each panel has its own x-axis scale --- \(\beta\)
-magnitudes are not directly comparable across panels because each RQ
-tests a different contrast (step-change, per-round slope, or simple
-group difference) and RQ1 occupancy is on the log-odds scale while all
-others use the Tweedie log link. Models with degenerate confidence
-intervals (non-positive-definite Hessian) are excluded.}
+\caption{\label{fig-stone-piles}Progressive algal biofouling at stone
+pile site 9 in Lake Rotoiti across three monitoring periods. Summer 2025
+(top left, shortly after construction) shows clean stone surfaces with
+open interstitial spaces. By Summer 2026 (bottom left) moderate biofilm
+accumulation is visible. Winter 2026 (right) shows complete cover of
+stone surfaces by filamentous algae.}
 
 \end{figure}%
 
 \subsection{Supplementary information}\label{supplementary-information}
 
 \emph{Supplementary figures are provided in the appendices.}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0536}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0298}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0476}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0833}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0774}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0655}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.2560}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0536}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0595}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0595}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0476}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0536}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0536}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0595}}@{}}
+\caption{Full fixed-effect estimates (β, SE, 95\% CI, p-value) for every
+term in every model currently in model\_registry. Unlike the
+interaction-only summary above, this surfaces covariate effects
+(e.g.~Substrate\_index\_after, Season) directly rather than requiring a
+one-off check per model.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+model\_id
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+RQ
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+species
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+response\_type
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+comparison
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+time\_frame
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+term
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+estimate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+std.error
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p\_adj\_BH
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.low
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.high
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+model\_id
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+RQ
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+species
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+response\_type
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+comparison
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+time\_frame
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+term
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+estimate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+std.error
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p\_adj\_BH
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.low
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+conf.high
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+M1aac & RQ1 & Catfish & abundance & treatment & before & (Intercept) &
+-2.303 & 0.908 & -2.535 & 0.011 & NA & -4.083 & -0.522 \\
+M1aac & RQ1 & Catfish & abundance & treatment & before &
+Site\_type\_detailStone\_pile & -0.693 & 1.535 & -0.452 & 0.652 & 0.783
+& -3.701 & 2.315 \\
+M1abc & RQ1 & Catfish & biomass & treatment & before & (Intercept) &
+3.203 & 1.279 & 2.504 & 0.012 & NA & 0.696 & 5.709 \\
+M1abc & RQ1 & Catfish & biomass & treatment & before &
+Site\_type\_detailStone\_pile & -5.100 & 3.107 & -1.641 & 0.101 & 0.403
+& -11.190 & 0.990 \\
+M1aak & RQ1 & Kōura & abundance & treatment & before & (Intercept) &
+-1.897 & 0.785 & -2.415 & 0.016 & NA & -3.437 & -0.358 \\
+M1aak & RQ1 & Kōura & abundance & treatment & before &
+Site\_type\_detailStone\_pile & 0.288 & 1.044 & 0.276 & 0.783 & 0.783 &
+-1.759 & 2.334 \\
+M1abk & RQ1 & Kōura & biomass & treatment & before & (Intercept) & 1.030
+& 0.830 & 1.241 & 0.215 & NA & -0.597 & 2.656 \\
+M1abk & RQ1 & Kōura & biomass & treatment & before &
+Site\_type\_detailStone\_pile & 1.044 & 0.977 & 1.068 & 0.286 & 0.571 &
+-0.872 & 2.959 \\
+M1bac & RQ1 & Catfish & abundance & reference & before & (Intercept) &
+-102.299 & 32.656 & -3.133 & 0.002 & NA & -166.303 & -38.295 \\
+M1bac & RQ1 & Catfish & abundance & reference & before &
+Site\_type\_detailReference\_2 & -1.655 & 0.536 & -3.087 & 0.002 & 0.004
+& -2.706 & -0.604 \\
+M1bac & RQ1 & Catfish & abundance & reference & before & Temperature &
+4.079 & 1.293 & 3.154 & 0.002 & NA & 1.544 & 6.613 \\
+M1bbc & RQ1 & Catfish & biomass & reference & before & (Intercept) &
+-153.136 & 37.363 & -4.099 & 0.000 & NA & -226.366 & -79.906 \\
+M1bbc & RQ1 & Catfish & biomass & reference & before &
+Site\_type\_detailReference\_2 & -2.569 & 0.743 & -3.457 & 0.001 & 0.002
+& -4.026 & -1.112 \\
+M1bbc & RQ1 & Catfish & biomass & reference & before & Temperature &
+6.315 & 1.482 & 4.261 & 0.000 & NA & 3.410 & 9.220 \\
+M1bak & RQ1 & Kōura & abundance & reference & before & (Intercept) &
+0.742 & 0.553 & 1.343 & 0.179 & NA & -0.341 & 1.825 \\
+M1bak & RQ1 & Kōura & abundance & reference & before &
+Site\_type\_detailReference\_2 & 0.031 & 0.778 & 0.040 & 0.968 & 0.968 &
+-1.494 & 1.557 \\
+M1bbk & RQ1 & Kōura & biomass & reference & before & (Intercept) & 3.623
+& 0.478 & 7.580 & 0.000 & NA & 2.686 & 4.560 \\
+M1bbk & RQ1 & Kōura & biomass & reference & before &
+Site\_type\_detailReference\_2 & -0.041 & 0.681 & -0.061 & 0.952 & 0.968
+& -1.375 & 1.293 \\
+M2aac & RQ2a & Catfish & abundance & vs\_control & full & (Intercept) &
+-3.777 & 1.721 & -2.196 & 0.028 & NA & -7.150 & -0.405 \\
+M2aac & RQ2a & Catfish & abundance & vs\_control & full & PeriodAfter &
+0.664 & 1.505 & 0.442 & 0.659 & NA & -2.285 & 3.613 \\
+M2aac & RQ2a & Catfish & abundance & vs\_control & full &
+siteStone\_pile & -0.694 & 1.752 & -0.396 & 0.692 & NA & -4.127 &
+2.738 \\
+M2aac & RQ2a & Catfish & abundance & vs\_control & full &
+monitoring\_int & -0.291 & 0.336 & -0.868 & 0.385 & NA & -0.949 &
+0.367 \\
+M2aac & RQ2a & Catfish & abundance & vs\_control & full &
+PeriodAfter:siteStone\_pile & 2.007 & 1.956 & 1.026 & 0.305 & 0.861 &
+-1.828 & 5.842 \\
+M2abc & RQ2a & Catfish & biomass & vs\_control & full & (Intercept) &
+1.770 & 2.734 & 0.647 & 0.517 & NA & -3.589 & 7.128 \\
+M2abc & RQ2a & Catfish & biomass & vs\_control & full & PeriodAfter &
+-0.330 & 2.264 & -0.146 & 0.884 & NA & -4.767 & 4.107 \\
+M2abc & RQ2a & Catfish & biomass & vs\_control & full & siteStone\_pile
+& -5.279 & 5.667 & -0.932 & 0.352 & NA & -16.386 & 5.827 \\
+M2abc & RQ2a & Catfish & biomass & vs\_control & full & monitoring\_int
+& -0.354 & 0.483 & -0.731 & 0.465 & NA & -1.301 & 0.594 \\
+M2abc & RQ2a & Catfish & biomass & vs\_control & full &
+PeriodAfter:siteStone\_pile & 5.309 & 5.572 & 0.953 & 0.341 & 0.861 &
+-5.611 & 16.229 \\
+M2aoc & RQ2a & Catfish & occupancy & vs\_control & full & (Intercept) &
+-2.029 & 1.853 & -1.095 & 0.274 & NA & -5.661 & 1.604 \\
+M2aoc & RQ2a & Catfish & occupancy & vs\_control & full & PeriodAfter &
+-0.148 & 1.734 & -0.085 & 0.932 & NA & -3.548 & 3.251 \\
+M2aoc & RQ2a & Catfish & occupancy & vs\_control & full &
+siteStone\_pile & 0.000 & 1.947 & 0.000 & 1.000 & NA & -3.815 & 3.815 \\
+M2aoc & RQ2a & Catfish & occupancy & vs\_control & full &
+monitoring\_int & -0.160 & 0.255 & -0.628 & 0.530 & NA & -0.661 &
+0.340 \\
+M2aoc & RQ2a & Catfish & occupancy & vs\_control & full &
+PeriodAfter:siteStone\_pile & 0.374 & 2.132 & 0.175 & 0.861 & 0.861 &
+-3.805 & 4.552 \\
+M2aak & RQ2a & Kōura & abundance & vs\_control & full & (Intercept) &
+-2.753 & 1.183 & -2.327 & 0.020 & NA & -5.072 & -0.434 \\
+M2aak & RQ2a & Kōura & abundance & vs\_control & full & PeriodAfter &
+2.374 & 0.976 & 2.432 & 0.015 & NA & 0.461 & 4.286 \\
+M2aak & RQ2a & Kōura & abundance & vs\_control & full & siteStone\_pile
+& 0.751 & 1.335 & 0.563 & 0.574 & NA & -1.865 & 3.368 \\
+M2aak & RQ2a & Kōura & abundance & vs\_control & full & monitoring\_int
+& -0.253 & 0.082 & -3.094 & 0.002 & NA & -0.413 & -0.093 \\
+M2aak & RQ2a & Kōura & abundance & vs\_control & full &
+PeriodAfter:siteStone\_pile & 0.311 & 1.232 & 0.253 & 0.800 & 0.861 &
+-2.104 & 2.727 \\
+M2abk & RQ2a & Kōura & biomass & vs\_control & full & (Intercept) &
+0.315 & 1.335 & 0.236 & 0.813 & NA & -2.301 & 2.931 \\
+M2abk & RQ2a & Kōura & biomass & vs\_control & full & PeriodAfter &
+2.248 & 1.246 & 1.805 & 0.071 & NA & -0.193 & 4.689 \\
+M2abk & RQ2a & Kōura & biomass & vs\_control & full & siteStone\_pile &
+1.410 & 1.552 & 0.909 & 0.363 & NA & -1.631 & 4.451 \\
+M2abk & RQ2a & Kōura & biomass & vs\_control & full & monitoring\_int &
+-0.196 & 0.110 & -1.791 & 0.073 & NA & -0.412 & 0.019 \\
+M2abk & RQ2a & Kōura & biomass & vs\_control & full &
+PeriodAfter:siteStone\_pile & -0.336 & 1.471 & -0.228 & 0.819 & 0.861 &
+-3.220 & 2.548 \\
+M2aok & RQ2a & Kōura & occupancy & vs\_control & full & (Intercept) &
+-0.690 & 1.643 & -0.420 & 0.674 & NA & -3.911 & 2.530 \\
+M2aok & RQ2a & Kōura & occupancy & vs\_control & full & PeriodAfter &
+1.913 & 1.556 & 1.230 & 0.219 & NA & -1.136 & 4.963 \\
+M2aok & RQ2a & Kōura & occupancy & vs\_control & full & siteStone\_pile
+& 0.013 & 2.121 & 0.006 & 0.995 & NA & -4.144 & 4.171 \\
+M2aok & RQ2a & Kōura & occupancy & vs\_control & full & monitoring\_int
+& -0.286 & 0.215 & -1.333 & 0.183 & NA & -0.708 & 0.135 \\
+M2aok & RQ2a & Kōura & occupancy & vs\_control & full &
+PeriodAfter:siteStone\_pile & 1.013 & 1.762 & 0.575 & 0.565 & 0.861 &
+-2.440 & 4.466 \\
+M2bac & RQ2b & Catfish & abundance & vs\_control & after & (Intercept) &
+-1.974 & 1.605 & -1.230 & 0.219 & NA & -5.121 & 1.172 \\
+M2bac & RQ2b & Catfish & abundance & vs\_control & after &
+siteStone\_pile & -1.425 & 1.826 & -0.781 & 0.435 & NA & -5.004 &
+2.153 \\
+M2bac & RQ2b & Catfish & abundance & vs\_control & after &
+monitoring\_int & -0.633 & 0.407 & -1.556 & 0.120 & NA & -1.430 &
+0.164 \\
+M2bac & RQ2b & Catfish & abundance & vs\_control & after &
+siteStone\_pile:monitoring\_int & 0.828 & 0.555 & 1.491 & 0.136 & 0.224
+& -0.260 & 1.916 \\
+M2bbc & RQ2b & Catfish & biomass & vs\_control & after & (Intercept) &
+3.787 & 1.990 & 1.903 & 0.057 & NA & -0.113 & 7.687 \\
+M2bbc & RQ2b & Catfish & biomass & vs\_control & after & siteStone\_pile
+& -4.231 & 3.386 & -1.250 & 0.211 & NA & -10.867 & 2.404 \\
+M2bbc & RQ2b & Catfish & biomass & vs\_control & after & monitoring\_int
+& -0.956 & 0.676 & -1.415 & 0.157 & NA & -2.280 & 0.368 \\
+M2bbc & RQ2b & Catfish & biomass & vs\_control & after &
+siteStone\_pile:monitoring\_int & 1.323 & 0.941 & 1.407 & 0.159 & 0.224
+& -0.520 & 3.167 \\
+M2boc & RQ2b & Catfish & occupancy & vs\_control & after & (Intercept) &
+-0.819 & 1.663 & -0.493 & 0.622 & NA & -4.080 & 2.441 \\
+M2boc & RQ2b & Catfish & occupancy & vs\_control & after &
+siteStone\_pile & -1.954 & 1.896 & -1.031 & 0.303 & NA & -5.670 &
+1.761 \\
+M2boc & RQ2b & Catfish & occupancy & vs\_control & after &
+monitoring\_int & -0.545 & 0.412 & -1.324 & 0.185 & NA & -1.352 &
+0.262 \\
+M2boc & RQ2b & Catfish & occupancy & vs\_control & after &
+siteStone\_pile:monitoring\_int & 0.707 & 0.535 & 1.322 & 0.186 & 0.224
+& -0.342 & 1.756 \\
+M2bak & RQ2b & Kōura & abundance & vs\_control & after & (Intercept) &
+0.084 & 0.846 & 0.099 & 0.921 & NA & -1.573 & 1.741 \\
+M2bak & RQ2b & Kōura & abundance & vs\_control & after & siteStone\_pile
+& 0.323 & 0.808 & 0.400 & 0.689 & NA & -1.261 & 1.907 \\
+M2bak & RQ2b & Kōura & abundance & vs\_control & after & monitoring\_int
+& -0.409 & 0.143 & -2.861 & 0.004 & NA & -0.690 & -0.129 \\
+M2bak & RQ2b & Kōura & abundance & vs\_control & after &
+siteStone\_pile:monitoring\_int & 0.243 & 0.179 & 1.359 & 0.174 & 0.224
+& -0.107 & 0.593 \\
+M2bbk & RQ2b & Kōura & biomass & vs\_control & after & (Intercept) &
+3.270 & 0.856 & 3.821 & 0.000 & NA & 1.593 & 4.948 \\
+M2bbk & RQ2b & Kōura & biomass & vs\_control & after & siteStone\_pile &
+-0.077 & 0.986 & -0.078 & 0.938 & NA & -2.010 & 1.856 \\
+M2bbk & RQ2b & Kōura & biomass & vs\_control & after & monitoring\_int &
+-0.427 & 0.191 & -2.240 & 0.025 & NA & -0.800 & -0.053 \\
+M2bbk & RQ2b & Kōura & biomass & vs\_control & after &
+siteStone\_pile:monitoring\_int & 0.366 & 0.239 & 1.531 & 0.126 & 0.224
+& -0.103 & 0.834 \\
+M2bok & RQ2b & Kōura & occupancy & vs\_control & after & (Intercept) &
+1.585 & 1.885 & 0.841 & 0.400 & NA & -2.109 & 5.280 \\
+M2bok & RQ2b & Kōura & occupancy & vs\_control & after & siteStone\_pile
+& 0.563 & 2.660 & 0.212 & 0.832 & NA & -4.651 & 5.776 \\
+M2bok & RQ2b & Kōura & occupancy & vs\_control & after & monitoring\_int
+& -0.403 & 0.311 & -1.296 & 0.195 & NA & -1.014 & 0.207 \\
+M2bok & RQ2b & Kōura & occupancy & vs\_control & after &
+siteStone\_pile:monitoring\_int & 0.229 & 0.441 & 0.519 & 0.604 & 0.604
+& -0.636 & 1.094 \\
+M3aac & RQ3a & Catfish & abundance & vs\_reference & after & (Intercept)
+& -7.151 & 1.282 & -5.577 & 0.000 & NA & -9.664 & -4.638 \\
+M3aac & RQ3a & Catfish & abundance & vs\_reference & after &
+siteStone\_pile & -2.471 & 1.940 & -1.274 & 0.203 & NA & -6.273 &
+1.331 \\
+M3aac & RQ3a & Catfish & abundance & vs\_reference & after &
+monitoring\_int & -0.215 & 0.147 & -1.462 & 0.144 & NA & -0.504 &
+0.073 \\
+M3aac & RQ3a & Catfish & abundance & vs\_reference & after & Temperature
+& 0.315 & 0.058 & 5.414 & 0.000 & NA & 0.201 & 0.429 \\
+M3aac & RQ3a & Catfish & abundance & vs\_reference & after &
+siteStone\_pile:monitoring\_int & 0.510 & 0.398 & 1.283 & 0.199 & 0.559
+& -0.269 & 1.290 \\
+M3abc & RQ3a & Catfish & biomass & vs\_reference & after & (Intercept) &
+3.011 & 1.189 & 2.532 & 0.011 & NA & 0.681 & 5.342 \\
+M3abc & RQ3a & Catfish & biomass & vs\_reference & after &
+siteStone\_pile & -4.370 & 3.059 & -1.429 & 0.153 & NA & -10.366 &
+1.626 \\
+M3abc & RQ3a & Catfish & biomass & vs\_reference & after &
+monitoring\_int & -0.250 & 0.209 & -1.196 & 0.232 & NA & -0.660 &
+0.160 \\
+M3abc & RQ3a & Catfish & biomass & vs\_reference & after &
+siteStone\_pile:monitoring\_int & 0.689 & 0.638 & 1.081 & 0.280 & 0.559
+& -0.560 & 1.939 \\
+M3aak & RQ3a & Kōura & abundance & vs\_reference & after & (Intercept) &
+0.229 & 0.519 & 0.440 & 0.660 & NA & -0.789 & 1.247 \\
+M3aak & RQ3a & Kōura & abundance & vs\_reference & after &
+siteStone\_pile & 0.217 & 0.901 & 0.240 & 0.810 & NA & -1.550 & 1.984 \\
+M3aak & RQ3a & Kōura & abundance & vs\_reference & after &
+monitoring\_int & -0.090 & 0.056 & -1.612 & 0.107 & NA & -0.199 &
+0.019 \\
+M3aak & RQ3a & Kōura & abundance & vs\_reference & after &
+siteStone\_pile:monitoring\_int & -0.086 & 0.109 & -0.791 & 0.429 &
+0.572 & -0.299 & 0.127 \\
+M3abk & RQ3a & Kōura & biomass & vs\_reference & after & (Intercept) &
+3.369 & 0.506 & 6.655 & 0.000 & NA & 2.377 & 4.361 \\
+M3abk & RQ3a & Kōura & biomass & vs\_reference & after & siteStone\_pile
+& -0.149 & 0.885 & -0.168 & 0.866 & NA & -1.884 & 1.586 \\
+M3abk & RQ3a & Kōura & biomass & vs\_reference & after & monitoring\_int
+& -0.088 & 0.074 & -1.177 & 0.239 & NA & -0.234 & 0.058 \\
+M3abk & RQ3a & Kōura & biomass & vs\_reference & after &
+siteStone\_pile:monitoring\_int & 0.016 & 0.142 & 0.112 & 0.911 & 0.911
+& -0.262 & 0.294 \\
+M3bac & RQ3b & Catfish & abundance & reference & after & (Intercept) &
+-7.372 & 1.705 & -4.324 & 0.000 & NA & -10.713 & -4.031 \\
+M3bac & RQ3b & Catfish & abundance & reference & after &
+Site\_type\_detailReference\_2 & 0.753 & 1.007 & 0.747 & 0.455 & NA &
+-1.221 & 2.726 \\
+M3bac & RQ3b & Catfish & abundance & reference & after & monitoring\_int
+& -0.130 & 0.220 & -0.591 & 0.555 & NA & -0.562 & 0.301 \\
+M3bac & RQ3b & Catfish & abundance & reference & after & Temperature &
+0.304 & 0.073 & 4.183 & 0.000 & NA & 0.161 & 0.446 \\
+M3bac & RQ3b & Catfish & abundance & reference & after &
+Site\_type\_detailReference\_2:monitoring\_int & -0.151 & 0.287 & -0.527
+& 0.598 & 0.797 & -0.714 & 0.411 \\
+M3bbc & RQ3b & Catfish & biomass & reference & after & (Intercept) &
+2.726 & 1.556 & 1.752 & 0.080 & NA & -0.324 & 5.775 \\
+M3bbc & RQ3b & Catfish & biomass & reference & after &
+Site\_type\_detailReference\_2 & 0.191 & 1.640 & 0.116 & 0.907 & NA &
+-3.024 & 3.406 \\
+M3bbc & RQ3b & Catfish & biomass & reference & after & monitoring\_int &
+-0.227 & 0.301 & -0.754 & 0.451 & NA & -0.816 & 0.363 \\
+M3bbc & RQ3b & Catfish & biomass & reference & after &
+Site\_type\_detailReference\_2:monitoring\_int & 0.022 & 0.419 & 0.052 &
+0.959 & 0.959 & -0.800 & 0.843 \\
+M3bak & RQ3b & Kōura & abundance & reference & after & (Intercept) &
+0.380 & 0.790 & 0.480 & 0.631 & NA & -1.169 & 1.928 \\
+M3bak & RQ3b & Kōura & abundance & reference & after &
+Site\_type\_detailReference\_2 & -0.115 & 0.570 & -0.202 & 0.840 & NA &
+-1.232 & 1.002 \\
+M3bak & RQ3b & Kōura & abundance & reference & after & monitoring\_int &
+-0.019 & 0.062 & -0.302 & 0.763 & NA & -0.141 & 0.103 \\
+M3bak & RQ3b & Kōura & abundance & reference & after & SeasonSpring &
+-0.386 & 0.227 & -1.699 & 0.089 & NA & -0.831 & 0.059 \\
+M3bak & RQ3b & Kōura & abundance & reference & after & SeasonSummer &
+-0.330 & 0.233 & -1.416 & 0.157 & NA & -0.787 & 0.127 \\
+M3bak & RQ3b & Kōura & abundance & reference & after & SeasonWinter &
+-0.546 & 0.196 & -2.781 & 0.005 & NA & -0.932 & -0.161 \\
+M3bak & RQ3b & Kōura & abundance & reference & after &
+Site\_type\_detailReference\_2:monitoring\_int & -0.069 & 0.088 & -0.787
+& 0.431 & 0.797 & -0.241 & 0.103 \\
+M3bbk & RQ3b & Kōura & biomass & reference & after & (Intercept) & 3.275
+& 0.800 & 4.095 & 0.000 & NA & 1.707 & 4.842 \\
+M3bbk & RQ3b & Kōura & biomass & reference & after &
+Site\_type\_detailReference\_2 & -0.067 & 0.670 & -0.100 & 0.920 & NA &
+-1.379 & 1.245 \\
+M3bbk & RQ3b & Kōura & biomass & reference & after & monitoring\_int &
+-0.047 & 0.087 & -0.548 & 0.584 & NA & -0.217 & 0.122 \\
+M3bbk & RQ3b & Kōura & biomass & reference & after &
+Site\_type\_detailReference\_2:monitoring\_int & -0.074 & 0.125 & -0.591
+& 0.554 & 0.797 & -0.319 & 0.171 \\
+\end{longtable}
 
 \protect\phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
@@ -880,12 +1463,32 @@ invasive freshwater fish in {New Zealand}: Proceedings of a workshop
 hosted by {Department of Conservation}, 10-12 may 2001, {Hamilton}}.
 Department of Conservation.
 
+\bibitem[\citeproctext]{ref-Bates2015}
+Bates D., Mächler M., Bolker B. \& Walker S. (2015). Fitting linear
+mixed-effects models using {lme4}. \emph{Journal of Statistical
+Software} \textbf{67}, 1--48.
+\url{https://doi.org/10.18637/jss.v067.i01}
+
 \bibitem[\citeproctext]{ref-Brooks2017}
 Brooks M., Bolker B., Kristensen K., Maechler M., Magnusson A., Skaug
 H., \emph{et al.} (2017).
 \href{https://doi.org/10.32614/cran.package.glmmtmb}{glmmTMB:
 Generalized linear mixed models using template model builder}.
 \emph{CRAN: Contributed Packages}
+
+\bibitem[\citeproctext]{ref-Burkner2018}
+Bürkner P.-C. (2018). Advanced bayesian multilevel modeling with the r
+package brms. \emph{The R Journal} \textbf{10}, 395.
+\url{https://doi.org/10.32614/rj-2018-017}
+
+\bibitem[\citeproctext]{ref-Burkner2017}
+Bürkner P.-C. (2017).
+\textless B\textgreater brms\textless/b\textgreater{} : An
+\textless i\textgreater r\textless/i\textgreater{} package for bayesian
+multilevel models using
+\textless i\textgreater stan\textless/i\textgreater. \emph{Journal of
+Statistical Software} \textbf{80}.
+\url{https://doi.org/10.18637/jss.v080.i01}
 
 \bibitem[\citeproctext]{ref-Burnham2002}
 Burnham K.P. \& R. A.D. (2002).
@@ -921,6 +1524,11 @@ Froese R. (2006). Cube law, condition factor and weight-length
 relationships: History, meta-analysis and recommendations. \emph{Journal
 of Applied Ichthyology} \textbf{22}, 241--253.
 \url{https://doi.org/10.1111/j.1439-0426.2006.00805.x}
+
+\bibitem[\citeproctext]{ref-Gabry2025}
+Gabry J., Češnovar R., Johnson A. \& Bronder S. (2025).
+\emph{\href{https://mc-stan.org/cmdstanr/}{Cmdstanr: R interface to
+'CmdStan'}}.
 
 \bibitem[\citeproctext]{ref-Grayling2020}
 Grayling S. (2020).
@@ -962,6 +1570,11 @@ invertebrates in a {New Zealand} river and the development of in-stream
 flow-habitat models for {\emph{Deleatidium}} spp. \emph{New Zealand
 Journal of Marine and Freshwater Research} \textbf{24}, 19--30.
 \url{https://doi.org/10.1080/00288330.1990.9516399}
+
+\bibitem[\citeproctext]{ref-Kusabs2023}
+Kusabs I.A. (2023). \emph{{Lake Rotorua} alum dosing monitoring
+programme 2023 koura and kakahi}. Kusabs \& Associates Ltd, Rotorua, New
+Zealand.
 
 \bibitem[\citeproctext]{ref-Kusabs2015a}
 Kusabs I.A., Hicks B.J., Quinn J.M. \& Hamilton D.P. (2015a).
@@ -1126,6 +1739,12 @@ crayfish ({\emph{Paranephrops zealandicus}}) in relation to stream
 physico-chemistry, predatory fish, and invertebrate prey. \emph{New
 Zealand Journal of Marine and Freshwater Research} \textbf{34},
 557--567. \url{https://doi.org/10.1080/00288330.2000.9516957}
+
+\bibitem[\citeproctext]{ref-Vehtari2021}
+Vehtari A., Gelman A., Simpson D., Carpenter B. \& Bürkner P.-C. (2021).
+Rank-normalization, folding, and localization: An improved Rˆ for
+assessing convergence of MCMC (with discussion). \emph{Bayesian
+Analysis} \textbf{16}. \url{https://doi.org/10.1214/20-ba1221}
 
 \bibitem[\citeproctext]{ref-Verburg2019}
 Verburg P. \& Albert A. (2019).
