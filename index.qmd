@@ -191,7 +191,24 @@ if (input_dir != chapter_dir) {
   file.copy(list.files(out_dir, full.names = TRUE, pattern = "\\.(png|jpg)$"), thesis_out, overwrite = TRUE)
 }
 knitr::opts_knit$set(root.dir = chapter_dir)
+
+ps  <- readr::read_csv(file.path(chapter_dir, "outputs", "tbl-power-scalars.csv"),
+                       show_col_types = FALSE)
+pwr <- function(key) ps$value[ps$key == key]
+
+psi_w <- readr::read_csv(file.path(chapter_dir, "outputs", "tbl-psi-warm.csv"),
+                          show_col_types = FALSE,
+                          col_types = readr::cols(.default = readr::col_character()))
+psi_extract <- function(data, col) {
+  vals <- as.numeric(stringr::str_extract(data[[col]], "^[0-9.]+"))
+  c(min = round(min(vals) * 100), max = round(max(vals) * 100))
+}
+psi_before_summer <- psi_w |> dplyr::filter(Period == "Before", Season == "Summer")
+psi_after_summer  <- psi_w |> dplyr::filter(Period == "After",  Season == "Summer")
+before_rng <- psi_extract(psi_before_summer, "ψ (mean [95% CrI])")
+after_rng  <- psi_extract(psi_after_summer,  "ψ (mean [95% CrI])")
 ```
+
 
 ## Abstract {.unnumbered}
 Placeholder — abstract to be written.
@@ -251,33 +268,21 @@ Results across all models and response variables are summarised in @fig-forest-p
 Pre-construction kōura abundance and biomass did not differ significantly between stone pile and control sites (@tbl-baseline-combined), confirming baseline equivalence of the paired design (`r fmt_p(stat("M1aak", "Site_type_detailStone_pile", "p_adj_BH"))` and `r fmt_p(stat("M1abk", "Site_type_detailStone_pile", "p_adj_BH"))`). The two reference sites differed in catfish abundance (`r fmt_p(stat("M1bac", "Reference_2", "p_adj_BH"))`) and biomass (`r fmt_p(stat("M1bbc", "Reference_2", "p_adj_BH"))`), reflecting natural diversity in rocky littoral habitat. Kōura abundance (`r fmt_p(stat("M1bak", "Site_type_detailReference_2", "p_adj_BH"))`) and biomass (`r fmt_p(stat("M1bbk", "Site_type_detailReference_2", "p_adj_BH"))`) did not differ between reference sites.
 
 ### Construction impact (BACI) and post-construction trajectory
-Stone pile construction produced no detectable step-change in kōura abundance, biomass, or occupancy relative to paired control sites in the 18 months following deployment (all *p*~adj~ = `r fmt_num(stat("M2aak", "PeriodAfter:siteStone_pile", "p_adj_BH"))`). A matched-season comparison, comparing Summer 2025 (before construction) with Summer 2026 (one year after construction), produced the same conclusion (kōura abundance: `r fmt_p(stat_ms("Kōura", "abundance", p.value))`). Post-construction trajectories did not diverge significantly between stone pile and control sites (all *p*~adj~ = `r fmt_num(stat("M2bak", "siteStone_pile:monitoring_int", "p_adj_BH"))`). Kōura abundance declined significantly across post-construction rounds at stone pile as control sites (β = `r fmt_b(stat("M2bak", "^monitoring_int$", "estimate"))`, `r fmt_p(stat("M2bak", "^monitoring_int$", "p.value"))`), with the sharpest decline observed in Winter 2026 (@fig-koura-trends). 
+Stone pile construction produced no detectable step-change in kōura abundance, biomass, or occupancy relative to paired control sites in the 18 months following deployment (all *p*~adj~ = `r fmt_num(stat("M2aak", "PeriodAfter:siteStone_pile", "p_adj_BH"))`). A matched-season comparison, comparing Summer 2025 (before construction) with Summer 2026 (one year after construction), produced the same conclusion (kōura abundance: `r fmt_p(stat_ms("Kōura", "abundance", p.value))`). Post-construction trajectories did not diverge significantly between stone pile and control sites (all *p*~adj~ = `r fmt_num(stat("M2bak", "siteStone_pile:monitoring_int", "p_adj_BH"))`). Kōura abundance declined significantly across post-construction rounds at stone pile and control sites (β = `r fmt_b(stat("M2bak", "^monitoring_int$", "estimate"))`, `r fmt_p(stat("M2bak", "^monitoring_int$", "p.value"))`), with the sharpest decline observed in Winter 2026 (@fig-koura-trends). 
 
-Kōura site occupancy was high across all sites types before and after construction. Warm-season occupancy estimats (summer and autumn combined) ranged from `r...` to `r...` across site type and periods  
+Kōura occupancy was already high across all sites types before construction, `r before_rng["min"]`–`r before_rng["max"]` % in summer (@tbl-psi-warm). After construction, occupancy increased marginally at all sites, `r after_rng["min"]`–`r after_rng["max"]` % in summer, leaving little statistical headroom to detect a treatment effect. The BACI contrast to compare how much stone pile sites changed relative to control sites was centered near zero with wide credible intervals (@fig-occ-warm-contrasts), indicating no detectable additional increase at stone pile sites. However, this result likely reflects a measured ceiling rather than biological response. After-treatment contrast shows no significant difference between site types, but the direction of the effect was consistent with early habitat use: stone pile sites showed a positivecontrast relative to control sites, while control site showed a negative contrat relative to reference sites, and stone pile sites were near zero relative to to reference sites (@fig-occ-warm-contrasts).
 
-@fig-occ-warm-contrasts
-
-@tbl-psi-warm
-
-@fig-trajectory-projection
-
-@fig-cpue-power-plots + @fig-power-plots
+The non-significant BACI results should be interpreted in the context of statistical power. For occupancy, power was near zero across all simulated scenarios (maximum `r scales::percent(pwr("max_occ_power"), accuracy = 1)`), reflecting the ceiling effect leaving no statistical room for a BACI signal (@fig-power-plots). For kōura CPUE, simulation-based power analysis showed that detecting the observed BACI effect size (β = `r round(pwr("baci_effect"), 2)` log-units) at 80 % power would require approximately `r pwr("n_pairs_needed")` site pairs, far exceeding the five pairs in this study, with power remaining below `r scales::percent(pwr("max_cpue_power"), accuracy = 1)` even at 30 simulated site pairs (@fig-cpue-power-plots). Post-construction power analysis showed that achieving 80 % power with the current five site pairs would instead require an effect size of approximately `r round(pwr("threshold_80"), 2)` log-units, almost `r round(pwr("threshold_ratio"), 0)` times the current observed effect (@fig-trajectory-projection). If the estimated positive trajectory of +`r round(pwr("traj_per_round"), 2)` log-units per seasonal round continues, the effect size may reach this detection threshold within approximately `r round(pwr("rounds_to_80"), 0)` additional monitoring rounds (~`r round(pwr("years_to_80"), 1)` years).
 
 ### Convergence toward reference sites and reference stability
-Stone pile sites maintained a consistently lower kōura abundance than reference sites throughout the post-construction period, with no significant change in this gap over time (β = `r fmt_b(stat("M3aak", "siteStone_pile:monitoring_int", "estimate"))`, `r fmt_p(stat("M3aak", "siteStone_pile:monitoring_int", "p.value"))`; @fig-convergence-plot). Kōura abundance declined across monitoring rounds at both stone pile and reference sites (β = `r fmt_b(stat("M3aak", "^monitoring_int$", "estimate"))`, `r fmt_p(stat("M3aak", "^monitoring_int$", "p.value"))`). The Winter 2026 monitoring round showed a pronounced decline at stone pile sites (CPUE ≈ 0.7) while reference sites maintained substantially higher abundance (CPUE ≈ 1.7; @fig-koura-trends), a within-round contrast not captured by the linear trajectory model. Water temperature at Winter 2026 was approximately 1.5°C lower than Winter 2025 but consistent across site types, rulling out temperature as a site specific driver.and therefore cannot explain the collapse at stone pile sites. Visual inspection of stone pile surfaces during Winter 2026 monitoring revealed substantially greater filamentous algal accumulation compared to earlier rounds (@fig-stone-piles).
+Stone pile sites maintained a consistently lower kōura abundance than reference sites throughout the post-construction period, with no significant change in this gap over time (β = `r fmt_b(stat("M3aak", "siteStone_pile:monitoring_int", "estimate"))`, `r fmt_p(stat("M3aak", "siteStone_pile:monitoring_int", "p.value"))`; @fig-convergence-plot). Kōura abundance declined across monitoring rounds at both stone pile and reference sites (β = `r fmt_b(stat("M3aak", "^monitoring_int$", "estimate"))`, `r fmt_p(stat("M3aak", "^monitoring_int$", "p.value"))`). The Winter 2026 monitoring round showed a pronounced decline at stone pile sites (CPUE ≈ 0.7) while reference sites maintained substantially higher abundance (CPUE ≈ 1.7; @fig-koura-trends), a within-round contrast not captured by the linear trajectory model. Water temperature at Winter 2026 was approximately 1.5°C lower than Winter 2025 but consistent across site types, ruling out temperature as a site-specific driver, and therefore cannot explain the collapse at stone pile sites. Visual inspection of stone pile surfaces during Winter 2026 monitoring revealed substantially greater filamentous algal accumulation compared to earlier rounds (@fig-stone-piles).
 
 *Catfish*
 Stone pile construction produced no significant effect on catfish abundance, biomass, or occupancy relative to control sites across any model or time period (@fig-forest-plot), indicating stone piles did not attract more catfish. 
 
-
-@fig-descriptive-context
-
-
-
-
 ## Discussion
 *Short-term construction effect*
-Stone pile constructionin the littoral zone of Lake Rotoiti porduced no detectable step-change in kōura abundance, biomass, or occupancy relative to paired control sites over an 18-month monitoring period. This outcome is most plausible explained by an insufficient monitoring window rather than ineffectiveness of the stone piles. Habitat establishmetn for freshwater crayfish is a slow process. @Johnsen2008 reported that crayfish abundance at a stone site addition site took 13 years to reach similar crayfish levels as a control site, and freshwater invertebrate colonisation studies generally show treatment effects emerging over two to three years of monitoring [@BRON]. Following reconstruction of the Rotorua lakefront (completed in July 2021), which included rocky kōura habitat only 17 kōura were recorded after 28 months, compared to 57 removed before construction, No kōura were observed 13 months after completion and slow recolonation was likely the effect of catfish predation [@Kusabs2023], suggesting that 18 months may represent a minimum rather tan sufficien monitoring duration for detecting population level responses to habitat addition.
+Stone pile construction in the littoral zone of Lake Rotoiti porduced no detectable step-change in kōura abundance, biomass, or occupancy relative to paired control sites over an 18-month monitoring period. This outcome is most plausible explained by an insufficient monitoring window rather than ineffectiveness of the stone piles. Habitat establishmetn for freshwater crayfish is a slow process. @Johnsen2008 reported that crayfish abundance at a stone site addition site took 13 years to reach similar crayfish levels as a control site, and freshwater invertebrate colonisation studies generally show treatment effects emerging over two to three years of monitoring [@BRON]. Following reconstruction of the Rotorua lakefront (completed in July 2021), which included rocky kōura habitat only 17 kōura were recorded after 28 months, compared to 57 removed before construction, No kōura were observed 13 months after completion and slow recolonation was likely the effect of catfish predation [@Kusabs2023], suggesting that 18 months may represent a minimum rather tan sufficien monitoring duration for detecting population level responses to habitat addition.
 
 The Autumn 2025 monitoring round, the first after stone pile deployment, showed eleveted kōura CPUE across all site types, which may have obscured any early construction effects in th BACI design. This cross-site spike is consistent with 
 
@@ -300,17 +305,17 @@ Current stone pile design creates isolated islands of refuge rathere than connec
 As rocky environments are identified as refuges and important for multiple species and threats [@Selwood2020] the value of restoration and expanding the availability of this habitat can be very important 
 
 
-### Baseline and site context*
+### Baseline and site context
 
-### Construction impact*
+### Construction impact
 
 Trap catches alone cannot determine whether kōura are actively using stone piles or are simply present in the surrounding area. For Chapter 5 higher catches near stone piles were therefore interpreted as indicating greater habitat use of the structures. In structurally complex habitats, fyke nets must be placed flat on the sediment to fish effectively; on rocky substrates this is often not possible, and kōura may pass beneath the net opening entirely.
 
-### Convergence and recovery*
+### Convergence and recovery
 The last monitoring showed on the stone piles an increase in cover of biofilm with the stones being more covered than assessed before 
 
 
-### Implications and future directions*
+### Implications and future directions
 For future studies it is recommended 
 
 Stone piles were constructed at the shore line to shallow to reach machrophyte beds which are located further offshore. Future stone pile construction could be extended further offshore to reach the macrophyte beds and test if stone piles could suppress machrophyte growth and create pathways for kōura to move between the deeperparts of the lake and the shore.

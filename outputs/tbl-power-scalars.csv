@@ -1,0 +1,12 @@
+key,value
+baci_effect,0.311
+baci_se,1.232
+threshold_80,1.8
+threshold_ratio,5.8
+traj_per_round,0.243
+traj_se,0.179
+rounds_to_80,6.1
+years_to_80,1.5
+n_pairs_needed,167
+max_cpue_power,0.26
+max_occ_power,0.078

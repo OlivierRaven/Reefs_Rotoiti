@@ -679,21 +679,42 @@ the same conclusion (kōura abundance: \emph{p} = 0.582).
 Post-construction trajectories did not diverge significantly between
 stone pile and control sites (all \emph{p}\textsubscript{adj} = 0.224).
 Kōura abundance declined significantly across post-construction rounds
-at stone pile as control sites (β = -0.41, \emph{p} = 0.004), with the
+at stone pile and control sites (β = -0.41, \emph{p} = 0.004), with the
 sharpest decline observed in Winter 2026
 (Figure~\ref{fig-koura-trends}).
 
-Kōura site occupancy was high across all sites types before and after
-construction. Warm-season occupancy estimats (summer and autumn
-combined) ranged from \texttt{r...\ to}r\ldots{}
+Kōura occupancy was already high across all sites types before
+construction, 81--89 \% in summer (\textbf{?@tbl-psi-warm}). After
+construction, occupancy increased marginally at all sites, 89--94 \% in
+summer, leaving little statistical headroom to detect a treatment
+effect. The BACI contrast to compare how much stone pile sites changed
+relative to control sites was centered near zero with wide credible
+intervals (\textbf{?@fig-occ-warm-contrasts}), indicating no detectable
+additional increase at stone pile sites. However, this result likely
+reflects a measured ceiling rather than biological response.
+After-treatment contrast shows no significant difference between site
+types, but the direction of the effect was consistent with early habitat
+use: stone pile sites showed a positivecontrast relative to control
+sites, while control site showed a negative contrat relative to
+reference sites, and stone pile sites were near zero relative to to
+reference sites (\textbf{?@fig-occ-warm-contrasts}).
 
-\textbf{?@fig-occ-warm-contrasts}
-
-\textbf{?@tbl-psi-warm}
-
-\textbf{?@fig-trajectory-projection}
-
-\textbf{?@fig-cpue-power-plots} + \textbf{?@fig-power-plots}
+The non-significant BACI results should be interpreted in the context of
+statistical power. For occupancy, power was near zero across all
+simulated scenarios (maximum 8\%), reflecting the ceiling effect leaving
+no statistical room for a BACI signal (\textbf{?@fig-power-plots}). For
+kōura CPUE, simulation-based power analysis showed that detecting the
+observed BACI effect size (β = 0.31 log-units) at 80 \% power would
+require approximately 167 site pairs, far exceeding the five pairs in
+this study, with power remaining below 26\% even at 30 simulated site
+pairs (\textbf{?@fig-cpue-power-plots}). Post-construction power
+analysis showed that achieving 80 \% power with the current five site
+pairs would instead require an effect size of approximately 1.8
+log-units, almost 6 times the current observed effect
+(\textbf{?@fig-trajectory-projection}). If the estimated positive
+trajectory of +0.24 log-units per seasonal round continues, the effect
+size may reach this detection threshold within approximately 6
+additional monitoring rounds (\textasciitilde1.5 years).
 
 \subsubsection{Convergence toward reference sites and reference
 stability}\label{convergence-toward-reference-sites-and-reference-stability}
@@ -709,18 +730,18 @@ maintained substantially higher abundance (CPUE ≈ 1.7;
 Figure~\ref{fig-koura-trends}), a within-round contrast not captured by
 the linear trajectory model. Water temperature at Winter 2026 was
 approximately 1.5°C lower than Winter 2025 but consistent across site
-types, rulling out temperature as a site specific driver.and therefore
+types, ruling out temperature as a site-specific driver, and therefore
 cannot explain the collapse at stone pile sites. Visual inspection of
 stone pile surfaces during Winter 2026 monitoring revealed substantially
 greater filamentous algal accumulation compared to earlier rounds
 (Figure~\ref{fig-stone-piles}).
 
+catis
+
 \emph{Catfish} Stone pile construction produced no significant effect on
 catfish abundance, biomass, or occupancy relative to control sites
 across any model or time period (Figure~\ref{fig-forest-plot}),
 indicating stone piles did not attract more catfish.
-
-\textbf{?@fig-descriptive-context}
 
 \subsection{Discussion}\label{discussion}
 
@@ -805,9 +826,9 @@ seasonal movement patterns with staying close to the shoreline during
 spring and summer probably looking for warmest waters to feed their
 young. While in winter movement increases and catfish spread across the
 lake swimming mid-water not going deeper than 15 m even when lake bottom
-is deeper (\citeproc{ref-Blanchfield2026}{\textbf{Blanchfield2026?}}).
-For kōura this means that during spring and summer the threat of catfish
-is highest and habitat compression during this period also being
+is deeper (\citeproc{ref-Blanchfield2026}{Blanchfield \emph{et al.},
+2026}). For kōura this means that during spring and summer the threat of
+catfish is highest and habitat compression during this period also being
 greatest further limiting the survival chances of kōura
 (\citeproc{ref-BRON}{\textbf{BRON?}}). \ldots{}
 
@@ -833,15 +854,14 @@ the stones being photocraphed every monitoring to compare devalopment
 and seasonal variation.
 
 As rocky environments are identified as refuges and important for
-multiple species and threats
-(\citeproc{ref-Selwood2020}{\textbf{Selwood2020?}}) the value of
-restoration and expanding the availability of this habitat can be very
-important
+multiple species and threats (\citeproc{ref-Selwood2020}{Selwood \&
+Zimmer, 2020}) the value of restoration and expanding the availability
+of this habitat can be very important
 
 \subsubsection{Baseline and site
-context*}\label{baseline-and-site-context}
+context}\label{baseline-and-site-context}
 
-\subsubsection{Construction impact*}\label{construction-impact}
+\subsubsection{Construction impact}\label{construction-impact}
 
 Trap catches alone cannot determine whether kōura are actively using
 stone piles or are simply present in the surrounding area. For Chapter 5
@@ -851,14 +871,13 @@ fyke nets must be placed flat on the sediment to fish effectively; on
 rocky substrates this is often not possible, and kōura may pass beneath
 the net opening entirely.
 
-\subsubsection{Convergence and
-recovery*}\label{convergence-and-recovery}
+\subsubsection{Convergence and recovery}\label{convergence-and-recovery}
 
 The last monitoring showed on the stone piles an increase in cover of
 biofilm with the stones being more covered than assessed before
 
 \subsubsection{Implications and future
-directions*}\label{implications-and-future-directions}
+directions}\label{implications-and-future-directions}
 
 For future studies it is recommended
 
@@ -1469,6 +1488,13 @@ mixed-effects models using {lme4}. \emph{Journal of Statistical
 Software} \textbf{67}, 1--48.
 \url{https://doi.org/10.18637/jss.v067.i01}
 
+\bibitem[\citeproctext]{ref-Blanchfield2026}
+Blanchfield P.J., Rodrigues T.H., MacNeil C., Stewart S., Lee F., Hicks
+B.J., \emph{et al.} (2026). Invadingbrown bullhead catfish (ameiurus
+nebulosus) show thermal niche rigidity and benthic niche plasticity:
+Implications for management. \emph{Biological Invasions}.
+\url{https://doi.org/10.1007/s10530-026-03877-5}
+
 \bibitem[\citeproctext]{ref-Brooks2017}
 Brooks M., Bolker B., Kristensen K., Maechler M., Magnusson A., Skaug
 H., \emph{et al.} (2017).
@@ -1715,6 +1741,11 @@ threatened with extinction. \emph{Nature} \textbf{638}, 138--145.
 \bibitem[\citeproctext]{ref-Scott1973}
 Scott W.B. \& Crossman E.J. (1973). \emph{Freshwater fishes of
 {Canada}}. Fisheries Research Board of Canada, Ottawa, Canada.
+
+\bibitem[\citeproctext]{ref-Selwood2020}
+Selwood K.E. \& Zimmer H.C. (2020). Refuges for biodiversity
+conservation: A review of the evidence. \emph{Biological Conservation}
+\textbf{245}, 108502. \url{https://doi.org/10.1016/j.biocon.2020.108502}
 
 \bibitem[\citeproctext]{ref-Sheriff2020}
 Sheriff M.J., Peacor S.D., Hawlena D. \& Thaker M. (2020).

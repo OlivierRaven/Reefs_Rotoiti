@@ -35,7 +35,7 @@ theme_set(base_theme)
 der_dir <- file.path("data", "derived")
 dir.create(der_dir, showWarnings = FALSE, recursive = TRUE)
 
-location_levels <- c("Control", "Stone_pile", "Reference1", "Reference2")
+location_levels <- c("Stone_pile", "Control", "Reference1", "Reference2")
 period_levels   <- c("Before", "After")
 season_levels   <- c("Summer", "Autumn", "Winter", "Spring")
 block_levels    <- c("Impact", "Reference")
@@ -553,11 +553,11 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
     file.path(der_dir, paste0(model_label, "_contrasts.csv")))
 
   # Shared display helpers — colours and shapes match analysis.qmd
-  site_labels  <- c(Control = "Control", Stone_pile = "Stone pile",
+  site_labels  <- c(Stone_pile = "Stone pile", Control = "Control",
                     Reference1 = "Reference 1", Reference2 = "Reference 2")
-  site_colours <- c(Control = "#E69F00", Stone_pile = "#D55E00",
+  site_colours <- c(Stone_pile = "#D55E00", Control = "#E69F00",
                     Reference1 = "#0072B2", Reference2 = "#56B4E9")
-  site_shapes  <- c(Control = 24, Stone_pile = 21,
+  site_shapes  <- c(Stone_pile = 21, Control = 24,
                     Reference1 = 22, Reference2 = 23)
   season_colours <- c(Summer = "#D55E00", Autumn = "#E69F00",
                       Winter = "#56B4E9", Spring = "#009E73")
@@ -621,26 +621,11 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
          p1, width = 10, height = 5, dpi = 300)
 
   # ---- Plot 2: contrast forest plot -----------------------------------------
-  # Separate panels for After and BACI; fix x range symmetrically around 0
   x_lim <- max(abs(c(contrasts_plot$lower95, contrasts_plot$upper95)),
                na.rm = TRUE) * 1.05
 
-  p2 <- ggplot(contrasts_plot,
-               aes(x = mean, y = forcats::fct_rev(factor(contrast)),
-                   colour = if (include_season) season else NULL)) +
-    geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50", linewidth = 0.6) +
-    geom_pointrange(aes(xmin = lower95, xmax = upper95),
-                    position = position_dodge(0.6),
-                    size = 0.4, linewidth = 0.8, fatten = 3) +
-    facet_wrap(~period, scales = "free_y", nrow = 1) +
-    {if (include_season)
-        scale_colour_manual(values = season_colours, name = "Season")
-      else
-        scale_colour_manual(values = c("After treatment" = "grey30"), guide = "none")} +
-    scale_x_continuous(limits = c(-x_lim, x_lim),
-                       labels = scales::label_number(accuracy = 0.1)) +
-    labs(x = "Posterior contrast (probability scale)", y = NULL) +
-    theme_classic(base_size = 11) +
+  shared_theme <- list(
+    theme_classic(base_size = 11),
     theme(
       text               = element_text(family = "Arial"),
       panel.border       = element_rect(colour = "black", fill = NA, linewidth = 0.3),
@@ -648,11 +633,53 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
       panel.grid.major.y = element_blank(),
       strip.background   = element_rect(fill = "grey92", colour = NA),
       strip.text         = element_text(face = "plain"),
-      axis.text.y        = element_text(size = 10),
-      legend.position    = "right"
+      axis.text.y        = element_text(size = 10)
     )
+  )
+  colour_scale <- if (include_season)
+    scale_colour_manual(values = season_colours, name = "Season")
+  else
+    scale_colour_manual(values = c("After treatment" = "grey30"), guide = "none")
+  x_scale <- scale_x_continuous(limits = c(-x_lim, x_lim),
+                                 labels = scales::label_number(accuracy = 0.1))
+
+  contrast_levels <- c(
+    "BACI (Stone pile − Control)",
+    "Reference 1 vs Reference 2",
+    "Control vs Reference",
+    "Stone pile vs Reference",
+    "Stone pile vs Control"
+  )
+
+  make_forest <- function(data) {
+    data <- data |>
+      dplyr::mutate(contrast = factor(contrast, levels = contrast_levels))
+    ggplot(data, aes(x = mean, y = contrast,
+                     colour = if (include_season) season else NULL)) +
+      geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50", linewidth = 0.6) +
+      geom_pointrange(aes(xmin = lower95, xmax = upper95),
+                      position = position_dodge(0.6),
+                      size = 0.4, linewidth = 0.8, fatten = 3) +
+      colour_scale + x_scale + shared_theme +
+      labs(x = "Posterior contrast (probability scale)", y = NULL)
+  }
+
+  baci_data  <- contrasts_plot |> dplyr::filter(period == "BACI")
+  after_data <- contrasts_plot |> dplyr::filter(period == "After treatment")
+
+  n_baci  <- dplyr::n_distinct(baci_data$contrast)
+  n_after <- dplyr::n_distinct(after_data$contrast)
+
+  p_baci  <- make_forest(baci_data)  + ggtitle("BACI") +
+    theme(legend.position = "none")
+  p_after <- make_forest(after_data) + ggtitle("After treatment") +
+    theme(legend.position = "right")
+
+  p2 <- p_baci / p_after +
+    patchwork::plot_layout(heights = c(n_baci, n_after))
+
   ggsave(file.path("outputs", paste0("fig-occ-", model_label, "-contrasts.png")),
-         p2, width = 10, height = 5, dpi = 300)
+         p2, width = 8, height = 6, dpi = 300)
 
   cat("\n====", model_label, "====\n")
   print(contrasts_all |>
@@ -675,7 +702,7 @@ results_full <- run_contrasts(fit_full, model_data,
 #| label: fig-contrasts-full
 #| fig-cap: "Full model (all seasons): occupancy probability ψ by site type and period (left) and posterior contrasts with 95% credible intervals (right)."
 #| fig-width: 12
-#| fig-height: 5
+#| fig-height: 7
 results_full$psi_plot + results_full$contrast_plot
 ```
 
@@ -715,31 +742,27 @@ results_warm$psi_plot + results_warm$contrast_plot
 ```{r}
 #| label: tbl-psi-warm
 #| tbl-cap: "Posterior kōura occupancy probability (ψ) from the warm-season occupancy model (Summer and Autumn rounds). Values are population-level estimates averaged over random site effects, with 95% credible intervals. Autumn has no Before period as baseline monitoring was conducted in summer only."
-results_warm$cell_summary |>
+psi_warm_tbl <- results_warm$cell_summary |>
   dplyr::mutate(
     season      = factor(season, levels = c("Summer", "Autumn")),
     period      = factor(period, levels = c("Before", "After")),
-    location_type = dplyr::recode(as.character(location_type),
-                      Stone_pile = "Stone pile",
-                      Reference1 = "Reference 1",
-                      Reference2 = "Reference 2")
-  ) |>
+    location_type = factor(
+                      dplyr::recode(as.character(location_type),
+                        Stone_pile = "Stone pile",
+                        Reference1 = "Reference 1",
+                        Reference2 = "Reference 2"),
+                      levels = c("Stone pile", "Control", "Reference 1", "Reference 2"))) |>
   dplyr::arrange(season, period, location_type) |>
   dplyr::transmute(
     Season      = as.character(season),
     Period      = as.character(period),
     `Site type` = location_type,
     `ψ (mean [95% CrI])` = sprintf("%.2f [%.2f–%.2f]", psi_mean, psi_lwr, psi_upr)
-  ) |>
-  knitr::kable(
-    align   = c("l", "l", "l", "c"),
-    caption = paste0(
-      "Posterior kōura occupancy probability (\\u03c8) from the warm-season ",
-      "occupancy model (Summer and Autumn rounds only). Values are population-level ",
-      "estimates averaged over random site effects, with 95\\% credible intervals. ",
-      "Autumn has no Before period as baseline monitoring was conducted in summer only."
-    )
   )
+
+readr::write_csv(psi_warm_tbl, file.path("outputs", "tbl-psi-warm.csv"))
+
+knitr::kable(psi_warm_tbl, align = c("l", "l", "l", "c"))
 ```
 
 # Combined contrast summary
@@ -1350,6 +1373,38 @@ ggsave(file.path("outputs", "fig-trajectory-projection.png"),
        p_traj, width = 8, height = 5, dpi = 300)
 
 p_traj
+```
+
+```{r}
+#| label: power-scalars-csv
+#| include: false
+
+# Analytically compute n_pairs needed to detect baci_now at 80% power.
+# SE scales as se_at_n = se_at_30 * sqrt(30 / n), so:
+#   baci_now = (z_alpha + z_beta) * se_at_n  →  n = 30 * (se_at_30 * z_sum / baci_now)^2
+z_sum         <- qnorm(0.975) + qnorm(0.80)
+n_pairs_needed <- ceiling(30 * (se_at_30 * z_sum / baci_now)^2)
+
+max_cpue_power <- max(cpue_power_grid$power)
+max_occ_power  <- max(power_grid$power)
+
+power_scalars <- tibble::tibble(
+  key   = c("baci_effect", "baci_se",
+            "threshold_80", "threshold_ratio",
+            "traj_per_round", "traj_se",
+            "rounds_to_80", "years_to_80",
+            "n_pairs_needed",
+            "max_cpue_power", "max_occ_power"),
+  value = c(round(baci_now, 3),       round(baci_se_now, 3),
+            round(threshold, 2),      round(threshold / baci_now, 1),
+            round(traj_per_round, 3), round(traj_se, 3),
+            round(rounds_to_80, 1),   round(rounds_to_80 / 4, 1),
+            n_pairs_needed,
+            round(max_cpue_power, 3), round(max_occ_power, 3))
+)
+
+readr::write_csv(power_scalars, file.path("outputs", "tbl-power-scalars.csv"))
+power_scalars
 ```
 
 
