@@ -998,7 +998,10 @@ ggsave(file.path("outputs", "fig-occ-power-curves.png"),
 #| fig-cap: "Occupancy BACI power analysis: power heatmap (left) and power curves by monitoring rounds (right). Dashed line marks 80% power threshold."
 #| fig-width: 12
 #| fig-height: 5
-p_heat + p_lines
+p_combined_occ <- p_heat + p_lines
+ggsave(file.path("outputs", "fig-power-plots.png"),
+       p_combined_occ, width = 12, height = 5, dpi = 300)
+p_combined_occ
 ```
 
 ```{r}
@@ -1240,7 +1243,10 @@ ggsave(file.path("outputs", "fig-cpue-power-curves.png"),
 #| fig-cap: "Kōura CPUE BACI power analysis (M2aak): power heatmap (left) and power curves by monitoring rounds (right). Dashed line marks 80% power threshold."
 #| fig-width: 12
 #| fig-height: 5
-p_heat_cpue + p_lines_cpue
+p_combined_cpue <- p_heat_cpue + p_lines_cpue
+ggsave(file.path("outputs", "fig-cpue-power-plots.png"),
+       p_combined_cpue, width = 12, height = 5, dpi = 300)
+p_combined_cpue
 ```
 
 ```{r}
