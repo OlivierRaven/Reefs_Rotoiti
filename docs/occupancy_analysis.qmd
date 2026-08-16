@@ -784,6 +784,173 @@ all_contrasts |>
   knitr::kable()
 ```
 
+# Additional and sensitivity models — wave exposure
+
+Two sensitivity models test whether wave exposure confounds or modifies the
+primary results from the warm-season model:
+
+- **Model S1 (fetch-ψ)**: adds max effective fetch (site-level, static) as a
+  covariate on occupancy (ψ). Tests whether more exposed sites have systematically
+  different baseline occupancy independent of treatment type.
+
+- **Model S2 (wave-p)**: adds the round-specific wave energy proxy as an
+  additional detection covariate alongside temperature. Tests whether high-energy
+  rounds suppress detection probability.
+
+LOO-IC comparison with the base warm model indicates whether either covariate
+improves predictive fit.
+
+```{r}
+#| label: fetch-covariates
+site_fetch    <- readr::read_csv(file.path(der_dir, "site_fetch.csv"),
+                                  show_col_types = FALSE)
+wave_by_round <- readr::read_csv(file.path(der_dir, "wave_exposure_by_round.csv"),
+                                  show_col_types = FALSE)
+
+warm_data_fetch <- warm_data |>
+  dplyr::left_join(
+    site_fetch |> dplyr::select(site_id, max_eff_fetch_km),
+    by = "site_id"
+  ) |>
+  dplyr::left_join(
+    wave_by_round |> dplyr::select(site_id, round, wave_energy_proxy),
+    by = c("site_id", "round")
+  ) |>
+  dplyr::mutate(
+    fetch_z = as.numeric(scale(max_eff_fetch_km)),
+    wave_z  = as.numeric(scale(wave_energy_proxy))
+  )
+
+cat("Fetch covariate range (km):", round(range(warm_data_fetch$max_eff_fetch_km), 2), "\n")
+cat("Wave energy proxy range:   ", round(range(warm_data_fetch$wave_energy_proxy, na.rm = TRUE), 0), "\n")
+cat("Missing wave_z:            ", sum(is.na(warm_data_fetch$wave_z)), "rows\n")
+```
+
+```{r}
+#| label: fit-fetch-psi
+fetch_psi_path <- file.path(der_dir, "fit_fetch_psi.rds")
+
+if (!file.exists(fetch_psi_path)) {
+
+  bf_fetch_psi <- bf(
+    y_dummy | vint(yA_obs, yB_obs, yA, yB) ~
+      location_type * period + season + fetch_z + (1 | site_id),
+    pA ~ 1 + temp_z + (1 | site_id),
+    pB ~ 1 + temp_z + (1 | site_id),
+    family = occ2
+  )
+
+  fit_fetch_psi <- brm(
+    bf_fetch_psi,
+    data     = warm_data_fetch,
+    prior    = priors_occ,
+    stanvars = stanvars_occ,
+    chains   = 4, iter = 4000, warmup = 1500,
+    seed     = 2026,
+    control  = list(adapt_delta = 0.99, max_treedepth = 13)
+  )
+
+  saveRDS(fit_fetch_psi, fetch_psi_path)
+  cat("Fitted and saved fetch-ψ model.\n")
+
+} else {
+  fit_fetch_psi <- readRDS(fetch_psi_path)
+  cat("Loaded cached fetch-ψ model.\n")
+}
+
+summary(fit_fetch_psi)
+cat("\nMax Rhat:   ", max(brms::rhat(fit_fetch_psi), na.rm = TRUE), "\n")
+cat("Min ESS:    ", min(posterior::summarise_draws(fit_fetch_psi)$ess_bulk, na.rm = TRUE), "\n")
+cat("Divergences:", sum(brms::nuts_params(fit_fetch_psi, pars = "divergent__")$Value), "\n")
+```
+
+```{r}
+#| label: fit-wave-p
+wave_p_path <- file.path(der_dir, "fit_wave_p.rds")
+
+if (!file.exists(wave_p_path)) {
+
+  bf_wave_p <- bf(
+    y_dummy | vint(yA_obs, yB_obs, yA, yB) ~
+      location_type * period + season + (1 | site_id),
+    pA ~ 1 + temp_z + wave_z + (1 | site_id),
+    pB ~ 1 + temp_z + wave_z + (1 | site_id),
+    family = occ2
+  )
+
+  fit_wave_p <- brm(
+    bf_wave_p,
+    data     = warm_data_fetch,
+    prior    = priors_occ,
+    stanvars = stanvars_occ,
+    chains   = 4, iter = 4000, warmup = 1500,
+    seed     = 2026,
+    control  = list(adapt_delta = 0.99, max_treedepth = 13)
+  )
+
+  saveRDS(fit_wave_p, wave_p_path)
+  cat("Fitted and saved wave-detection model.\n")
+
+} else {
+  fit_wave_p <- readRDS(wave_p_path)
+  cat("Loaded cached wave-detection model.\n")
+}
+
+summary(fit_wave_p)
+cat("\nMax Rhat:   ", max(brms::rhat(fit_wave_p), na.rm = TRUE), "\n")
+cat("Min ESS:    ", min(posterior::summarise_draws(fit_wave_p)$ess_bulk, na.rm = TRUE), "\n")
+cat("Divergences:", sum(brms::nuts_params(fit_wave_p, pars = "divergent__")$Value), "\n")
+```
+
+```{r}
+#| label: loo-comparison
+loo_warm      <- loo(fit_warm,      reloo = TRUE)
+loo_fetch_psi <- loo(fit_fetch_psi, reloo = TRUE)
+loo_wave_p    <- loo(fit_wave_p,    reloo = TRUE)
+
+loo_comp <- loo_compare(loo_warm, loo_fetch_psi, loo_wave_p)
+print(loo_comp, digits = 2)
+
+readr::write_csv(
+  as.data.frame(loo_comp) |> tibble::rownames_to_column("fit_name"),
+  file.path(der_dir, "loo_sensitivity_comparison.csv")
+)
+```
+
+```{r}
+#| label: fetch-effect-plot
+#| fig-cap: "Sensitivity model posterior estimates. Left: fetch-ψ model — posterior for the fetch_z coefficient on occupancy (positive = more exposed sites have higher occupancy). Right: wave-p model — posterior for the wave_z coefficient on detection probability for both trap methods (negative = high wave energy suppresses detection)."
+#| fig-width: 10
+#| fig-height: 4
+
+fetch_coef <- posterior::as_draws_df(fit_fetch_psi) |>
+  dplyr::select(b_fetch_z) |>
+  tidyr::pivot_longer(everything(), names_to = "param", values_to = "value") |>
+  dplyr::mutate(param = "fetch_z → ψ", model = "S1: fetch on ψ")
+
+wave_coefs <- posterior::as_draws_df(fit_wave_p) |>
+  dplyr::select(b_pA_wave_z, b_pB_wave_z) |>
+  tidyr::pivot_longer(everything(), names_to = "param", values_to = "value") |>
+  dplyr::mutate(
+    param = dplyr::recode(param,
+      b_pA_wave_z = "wave_z → pA (box trap)",
+      b_pB_wave_z = "wave_z → pB (fyke net)"),
+    model = "S2: wave on detection"
+  )
+
+all_coefs <- dplyr::bind_rows(fetch_coef, wave_coefs)
+
+ggplot(all_coefs, aes(x = value, y = param, fill = model)) +
+  ggdist::stat_halfeye(.width = c(0.5, 0.95), point_interval = "median_qi",
+                       alpha = 0.85, normalize = "groups") +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey40") +
+  scale_fill_manual(values = c("S1: fetch on ψ"       = "#0072B2",
+                               "S2: wave on detection" = "#D55E00"),
+                    name = NULL) +
+  labs(x = "Posterior coefficient (log-odds scale)", y = NULL) +
+  theme(legend.position = "bottom")
+```
+
 # Power analysis — sites and rounds needed for statistical detection
 
 The current study shows a consistent positive direction for the stone pile effect
@@ -941,33 +1108,6 @@ print(power_grid |> tidyr::pivot_wider(names_from = n_after_rounds,
 ```{r}
 #| label: fig-power-plots-setup
 #| include: false
-# ---- Heatmap ----------------------------------------------------------------
-p_heat <- ggplot(power_grid,
-                 aes(x = factor(n_after_rounds), y = factor(n_pairs),
-                     fill = power)) +
-  geom_tile(colour = "white", linewidth = 0.5) +
-  geom_text(aes(label = scales::percent(power, accuracy = 1)),
-            size = 3.2, colour = ifelse(power_grid$power > 0.6, "white", "grey20")) +
-  geom_contour(aes(x = as.numeric(factor(n_after_rounds)),
-                   y = as.numeric(factor(n_pairs)),
-                   z = power),
-               breaks = 0.8, colour = "black", linewidth = 1, linetype = "dashed",
-               inherit.aes = FALSE) +
-  scale_fill_gradientn(
-    colours = c("#d73027", "#fc8d59", "#fee090", "#e0f3f8", "#74add1", "#313695"),
-    values  = scales::rescale(c(0, 0.2, 0.4, 0.6, 0.8, 1)),
-    limits  = c(0, 1),
-    labels  = scales::percent_format(accuracy = 1),
-    name    = "Power"
-  ) +
-  scale_x_discrete(name = "Number of After-period monitoring rounds") +
-  scale_y_discrete(name = "Number of site pairs\n(Stone pile + Control)") +
-  theme(panel.grid = element_blank(), legend.position = "right")
-
-ggsave(file.path("outputs", "fig-occ-power-heatmap.png"),
-       p_heat, width = 8, height = 6, dpi = 300)
-
-# ---- Lines by n_after_rounds ------------------------------------------------
 p_lines <- power_grid |>
   dplyr::mutate(n_after_rounds = factor(n_after_rounds,
                   labels = paste0(c(2,4,6,8,10,12), " After rounds"))) |>
@@ -985,23 +1125,11 @@ p_lines <- power_grid |>
   scale_y_continuous(labels = scales::percent_format(accuracy = 1),
                      limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
   scale_x_continuous(breaks = c(3, 5, 7, 10, 15, 20, 30)) +
-  labs(x = "Number of site pairs (Stone pile + Control)",
+  labs(title = "Occupancy (BACI)",
+       x = "Number of site pairs (Stone pile + Control)",
        y = "Statistical power") +
+  base_theme +
   theme(panel.grid.minor = element_blank(), legend.position = "right")
-
-ggsave(file.path("outputs", "fig-occ-power-curves.png"),
-       p_lines, width = 8, height = 5, dpi = 300)
-```
-
-```{r}
-#| label: fig-power-plots
-#| fig-cap: "Occupancy BACI power analysis: power heatmap (left) and power curves by monitoring rounds (right). Dashed line marks 80% power threshold."
-#| fig-width: 12
-#| fig-height: 5
-p_combined_occ <- p_heat + p_lines
-ggsave(file.path("outputs", "fig-power-plots.png"),
-       p_combined_occ, width = 12, height = 5, dpi = 300)
-p_combined_occ
 ```
 
 ```{r}
@@ -1193,26 +1321,6 @@ print(cpue_power_grid |>
 ```{r}
 #| label: fig-cpue-power-plots-setup
 #| include: false
-p_heat_cpue <- ggplot(cpue_power_grid,
-                      aes(x = factor(n_after_rounds), y = factor(n_pairs),
-                          fill = power)) +
-  geom_tile(colour = "white", linewidth = 0.5) +
-  geom_text(aes(label = scales::percent(power, accuracy = 1)),
-            size = 3.2, colour = "grey20") +
-  scale_fill_gradientn(
-    colours = c("#d73027", "#fc8d59", "#fee090", "#e0f3f8", "#74add1", "#313695"),
-    values  = scales::rescale(c(0, 0.2, 0.4, 0.6, 0.8, 1)),
-    limits  = c(0, 1),
-    labels  = scales::percent_format(accuracy = 1),
-    name    = "Power"
-  ) +
-  scale_x_discrete(name = "Number of After-period monitoring rounds") +
-  scale_y_discrete(name = "Number of site pairs\n(Stone pile + Control)") +
-  theme(panel.grid = element_blank(), legend.position = "right")
-
-ggsave(file.path("outputs", "fig-cpue-power-heatmap.png"),
-       p_heat_cpue, width = 8, height = 6, dpi = 300)
-
 p_lines_cpue <- cpue_power_grid |>
   dplyr::mutate(n_after_rounds = factor(n_after_rounds,
                   labels = paste0(c(2, 4, 6, 8, 10, 12), " After rounds"))) |>
@@ -1230,23 +1338,25 @@ p_lines_cpue <- cpue_power_grid |>
   scale_y_continuous(labels = scales::percent_format(accuracy = 1),
                      limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
   scale_x_continuous(breaks = c(3, 5, 7, 10, 15, 20, 30)) +
-  labs(x = "Number of site pairs (Stone pile + Control)",
+  labs(title = "Kōura CPUE (BACI)",
+       x = "Number of site pairs (Stone pile + Control)",
        y = "Statistical power") +
+  base_theme +
   theme(panel.grid.minor = element_blank(), legend.position = "right")
-
-ggsave(file.path("outputs", "fig-cpue-power-curves.png"),
-       p_lines_cpue, width = 8, height = 5, dpi = 300)
 ```
 
 ```{r}
-#| label: fig-cpue-power-plots
-#| fig-cap: "Kōura CPUE BACI power analysis (M2aak): power heatmap (left) and power curves by monitoring rounds (right). Dashed line marks 80% power threshold."
+#| label: fig-power-curves-combined
+#| fig-cap: "Simulation-based power curves for the occupancy BACI (left) and kōura CPUE BACI (right). Each line represents a different number of After-period monitoring rounds. Dashed line marks 80% power. Neither analysis reaches 80% power within the simulated range, reflecting the dominant contribution of between-pair variance."
 #| fig-width: 12
 #| fig-height: 5
-p_combined_cpue <- p_heat_cpue + p_lines_cpue
-ggsave(file.path("outputs", "fig-cpue-power-plots.png"),
-       p_combined_cpue, width = 12, height = 5, dpi = 300)
-p_combined_cpue
+p_power_combined <- p_lines + p_lines_cpue +
+  patchwork::plot_layout(guides = "collect") &
+  theme(legend.position = "right")
+
+ggsave(file.path("outputs", "fig-power-curves-combined.png"),
+       p_power_combined, width = 12, height = 5, dpi = 300)
+p_power_combined
 ```
 
 ```{r}

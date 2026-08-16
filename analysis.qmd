@@ -21,7 +21,7 @@ packages <- c("DT","MuMIn","lunar","glmmTMB","DHARMa","broom.mixed","emmeans","l
 
 quiet_load <- function(pkg) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
-    suppressWarnings(suppressMessages(install.packages(pkg, dependencies = TRUE)))
+    suppressWarnings(suppressMessages(install.packages(pkg, dependencies = c("Depends", "Imports", "LinkingTo"))))
   }
   suppressPackageStartupMessages(require(pkg, character.only = TRUE, quietly = TRUE))
   invisible(TRUE)

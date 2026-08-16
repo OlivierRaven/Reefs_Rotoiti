@@ -21,7 +21,7 @@ packages <- c("DT","MuMIn","lunar","glmmTMB","DHARMa","broom.mixed","emmeans","l
 
 quiet_load <- function(pkg) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
-    suppressWarnings(suppressMessages(install.packages(pkg, dependencies = TRUE)))
+    suppressWarnings(suppressMessages(install.packages(pkg, dependencies = c("Depends", "Imports", "LinkingTo"))))
   }
   suppressPackageStartupMessages(require(pkg, character.only = TRUE, quietly = TRUE))
   invisible(TRUE)
@@ -55,10 +55,6 @@ write.csv(Macroinvertebrates, file.path(der_data_dir, "Macroinvertebrates.csv"),
 
 
 
-### Reproducibility note 
-# The sections above require data/raw/Natural_habitat.xlsx (if not tracked).
-# To reproduce analyses and figures without the raw Excel file, run from here using the derived CSVs in data/derived/:
-
 Site_info          <- read.csv(file.path(der_data_dir, "Site_info.csv"))
 Monitoring_data    <- read.csv(file.path(der_data_dir, "Monitoring_data.csv"))
 Chemical_data      <- read.csv(file.path(der_data_dir, "Chemical_data.csv"))
@@ -67,7 +63,6 @@ Weed_data          <- read.csv(file.path(der_data_dir, "Weed_data.csv"))
 Fish_data          <- read.csv(file.path(der_data_dir, "Fish_data.csv"))
 Macroinvertebrates <- read.csv(file.path(der_data_dir, "Macroinvertebrates.csv"))
 
-# set plotting aesthetics
 site_colours <- c("Stone_pile" = "#D55E00", "Control" = "#E69F00", "Reference" = "#0072B2")
 site_fill <- c("Stone_pile" = "#D55E00", "Control" = "#E69F00", "Reference" = "#0072B2")
 site_shapes  <- c("Stone_pile" = 21,  "Control" = 24, "Reference" = 22)
@@ -90,16 +85,12 @@ base_theme_bw <- theme_classic() +
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.3))
 theme_set(base_theme_bw)
 
-# Format of p values in text, including the correct comparison operator and
-# the italic "p" label. Set label = FALSE for values chained after a leading
-# "*p*" (e.g. "*p* < 0.001, 0.011, 0.004, respectively").
 format_pval <- function(p, label = TRUE) {
   out <- if (p < 0.001) "< 0.001" else paste0("= ", format(round(p, 3), nsmall = 3))
   if (label) paste0("*p* ", out) else out
 }
 
 
-# Single lookup function — partial term matching so you don't need full term names
 stat <- function(mid, trm, col) {
   tidy_all_full |>
     dplyr::filter(model_id == mid,
@@ -108,7 +99,6 @@ stat <- function(mid, trm, col) {
     dplyr::first()
 }
 
-# Formatting helpers
 fmt_p <- function(p) {
   if (is.na(p)) return("NA")
   if (p < 0.001) return("*p* < 0.001")
@@ -150,10 +140,8 @@ stat_ms <- function(sp, rt, col) {
 #| fig-height: 5
 #| fig-cap: "Length–weight relationship for kōura, fitted on log₁₀–log₁₀ scale. Open points are weights predicted from the length–weight regression (used to fill missing scale measurements); filled points are directly measured weights."
 
-# use size of koura to fill missing weights.
 lw_model <- lm(log10(weight_g) ~ log10(length_mm), data = Fish_data, subset = species_name == "Freshwater_crayfish", na.action = na.exclude)
 
-# extract the residual variance
 sigma_log10 <- sigma(lw_model)
 c <- 10^(0.5 * sigma_log10^2)
 
@@ -178,14 +166,10 @@ total_koura <- Fish_data |>
 
 hist(Fish_data |> dplyr::filter(is_koura) |> dplyr::pull(length_mm), xlab = "Length (mm)")
 
-# Extract model coefficients
 a <- coef(lw_model)[1]
 b <- coef(lw_model)[2]
-
-# Create formula text for the plot
 formula_text <- paste0( "log10(Weight[g]) = ", round(a, 3), " + ", round(b, 3), " * log10(OCL Length[mm])")
 
-# Plot with formula added
 length_weight_plot <- ggplot(
 Fish_data |> dplyr::filter(is_koura),
 aes(x = length_mm, y = Predicted_weight, shape = Weight_source)) +
@@ -402,7 +386,6 @@ Combined_data <- Combined_data %>%
       TRUE ~ site),
       levels = c("Stone_pile", "Control", "Reference_1", "Reference_2")))
 
-# Substrate_index_update
 site_area_m2 <- 10 * 15
 
 pile_footprint_pct <- Stone_pile_data %>%
@@ -441,7 +424,34 @@ Combined_data <- Combined_data %>%
     lunar_illumination = (1 - cos(lunar.phase(Date))) / 2,  # 0=new, 1=full
     lunar_name = lunar.phase(Date, name = TRUE))     # "New", "Waxing", "Full", "Waning"
 
-# use buoy data to find stratification and habitat compression at monitoring period.
+monitoring_start <- as.Date("2025-01-01")
+monitoring_end   <- as.Date("2026-08-31")
+
+met_daily <- dplyr::bind_rows(
+  readRDS(file.path(raw_data_dir, "met_chunk_2025.rds")),
+  readRDS(file.path(raw_data_dir, "met_chunk_2026.rds"))
+) |>
+  dplyr::filter(
+    site_id   == "Rotoiti",
+    parameter %in% c("TmpAir", "RadSWD", "PpRain", "WndSpd"),
+    !is.na(value)
+  ) |>
+  dplyr::mutate(Date = as.Date(datetime)) |>
+  dplyr::filter(Date >= monitoring_start, Date <= monitoring_end) |>
+  dplyr::group_by(Date, parameter) |>
+  dplyr::summarise(
+    value_mean = mean(value, na.rm = TRUE),
+    value_sum  = sum(value,  na.rm = TRUE),   # daily total for rainfall
+    .groups    = "drop"
+  ) |>
+  dplyr::mutate(value_plot = dplyr::if_else(parameter == "PpRain", value_sum, value_mean)) |>
+  dplyr::select(Date, parameter, value_plot) |>
+  tidyr::pivot_wider(names_from = parameter, values_from = value_plot)
+
+readr::write_csv(met_daily, file.path(der_data_dir, "met_daily_rotoiti.csv"))
+cat("Meteorological data extracted:", nrow(met_daily), "days,",
+    format(range(met_daily$Date)), "\n")
+
 CTD_buoy <- readRDS(file.path(raw_data_dir, "buoy_raw_data.rds"))
 
 Buoy_data_Rotoiti <- CTD_buoy |>
@@ -455,7 +465,6 @@ Buoy_data_Rotoiti <- CTD_buoy |>
       Date  = as.Date(DateTime),
       Time  = format(DateTime, "%H:%M:%S"),
       Year  = lubridate::year(DateTime),
-      # Month label is locale-dependent (display only) — Season uses numeric month instead
       Month = lubridate::month(DateTime, label = TRUE),
       Day   = lubridate::day(DateTime),
       Season = case_when(
@@ -471,13 +480,10 @@ Buoy_data_Rotoiti <- CTD_buoy |>
         lubridate::hour(DateTime) >= 18 & lubridate::hour(DateTime) < 24 ~ "Evening",
         TRUE ~ "Night"))
 
-# Filter to study period — start from July 2024 to include full Before period
 Buoy_study <- Buoy_data_Rotoiti |>
     dplyr::filter(Date >= as.Date("2024-07-01"),
                   Date <= as.Date("2026-07-31"))
 
-# Daily oxycline depth: shallowest depth where DO < 5 mg/L
-# Recalculate oxycline_daily with 5 mg/L threshold and habitable depth
 oxycline_daily <- Buoy_study |>
     dplyr::group_by(Date) |>
     dplyr::arrange(Depth, .by_group = TRUE) |>
@@ -492,12 +498,10 @@ oxycline_daily <- Buoy_study |>
         .groups = "drop" ) |>
     dplyr::mutate(full_column = is.na(hypoxia_top_m))
 
-# Per-site visit date
 visit_dates <- Combined_data |>
     dplyr::mutate(visit_date = as.Date(date_time)) |>
     dplyr::select(site_id, monitoring, monitoring_id, visit_date)
 
-# For each visit, average habitable depth over ±14 day window
 visit_buoy <- visit_dates |>
     dplyr::rowwise() |>
     dplyr::mutate(buoy_slice = list(oxycline_daily |>
@@ -509,13 +513,11 @@ visit_buoy <- visit_dates |>
     dplyr::select(-buoy_slice) |>
     dplyr::ungroup()
 
-# Join to Combined_data
 Combined_data <- Combined_data |>
     dplyr::left_join(visit_buoy |>
     dplyr::select(monitoring_id, habitable_depth_m, hypoxia_top_m, surface_temp_C, full_column),
         by = "monitoring_id")
 
-# Monitoring quality flag — based on known compromised events
 compromised_ids <- c("6_1", "13_1", "14_1", "1_2", "2_2", "19_2", "20_2", "1_3", "2_3", "6_5", "5_6", "6_6")
 
 Combined_data <- Combined_data %>%
@@ -526,6 +528,25 @@ write.csv(Combined_data, file.path(der_data_dir, "Combined_data.csv"), row.names
 write.csv(habitat_classification, file.path(der_data_dir, "habitat_classification.csv"), row.names = FALSE)
 
 all_data <- Combined_data
+
+# Join fetch and wave exposure covariates (from fetch-calc chunk)
+site_fetch_cov <- readr::read_csv(file.path(der_data_dir, "site_fetch.csv"),
+                                   show_col_types = FALSE) |>
+  dplyr::select(site_id, max_eff_fetch_km) |>
+  dplyr::mutate(site_id = factor(site_id, levels = levels(all_data$site_id)))
+
+wave_round_cov <- readr::read_csv(file.path(der_data_dir, "wave_exposure_by_round.csv"),
+                                   show_col_types = FALSE) |>
+  dplyr::select(site_id, round, wave_energy_proxy) |>
+  dplyr::mutate(site_id = factor(site_id, levels = levels(all_data$site_id)))
+
+all_data <- all_data |>
+  dplyr::left_join(site_fetch_cov, by = "site_id") |>
+  dplyr::left_join(wave_round_cov, by = c("site_id", "monitoring_int" = "round")) |>
+  dplyr::mutate(
+    fetch_z = as.numeric(scale(max_eff_fetch_km)),
+    wave_z  = as.numeric(scale(wave_energy_proxy))
+  )
 
 ```
 
@@ -538,12 +559,10 @@ all_data <- Combined_data
 
 stone_pile_date <- as.Date("2025-02-14")
 
-# One median date per monitoring round across all sites
 monitoring_lines <- visit_dates |>
   dplyr::group_by(monitoring) |>
   dplyr::summarise(date = median(visit_date), .groups = "drop")
 
-# Daily mean per 1-m depth bin
 buoy_daily <- Buoy_study |>
   dplyr::mutate(
     Date      = as.Date(DateTime),
@@ -556,8 +575,6 @@ buoy_daily <- Buoy_study |>
     .groups = "drop"
   )
 
-# X limits: up to 2 weeks either side of the monitoring window,
-# clamped to the actual buoy record so no empty space appears
 x_lims <- c(
   max(min(buoy_daily$Date), min(monitoring_lines$date) - 14),
   min(max(buoy_daily$Date), max(monitoring_lines$date) + 14)
@@ -622,6 +639,314 @@ ggsave(file.path(out_dir, "fig-lake-conditions.png"),
        fig_lake_conditions, width = 12, height = 8, dpi = 300)
 ```
 
+## Meteorological conditions
+```{r}
+#| label: fig-met-conditions
+#| fig-width: 12
+#| fig-height: 8
+#| fig-cap: "Meteorological conditions at Lake Rotoiti during the monitoring period. From top: air temperature (°C), shortwave downwelling radiation (W/m²), daily rainfall (mm), and wind speed (m/s). Vertical lines mark monitoring visits; orange line marks stone pile construction completion (14 February 2025)."
+
+met_plot <- met_daily |>
+  tidyr::pivot_longer(cols = c(TmpAir, RadSWD, PpRain, WndSpd),
+                      names_to = "parameter", values_to = "value") |>
+  dplyr::mutate(parameter = factor(parameter,
+    levels = c("TmpAir", "RadSWD", "PpRain", "WndSpd"),
+    labels = c("Air temperature (°C)", "Solar radiation (W/m²)",
+               "Daily rainfall (mm)", "Wind speed (m/s)")))
+
+p_met <- ggplot(met_plot, aes(x = Date, y = value)) +
+  geom_line(colour = "grey40", linewidth = 0.4) +
+  geom_vline(data = monitoring_lines, aes(xintercept = date),
+             colour = "black", linetype = "dashed", linewidth = 0.5) +
+  geom_vline(xintercept = as.Date("2025-02-14"),
+             colour = "#D55E00", linewidth = 0.8) +
+  facet_wrap(~ parameter, ncol = 1, scales = "free_y") +
+  scale_x_date(date_breaks = "2 months", date_labels = "%b %Y",
+               limits = c(monitoring_start, monitoring_end)) +
+  labs(x = NULL, y = NULL) +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(hjust = 0))
+
+p_met
+
+ggsave(file.path(out_dir, "fig-met-conditions.png"),
+       p_met, width = 12, height = 8, dpi = 300)
+```
+
+## Wave exposure (fetch analysis)
+```{r}
+#| label: fetch-calc
+#| message: false
+#| warning: false
+
+if (!requireNamespace("sf", quietly = TRUE)) install.packages("sf")
+library(sf)
+
+lake_poly <- sf::st_read(file.path(raw_data_dir, "Lake Rotoiti.gpkg"), quiet = TRUE) |>
+  sf::st_transform(crs = 2193) |>   # NZTM — metres, accurate for NZ
+  sf::st_union() |>
+  sf::st_buffer(1)                   # 1 m only — just handles floating-point edge cases
+
+lake_boundary <- sf::st_boundary(lake_poly)   # shoreline linestring for crossing detection
+
+# --- 2. Unique site locations ------------------------------------------------
+sites_sf <- Site_info |>
+  dplyr::distinct(site_id, site, lat, lon) |>
+  sf::st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
+  sf::st_transform(crs = 2193)
+
+# --- 3. Fetch per direction --------------------------------------------------
+# Cast a ray from each site outward; find where it FIRST crosses the lake
+# boundary after leaving the site (> 50 m away). This correctly stops at
+# peninsulas — it does not continue to count water behind land.
+directions <- seq(0, 350, by = 10)   # 36 directions, every 10°
+
+calc_fetch <- function(site_pt, lake_poly, lake_bnd, direction_deg, max_dist = 15000) {
+  rad     <- direction_deg * pi / 180
+  dir_vec <- c(sin(rad), cos(rad))
+  coord   <- as.numeric(sf::st_coordinates(site_pt))
+
+  # Guard: at least 30 m of the 5–405 m ray segment must be inside the lake.
+  # Starting 5 m ahead avoids boundary floating-point noise.
+  near_ray <- sf::st_sfc(
+    sf::st_linestring(matrix(
+      c(coord + dir_vec * 5, coord + dir_vec * 405),
+      ncol = 2, byrow = TRUE
+    )),
+    crs = 2193
+  )
+  near_clip <- suppressWarnings(sf::st_intersection(near_ray, lake_poly))
+  if (length(near_clip) == 0 || sf::st_is_empty(near_clip[[1]])) return(0)
+  if (as.numeric(sf::st_length(near_clip)) < 30) return(0)
+
+  endpt <- coord + dir_vec * max_dist
+  ray   <- sf::st_sfc(
+    sf::st_linestring(matrix(c(coord, endpt), ncol = 2, byrow = TRUE)),
+    crs = 2193
+  )
+  crossings <- suppressWarnings(sf::st_intersection(ray, lake_bnd))
+  if (length(crossings) == 0 || sf::st_is_empty(crossings[[1]])) return(max_dist)
+
+  pts    <- suppressWarnings(sf::st_cast(crossings, "POINT"))
+  cxy    <- sf::st_coordinates(pts)
+  signed <- apply(cxy, 1, function(p) sum((p - coord) * dir_vec))
+  forward <- signed[signed > 20]
+  if (length(forward) == 0) return(max_dist)
+  min(forward)
+}
+
+# Snap each site to the nearest point on the lake boundary.
+# This ensures sites that are slightly outside the polygon (coordinate mismatch)
+# start exactly on the shoreline, so the guard works correctly for all sites.
+sites_snapped <- sites_sf
+sf::st_geometry(sites_snapped) <- purrr::map(
+  seq_len(nrow(sites_sf)),
+  function(i) {
+    connector <- sf::st_nearest_points(sites_sf[i, ], lake_boundary)
+    sf::st_cast(connector, "POINT")[[2]]
+  }
+) |> sf::st_sfc(crs = 2193)
+
+message("Calculating fetch: ", nrow(sites_snapped), " sites x ", length(directions), " directions")
+fetch_raw <- purrr::map_dfr(seq_len(nrow(sites_snapped)), function(i) {
+  site_pt <- sites_snapped[i, ]
+  dplyr::tibble(
+    site_id   = sites_sf$site_id[i],
+    site_type = sites_sf$site[i],
+    direction = directions,
+    fetch_m   = purrr::map_dbl(directions, function(d) calc_fetch(site_pt, lake_poly, lake_boundary, d))
+  )
+})
+
+# --- 4. Effective fetch (USACE cosine weighting ±45° in 5° steps) -----------
+eff_fetch_at_dir <- function(df, wind_dir) {
+  offsets <- seq(-45, 45, by = 5)
+  weights <- cos(offsets * pi / 180)
+  sectors <- (wind_dir + offsets) %% 360
+  f_sect  <- purrr::map_dbl(sectors, function(s) {
+    diffs <- pmin(abs(df$direction - s), 360 - abs(df$direction - s))
+    df$fetch_m[which.min(diffs)]
+  })
+  sum(weights * f_sect) / sum(weights)
+}
+
+fetch_eff <- fetch_raw |>
+  dplyr::group_by(site_id, site_type) |>
+  dplyr::group_modify(function(df, key) {
+    df$eff_fetch_m <- purrr::map_dbl(df$direction, function(d) eff_fetch_at_dir(df, d))
+    df
+  }) |>
+  dplyr::ungroup()
+
+# Static summary: maximum effective fetch per site (worst-case exposure)
+site_exposure <- fetch_eff |>
+  dplyr::group_by(site_id, site_type) |>
+  dplyr::summarise(
+    max_eff_fetch_km   = round(max(eff_fetch_m) / 1000, 2),
+    mean_eff_fetch_km  = round(mean(eff_fetch_m) / 1000, 2),
+    dominant_dir_deg   = direction[which.max(eff_fetch_m)],
+    # Raw fetch (not cosine-averaged) for sanity-check map — arrow should reach the far shore
+    max_raw_fetch_km   = round(max(fetch_m) / 1000, 2),
+    dominant_raw_dir   = direction[which.max(fetch_m)],
+    .groups = "drop"
+  )
+
+# 5. Wind direction by monitoring round (14-day pre-visit window) 
+met_wind <- dplyr::bind_rows(
+  readRDS(file.path(raw_data_dir, "met_chunk_2025.rds")),
+  readRDS(file.path(raw_data_dir, "met_chunk_2026.rds"))
+) |>
+  dplyr::filter(site_id == "Rotoiti",
+                parameter %in% c("WndSpd", "WndDir"),
+                !is.na(value)) |>
+  dplyr::mutate(Date = as.Date(datetime))
+
+round_dates <- Site_info |>
+  dplyr::mutate(visit_date = as.Date(date_time)) |>
+  dplyr::group_by(monitoring) |>
+  dplyr::summarise(start_date = min(visit_date, na.rm = TRUE), .groups = "drop") |>
+  dplyr::rename(round = monitoring)
+
+wind_by_round <- purrr::map_dfr(seq_len(nrow(round_dates)), function(i) {
+  r_date  <- round_dates$start_date[i]
+  window  <- met_wind |>
+    dplyr::filter(Date >= r_date - 14, Date < r_date)
+  spd     <- window |> dplyr::filter(parameter == "WndSpd") |> dplyr::pull(value)
+  dir_deg <- window |> dplyr::filter(parameter == "WndDir") |> dplyr::pull(value)
+  dir_rad <- dir_deg * pi / 180
+  mean_dir <- atan2(mean(sin(dir_rad), na.rm = TRUE),
+                    mean(cos(dir_rad), na.rm = TRUE)) * 180 / pi
+  dplyr::tibble(
+    round         = round_dates$round[i],
+    visit_start   = r_date,
+    mean_wind_spd = mean(spd, na.rm = TRUE),
+    mean_wind_dir = (mean_dir + 360) %% 360,
+    n_obs         = sum(!is.na(dir_deg))
+  )
+})
+
+# --- 6. Wave energy proxy per site per round ---------------------------------
+# Wave energy ~ effective_fetch × wind_speed²  (proportional to Hs²)
+wave_exposure <- purrr::map_dfr(seq_len(nrow(wind_by_round)), function(j) {
+  r     <- wind_by_round$round[j]
+  w_spd <- wind_by_round$mean_wind_spd[j]
+  w_dir <- wind_by_round$mean_wind_dir[j]
+  fetch_eff |>
+    dplyr::group_by(site_id, site_type) |>
+    dplyr::group_modify(function(df, key) {
+      diffs <- pmin(abs(df$direction - w_dir), 360 - abs(df$direction - w_dir))
+      best  <- df$eff_fetch_m[which.min(diffs)]
+      dplyr::tibble(
+        eff_fetch_m       = best,
+        wind_spd_ms       = w_spd,
+        wind_dir_deg      = w_dir,
+        wave_energy_proxy = best * w_spd^2
+      )
+    }) |>
+    dplyr::mutate(round = r) |>
+    dplyr::ungroup()
+})
+
+readr::write_csv(site_exposure, file.path(der_data_dir, "site_fetch.csv"))
+readr::write_csv(wave_exposure, file.path(der_data_dir, "wave_exposure_by_round.csv"))
+
+cat("Fetch range (max eff fetch):",
+    round(range(site_exposure$max_eff_fetch_km), 1), "km\n")
+cat("Sites with max fetch > 5 km:",
+    sum(site_exposure$max_eff_fetch_km > 5), "\n")
+```
+
+```{r}
+#| label: fig-fetch-map
+#| fig-width: 10
+#| fig-height: 7
+#| fig-cap: "Sanity check: Lake Rotoiti outline with monitoring sites and raw maximum-fetch rays. Each arrow points in the direction of greatest raw fetch; the arrowhead should land on the opposite shoreline. Effective fetch (used in the analysis) is shorter due to cosine-weighting across ±45°."
+
+lake_wgs84 <- sf::st_read(file.path(raw_data_dir, "Lake Rotoiti.gpkg"), quiet = TRUE) |>
+  sf::st_transform(crs = 4326) |>
+  sf::st_union()   # combine all polygon features so all lake arms are rendered
+
+# Site coordinates with fetch summary in WGS84 (for geom_sf compatibility)
+# 1° lat ≈ 111 km; 1° lon ≈ 89 km at latitude -38°
+fetch_map_df <- site_exposure |>
+  dplyr::left_join(
+    Site_info |> dplyr::distinct(site_id, site, lat, lon),
+    by = c("site_id", "site_type" = "site")) |>
+  dplyr::mutate(
+    rad     = dominant_raw_dir * pi / 180,
+    lon_end = lon + sin(rad) * max_raw_fetch_km / 89,
+    lat_end = lat + cos(rad) * max_raw_fetch_km / 111,
+    site_type = factor(site_type, levels = c("Stone_pile", "Control", "Reference"))  )
+
+fetch_map <- ggplot() +
+  geom_sf(data = lake_wgs84, fill = "#c6e2f5", colour = "grey50", linewidth = 0.4) +
+  geom_segment(
+    data  = fetch_map_df,
+    aes(x = lon, y = lat, xend = lon_end, yend = lat_end, colour = site_type),
+    arrow = arrow(length = unit(0.22, "cm"), type = "closed"),
+    linewidth = 0.9, alpha = 0.9) +
+  geom_point(
+    data  = fetch_map_df,
+    aes(x = lon, y = lat, colour = site_type, shape = site_type),
+    size = 3, fill = "white", stroke = 1.2) +
+  geom_text(
+    data  = fetch_map_df,
+    aes(x = lon, y = lat, label = site_id),
+    vjust = -0.9, size = 2.5, colour = "grey20") +
+  scale_colour_manual(values = site_colours, labels = site_labels, name = NULL) +
+  scale_shape_manual( values = site_shapes,  labels = site_labels, name = NULL) +
+  labs(x = "Longitude", y = "Latitude") +
+  coord_sf() 
+
+ggsave(file.path(out_dir, "fig-fetch-map.png"), fetch_map , width = 10, height = 7, dpi = 300)
+
+fetch_map
+```
+
+```{r}
+#| label: fig-fetch-exposure
+#| fig-width: 12
+#| fig-height: 5
+#| fig-cap: "Wave exposure at monitoring sites. Left: maximum effective fetch per site (km), the worst-case open-water fetch distance accounting for ±45° angular spread. Right: wave energy proxy (effective fetch × wind speed²) per site per monitoring round; colours indicate site type. Each line is one site. Higher values indicate greater potential for wave disturbance."
+
+# Panel A: max effective fetch per site
+p_fetch <- site_exposure |>
+  dplyr::mutate(
+    site_label = paste0("Site ", site_id),
+    site_type  = factor(site_type, levels = c("Stone_pile", "Control", "Reference"))
+  ) |>
+  ggplot(aes(x = reorder(site_label, max_eff_fetch_km),
+             y = max_eff_fetch_km, colour = site_type, fill = site_type)) +
+  geom_col(width = 0.7, alpha = 0.85) +
+  scale_colour_manual(values = site_colours, labels = site_labels, name = NULL) +
+  scale_fill_manual(  values = site_fill,    labels = site_labels, name = NULL) +
+  labs(x = NULL, y = "Max effective fetch (km)") +
+  coord_flip() 
+
+# Panel B: wave energy proxy per site over rounds
+p_wave <- wave_exposure |>
+  dplyr::left_join(wind_by_round |> dplyr::select(round, visit_start), by = "round") |>
+  dplyr::mutate(
+    site_type  = factor(site_type, levels = c("Stone_pile", "Control", "Reference")),
+    site_label = paste0("Site ", site_id)
+  ) |>
+  ggplot(aes(x = visit_start, y = wave_energy_proxy / 1e6,
+             colour = site_type, group = site_label)) +
+  geom_line(linewidth = 0.5, alpha = 0.7) +
+  geom_point(size = 1.5, alpha = 0.8) +
+  scale_colour_manual(values = site_colours, labels = site_labels, name = NULL) +
+  scale_x_date(date_breaks = "3 months", date_labels = "%b %Y") +
+  labs(x = NULL, y = expression(Wave~energy~proxy~(10^6~m^3~s^{-2}))) 
+
+p_fetch_combined <- p_fetch + p_wave
+
+ggsave(file.path(out_dir, "fig-fetch-exposure.png"), p_fetch_combined, width = 12, height = 5, dpi = 300)
+
+p_fetch_combined
+
+
+```
+
 ## Missing data summary
 ```{r}
 #| label: tbl-missing-data-summary
@@ -668,10 +993,6 @@ stone_pile_site_summary <- Stone_pile_data %>%
     .groups   = "drop") %>%
   pivot_wider(names_from = parameter, values_from = value_num) %>%
   mutate(
-    # Cast to character (not factor) so the join below inherits
-    # site_info_summary's (already correctly numeric-ordered) factor
-    # instead of re-sorting this subset alphabetically on its own —
-    # left_join() coerces factor-vs-character but errors on factor-vs-integer.
     site_id          = as.character(site_id),
     Depth_m          = round((Depth_on_R + Depth_on_L) / 2 / 1000, 2),
     Depth_after_m    = round(Depth_after       / 1000, 2),
@@ -689,11 +1010,6 @@ site_data <- site_info_summary %>%
   mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
   select(site_id, site, DHT, Substrate_index_before, Slope_0_20m, Distance_shore_m, Depth_m, Height_above_m, Area_m2, Volume_m3)
 
-# Display table drops the stone-pile build dimensions (Distance_shore_m,
-# Depth_m, Height_above_m, Area_m2, Volume_m3) — they only exist for
-# Stone_pile sites, so they don't fit a per-site comparison table. site_data
-# itself keeps them, since stone_pile_data2/mean_dist_shore/mean_depth/
-# mean_area below still depend on them.
 site_overview_display <- site_data %>%
   dplyr::select(site_id, site, DHT, Substrate_index_before, Slope_0_20m)
 
@@ -770,11 +1086,6 @@ parameter_labels <- c(
   Area_m2          = "Area (m²)",
   Volume_m3        = "Volume (m³)")
 
-# Only Stone_pile sites have real values here (Control/Reference are NA
-# from the left_join in site_data) — filter the NAs out before plotting so
-# the unused factor levels actually drop, instead of leaving 15 empty tick
-# positions squeezed in next to the 5 real bars. No fill/legend needed
-# either, since every remaining bar is the same site type.
 stone_pile_structure_plot <- stone_pile_data2 %>%
   dplyr::filter(!is.na(Value)) %>%
   ggplot(aes(site_id, Value)) +
@@ -811,10 +1122,6 @@ chemical_var_labels <- c(
   Specific_conductivity = "Specific conductivity\n(µS/cm)",
   pH                    = "pH")
 
-# Coloured by site type (not individual site_id) for consistency with every
-# other panel — a 20-line/colour legend was competing with the data itself.
-# x-axis uses monitoring_int + monitor_labels, same as the species-trends
-# panel, so both panels read the same round labels.
 Chemical_plot <- ggplot(Chemical_data2, aes(monitoring_int, Values, colour = site)) +
   geom_vline(xintercept = 0.25, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
   geom_point(alpha = 0.5, position = position_jitter(width = 0.1)) +
@@ -909,10 +1216,6 @@ combined_trends
 #| dpi: 300
 #| fig-cap: "Descriptive context plots, combined. Left column (top to bottom): baseline habitat characteristics (mean ± SE by site type), stone pile structure dimensions (5 stone pile sites), chemical conditions over time (mean ± smoothed trend by site type). Right column: mean catch per monitoring round by site type, for catfish, kōaro, and goldfish. Site-type colours are shared across all panels — see the legend on the right. Background/methods-supporting figures, not primary results — see Results for the BACI, trend, and convergence models."
 
-# Left column stacks the 3 site-characteristic panels; right column is the
-# species-trends panel (already a 3-row stack of its own), so both sides
-# end up with matching internal proportions instead of a forced 2x2 grid
-# that would otherwise squash the taller species-trends panel.
 left_column <- Habitat_plot / stone_pile_structure_plot / Chemical_plot
 
 descriptive_context_plot <- (left_column | combined_trends) +
@@ -930,7 +1233,7 @@ descriptive_context_plot
 #| fig-width: 6
 #| fig-height: 3
 #| dpi: 300
-#| fig-cap: "Mean kōura CPUE per monitoring round (± 95% CI, log scale) by site type. Shading distinguishes the pre-construction period (Before) from post-construction monitoring (After)."
+#| fig-cap: "Mean kōura CPUE per monitoring round (± 95% CI, log scale) by site type. Vertical dashed line distinguishes the pre-construction period (Before) from post-construction monitoring (After)."
 
 koura_summary <- all_data %>%
   group_by(monitoring_int, site) %>%
@@ -1561,8 +1864,9 @@ fit_rq2a <- function(species, response_type) {
     response_type == "biomass"   ~ paste0("Weighted_BPUE_", species))
   if (!response_col %in% names(rq2a_data)) return(NULL)
 
-  # Season collinear with Period in BACI; all models → Base
-  form <- paste0("`", response_col, "` ~ Period * site + monitoring_int + (1 | pair_id / site_id)")
+  # Season collinear with Period in BACI; catfish models include fetch_z (AICc-selected)
+  fetch_term <- if (species == "Catfish") " + fetch_z" else ""
+  form <- paste0("`", response_col, "` ~ Period * site + monitoring_int", fetch_term, " + (1 | pair_id / site_id)")
   fam_obj <- if (response_type == "occupancy") binomial() else tweedie()
   zif     <- if (species == "Catfish" && response_type == "abundance") ~1 else ~0
   m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = rq2a_data, REML = TRUE, family = fam_obj,
@@ -1611,9 +1915,9 @@ fit_rq2b <- function(species, response_type) {
 
   fam_obj <- if (response_type == "occupancy") binomial() else tweedie()
   zif     <- if (species == "Catfish" && response_type == "abundance") ~1 else ~0
-  # Season collinear with Period in BACI context; all models → Base
-  # (In RQ2b post-only data, Season appeared supported by AICc but model was degenerate)
-  form <- paste0("`", response_col, "` ~ site * monitoring_int + (1 | pair_id/site_id)")
+  # Season collinear with Period in BACI context; catfish models include fetch_z (AICc-selected)
+  fetch_term <- if (species == "Catfish") " + fetch_z" else ""
+  form <- paste0("`", response_col, "` ~ site * monitoring_int", fetch_term, " + (1 | pair_id/site_id)")
   m <- tryCatch(glmmTMB::glmmTMB(as.formula(form), data = rq2b_data, REML = TRUE, family = fam_obj,
                   ziformula = zif),
                 error = function(e) NULL)
@@ -2374,7 +2678,8 @@ rq1a_cov <- tidyr::crossing(species = all_species, response_type = c("abundance"
       base <- paste0("`", rc, "` ~ Site_type_detail")
       covariate_select(base,
         list(Temperature = paste0(base, " + Temperature"),
-             Substrate   = paste0(base, " + Substrate_index_before")),
+             Substrate   = paste0(base, " + Substrate_index_before"),
+             Fetch       = paste0(base, " + fetch_z")),
         rq1a_data, tweedie(), zif,
         focal_term = "Site_type_detailStone_pile")
     }))
@@ -2390,7 +2695,8 @@ rq1b_cov <- tidyr::crossing(species = all_species, response_type = c("abundance"
       base <- paste0("`", rc, "` ~ Site_type_detail")
       covariate_select(base,
         list(Temperature = paste0(base, " + Temperature"),
-             Substrate   = paste0(base, " + Substrate_index_before")),
+             Substrate   = paste0(base, " + Substrate_index_before"),
+             Fetch       = paste0(base, " + fetch_z")),
         rq1b_data, tweedie(), zif,
         focal_term = "Site_type_detailReference_2")
     }))
@@ -2401,7 +2707,7 @@ rq1_cov_summary <- dplyr::bind_rows(
   dplyr::select(model_id, species, response_type, candidate, K, AICc, delta_AICc, SE_focal, R2m, supported, hessian_ok) %>%
   dplyr::mutate(across(where(is.numeric), ~ round(.x, 2)))
 
-print(rq1_cov_summary, n = 24)
+print(rq1_cov_summary, n = 32)
 
 DT::datatable(rq1_cov_summary, filter = "top",
   options = list(pageLength = 30, dom = 'Bfrtip', buttons = c('csv', 'excel')),
@@ -2430,7 +2736,9 @@ rq2a_cov <- tidyr::crossing(species = all_species, response_type = c("occupancy"
       covariate_select(base,
         list(Temperature = paste0(base, " + Temperature"),
              Season      = paste0(base, " + Season"),
-             Substrate   = paste0(base, " + Substrate_index_before")),
+             Substrate   = paste0(base, " + Substrate_index_before"),
+             Fetch       = paste0(base, " + fetch_z"),
+             Wave        = paste0(base, " + wave_z")),
         rq2a_data, fam, zif,
         focal_term = "PeriodAfter:siteStone_pile")
     }))
@@ -2451,7 +2759,9 @@ rq2b_cov <- tidyr::crossing(species = all_species, response_type = c("occupancy"
       covariate_select(base,
         list(Temperature = paste0(base, " + Temperature"),
              Season      = paste0(base, " + Season"),
-             Substrate   = paste0(base, " + Substrate_index_before")),
+             Substrate   = paste0(base, " + Substrate_index_before"),
+             Fetch       = paste0(base, " + fetch_z"),
+             Wave        = paste0(base, " + wave_z")),
         rq2b_data, fam, zif,
         focal_term = "siteStone_pile:monitoring_int")
     }))
@@ -2487,7 +2797,9 @@ rq3a_cov <- tidyr::crossing(species = all_species, response_type = c("abundance"
       covariate_select(base,
         list(Temperature     = paste0(base, " + Temperature"),
              Season          = paste0(base, " + Season"),
-             Substrate_after = paste0(base, " + Substrate_index_after")),
+             Substrate_after = paste0(base, " + Substrate_index_after"),
+             Fetch           = paste0(base, " + fetch_z"),
+             Wave            = paste0(base, " + wave_z")),
         rq3a_data, tweedie(), zif,
         focal_term = "siteStone_pile:monitoring_int")
     }))
@@ -2503,7 +2815,9 @@ rq3b_cov <- tidyr::crossing(species = all_species, response_type = c("abundance"
       base <- paste0("`", rc, "` ~ Site_type_detail * monitoring_int + (1 | pair_id / site_id)")
       covariate_select(base,
         list(Temperature = paste0(base, " + Temperature"),
-             Season      = paste0(base, " + Season")),
+             Season      = paste0(base, " + Season"),
+             Fetch       = paste0(base, " + fetch_z"),
+             Wave        = paste0(base, " + wave_z")),
         rq3b_data, tweedie(), zif,
         focal_term = "Site_type_detailReference_2:monitoring_int")
     }))

@@ -9,6 +9,8 @@
 ```{r}
 #| echo: false
 #| tbl-cap: "Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model currently in model_registry. Unlike the interaction-only summary above, this surfaces covariate effects (e.g. Substrate_index_after, Season) directly rather than requiring a one-off check per model."
+tidy_all_full <- readr::read_csv(file.path("outputs", "tbl-models-summary-full.csv"),
+                                  show_col_types = FALSE)
 knitr::kable(tidy_all_full, digits = 3)
 ```
 
