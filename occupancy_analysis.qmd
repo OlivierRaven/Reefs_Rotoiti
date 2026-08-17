@@ -9,6 +9,8 @@ execute:
 # Setup
 ```{r}
 #| label: setup
+#| cache: false
+knitr::opts_chunk$set(fig.path = "occupancy_analysis_files/figure-html/")
 library(brms)
 library(cmdstanr)
 library(tidyverse)
@@ -1481,8 +1483,9 @@ p_traj <- ggplot(proj, aes(x = additional_rounds, y = baci_proj)) +
   scale_y_continuous(
     name    = "Projected BACI effect (log-units)",
     sec.axis = sec_axis(~ exp(.), name = "Ratio scale (×)",
-                        breaks = c(1, 2, 4, 8),
-                        labels = c("1×", "2×", "4×", "8×"))) +
+                        breaks = c(1, 2, 4, 6, 8),
+                        labels = c("1×", "2×", "4×", "6×", "8×"))) +
+  base_theme +
   theme(panel.grid.minor = element_blank())
 
 ggsave(file.path("outputs", "fig-trajectory-projection.png"),

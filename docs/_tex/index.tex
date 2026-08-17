@@ -683,11 +683,12 @@ excluded zero in the positive direction.
 \subsection{Results}\label{results}
 
 Results across all models and response variables are summarised in
-Figure~\ref{fig-forest-plot} and \textbf{?@tbl-models-summary-full}.
-Stone pile construction produced no significant effect on catfish
-abundance, biomass, or occupancy relative to control sites across any
-model or time period (Figure~\ref{fig-forest-plot}), indicating stone
-piles did not attract catfish.
+{[}{Figure~\ref{fig-forest-plot}}{]} and
+{[}{Table~\ref{tbl-models-summary-full}}{]}. Stone pile construction
+produced no significant effect on catfish abundance, biomass, or
+occupancy relative to control sites across any model or time period
+({[}{Figure~\ref{fig-forest-plot}}{]}), indicating stone piles did not
+attract catfish.
 
 \subsubsection{Baseline equivalence}\label{baseline-equivalence}
 
@@ -757,11 +758,11 @@ stability}\label{convergence-toward-reference-sites-and-reference-stability}
 Stone pile sites maintained a consistently lower kōura abundance than
 reference sites throughout the post-construction period, with no
 significant change in this gap over time (β = -0.09, \emph{p} = 0.429;
-Figure~\ref{fig-convergence-plot}). Kōura abundance declined across
-monitoring rounds at both stone pile and reference sites (β = -0.09,
-\emph{p} = 0.107). The Winter 2026 monitoring round showed a pronounced
-decline at stone pile sites (CPUE ≈ 0.7) while reference sites
-maintained substantially higher abundance (CPUE ≈ 1.7;
+{[}{Figure~\ref{fig-convergence-plot}}{]}). Kōura abundance declined
+across monitoring rounds at both stone pile and reference sites (β =
+-0.09, \emph{p} = 0.107). The Winter 2026 monitoring round showed a
+pronounced decline at stone pile sites (CPUE ≈ 0.7) while reference
+sites maintained substantially higher abundance (CPUE ≈ 1.7;
 Figure~\ref{fig-koura-trends}), a within-round contrast not captured by
 the linear trajectory model. Water temperature at Winter 2026 was
 approximately 1.5°C lower than Winter 2025 but consistent across site
@@ -1307,6 +1308,8 @@ Hessian) are excluded.}
 
 \end{figure}%
 
+{
+
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0536}}
   >{\raggedright\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0298}}
@@ -1322,43 +1325,15 @@ Hessian) are excluded.}
   >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0536}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0536}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0595}}@{}}
-\caption{Full fixed-effect estimates (β, SE, 95\% CI, p-value) for every
-term in every model currently in model\_registry. Unlike the
-interaction-only summary above, this surfaces covariate effects
-(e.g.~Substrate\_index\_after, Season) directly rather than requiring a
-one-off check per model.}\tabularnewline
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-model\_id
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-RQ
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-species
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-response\_type
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-comparison
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-time\_frame
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-term
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-estimate
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-std.error
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-statistic
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-p.value
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-p\_adj\_BH
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-conf.low
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-conf.high
-\end{minipage} \\
-\midrule\noalign{}
-\endfirsthead
+
+\caption{\label{tbl-models-summary-full}Full fixed-effect estimates (β,
+SE, 95\% CI, p-value) for every term in every model currently in
+model\_registry. Unlike the interaction-only summary above, this
+surfaces covariate effects (e.g.~Substrate\_index\_after, Season)
+directly rather than requiring a one-off check per model.}
+
+\tabularnewline
+
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 model\_id
@@ -1667,22 +1642,10 @@ M3bbk & RQ3b & Kōura & biomass & reference & after & monitoring\_int &
 M3bbk & RQ3b & Kōura & biomass & reference & after &
 Site\_type\_detailReference\_2:monitoring\_int & -0.074 & 0.125 & -0.591
 & 0.554 & 0.797 & -0.319 & 0.171 \\
+
 \end{longtable}
 
-\begin{figure}
-
-\centering{
-
-\pandocbounded{\includegraphics[keepaspectratio]{outputs/fig-occ-warm-psi.png}}
-
 }
-
-\caption{\label{fig-occ-warm-psi}Posterior kōura occupancy probability
-(ψ) from the warm-season occupancy model (Summer and Autumn rounds) by
-site type and period. Points show posterior means with 95\% credible
-intervals.}
-
-\end{figure}%
 
 \begin{figure}
 

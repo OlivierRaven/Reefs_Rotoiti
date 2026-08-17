@@ -389,16 +389,21 @@ Descriptive context plots, combined. Left column (top to bottom): baseline habit
 </figcaption>
 </figure>
 </div>
-<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [1]:</pre></div><div class="cell" data-tbl-cap="Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model currently in model_registry. Unlike the interaction-only summary above, this surfaces covariate effects (e.g. Substrate_index_after, Season) directly rather than requiring a one-off check per model.">
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [1]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>View Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>tidy_all_full <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="fu">file.path</span>(<span class="st">"outputs"</span>, <span class="st">"tbl-models-summary-full.csv"</span>),</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>tidy_all_full <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="fu">file.path</span>(<span class="st">"outputs"</span>, <span class="st">"tbl-models-summary-full.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(tidy_all_full, <span class="at">digits =</span> <span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
+<div class="cell-container"><div class="cell-decorator"><pre>In [2]:</pre></div><div id="tbl-models-summary-full" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-models-summary-full-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model currently in model_registry. Unlike the interaction-only summary above, this surfaces covariate effects (e.g.&nbsp;Substrate_index_after, Season) directly rather than requiring a one-off check per model.
+</figcaption>
+<div aria-describedby="tbl-models-summary-full-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<table class="caption-top table table-sm table-striped small">
-<caption>Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model currently in model_registry. Unlike the interaction-only summary above, this surfaces covariate effects (e.g.&nbsp;Substrate_index_after, Season) directly rather than requiring a one-off check per model.</caption>
+<table class="cell caption-top table table-sm table-striped small">
 <colgroup>
 <col style="width: 5%">
 <col style="width: 2%">
@@ -2277,21 +2282,14 @@ Descriptive context plots, combined. Left column (top to bottom): baseline habit
 </tbody>
 </table>
 </div>
-</div></div>
-<div id="fig-occ-warm-psi" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-occ-warm-psi-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="outputs/fig-occ-warm-psi.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Posterior kōura occupancy probability (ψ) from the warm-season occupancy model (Summer and Autumn rounds) by site type and period. Points show posterior means with 95% credible intervals."><img src="outputs/fig-occ-warm-psi.png" class="img-fluid figure-img"></a>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-occ-warm-psi-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Posterior kōura occupancy probability (ψ) from the warm-season occupancy model (Summer and Autumn rounds) by site type and period. Points show posterior means with 95% credible intervals.
-</figcaption>
 </figure>
-</div>
+</div></div>
+</div></div>
 <div id="fig-convergence-plot" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-convergence-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="outputs/fig-convergence-plot.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term (\beta ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c)."><img src="outputs/fig-convergence-plot.png" class="img-fluid figure-img" style="width:6.5in"></a>
+<a href="outputs/fig-convergence-plot.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term (\beta ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c)."><img src="outputs/fig-convergence-plot.png" class="img-fluid figure-img" style="width:6.5in"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-convergence-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term (<span class="math inline">\(\beta\)</span> ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).
@@ -2775,16 +2773,15 @@ Predicted kōura CPUE trajectories over monitoring rounds at stone pile and refe
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="al">![Descriptive context plots, combined. Left column (top to bottom): baseline habitat characteristics (mean ± SE by site type), stone pile structure dimensions (5 stone pile sites), chemical conditions over time (mean ± smoothed trend by site type). Right column: mean catch per monitoring round by site type, for catfish, kōaro, and goldfish. Site-type colours are shared across all panels — see the legend on the right. Background/methods-supporting figures, not primary results — see Results for the BACI, trend, and convergence models.](outputs/fig-descriptive-context.png)</span>{#fig-descriptive-context-ch5 width=6.5in}</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: false</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">#| tbl-cap: "Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model currently in model_registry. Unlike the interaction-only summary above, this surfaces covariate effects (e.g. Substrate_index_after, Season) directly rather than requiring a one-off check per model."</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>tidy_all_full <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="fu">file.path</span>(<span class="st">"outputs"</span>, <span class="st">"tbl-models-summary-full.csv"</span>),</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(tidy_all_full, <span class="at">digits =</span> <span class="dv">3</span>)</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="al">![Posterior kōura occupancy probability (ψ) from the warm-season occupancy model (Summer and Autumn rounds) by site type and period. Points show posterior means with 95% credible intervals.](outputs/fig-occ-warm-psi.png)</span>{#fig-occ-warm-psi}</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="al">![Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term ($\beta$ ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).](outputs/fig-convergence-plot.png)</span>{#fig-convergence-plot width=6.5in}</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: tbl-models-summary-full</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">#| echo: false</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">#| tbl-cap: "Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model currently in model_registry. Unlike the interaction-only summary above, this surfaces covariate effects (e.g. Substrate_index_after, Season) directly rather than requiring a one-off check per model."</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>tidy_all_full <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="fu">file.path</span>(<span class="st">"outputs"</span>, <span class="st">"tbl-models-summary-full.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(tidy_all_full, <span class="at">digits =</span> <span class="dv">3</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="al">![Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term ($\beta$ ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).](outputs/fig-convergence-plot.png)</span>{#fig-convergence-plot width=6.5in}</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
 (function() {
