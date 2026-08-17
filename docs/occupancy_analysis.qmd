@@ -1347,7 +1347,7 @@ p_lines_cpue <- cpue_power_grid |>
 
 ```{r}
 #| label: fig-power-curves-combined
-#| fig-cap: "Simulation-based power curves for the occupancy BACI (left) and kōura CPUE BACI (right). Each line represents a different number of After-period monitoring rounds. Dashed line marks 80% power. Neither analysis reaches 80% power within the simulated range, reflecting the dominant contribution of between-pair variance."
+#| fig-cap: "Simulation-based power curves for the occupancy BACI (left) and kōura CPUE BACI (right). Each line represents a different number of After-period monitoring rounds. Dashed line marks 80% power."
 #| fig-width: 12
 #| fig-height: 5
 p_power_combined <- p_lines + p_lines_cpue +
@@ -1416,7 +1416,7 @@ an optimistic lower bound — the true detection horizon is likely later.
 
 ```{r}
 #| label: fig-trajectory-projection
-#| fig-cap: "Projected kōura CPUE BACI effect size trajectory under continued monitoring. The green line shows the linear projection from the current BACI (0.311 log-units) growing at the M2bak divergence rate (+0.243 log-units per quarterly round). The dashed horizontal line shows the 80% power detection threshold for 5 site pairs (1.80 log-units, 6.0×). The dotted vertical line marks where the projection crosses the threshold (~6 additional quarterly rounds, ~1.5 years). The shaded ribbon shows propagated uncertainty. Note: the projection assumes linear growth; saturation of stone pile carrying capacity is expected to slow the trajectory."
+#| fig-cap: "Projected kōura CPUE BACI effect size over additional monitoring rounds. The solid line shows the linear projection based on the estimated post-construction trajectory; shaded ribbon shows 95% uncertainty interval. Dashed horizontal line marks the detection threshold for 80% power with five site pairs."
 
 # Parameters read from model summary CSV (written by analysis.qmd)
 baci_now       <- cpue_b_baci   # M2aak BACI — already loaded in cpue-params

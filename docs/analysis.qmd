@@ -2130,7 +2130,7 @@ DT::datatable(
 #| fig-width: 8
 #| fig-height: 4
 #| dpi: 300
-#| fig-cap: "Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the RQ3 abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term (β ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c)."
+#| fig-cap: "Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term (β ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c)."
 
 
 M3aak <- rq3a_results %>%
@@ -2426,7 +2426,7 @@ DT::datatable(
 #| fig-width: 3
 #| fig-height: 14
 #| dpi: 300
-#| fig-cap: "Effect sizes (β ± 95% CI) for the key term of interest of every model in model_registry (kōura and catfish, RQ1–RQ4). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — β magnitudes are not directly comparable across panels because each RQ tests a different contrast (step-change, per-round slope, or simple group difference) and RQ1 occupancy is on the log-odds scale while all others use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded."
+#| fig-cap: "Effect sizes (β ± 95% CI) for the key term of interest across all models (kōura and catfish; baseline, BACI, trajectory, and convergence comparisons). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — β magnitudes are not directly comparable across panels because each comparison tests a different contrast (step-change, per-round slope, or simple group difference), and occupancy is on the log-odds scale while abundance and biomass models use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded."
 
 # Built directly from tidy_all — drop models with degenerate CIs (non-PD Hessian)
 forest_data <- tidy_all %>%
