@@ -687,7 +687,7 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
     patchwork::plot_layout(heights = c(n_baci, n_after))
 
   ggsave(file.path("outputs", paste0("fig-occ-", model_label, "-contrasts.png")),
-         p2, width = 8, height = 6, dpi = 300)
+         p2, width = 6, height = 5, dpi = 300)
 
   cat("\n====", model_label, "====\n")
   print(contrasts_all |>

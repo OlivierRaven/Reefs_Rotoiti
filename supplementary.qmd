@@ -1,18 +1,16 @@
 ## Chapter 5 — Supplementary information {.unnumbered}
 
-![Length–weight relationship for kōura, fitted on log₁₀–log₁₀ scale. Open points are weights predicted from the length–weight regression (used to fill missing scale measurements); filled points are directly measured weights.](outputs/fig-length-weight.png){#fig-length-weight-ch5 width=6.5in}
+![Length–weight relationship for kōura, fitted on log₁₀–log₁₀ scale. Open points are weights predicted from the length–weight regression (used to fill missing scale measurements); filled points are directly measured weights.](outputs/fig-length-weight-ch5.png){#fig-length-weight-ch5 width=80%}
 
-![Effect sizes (β ± 95% CI) for the key term of interest across all models (kōura and catfish; baseline, BACI, trajectory, and convergence comparisons). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — β magnitudes are not directly comparable across panels because each comparison tests a different contrast (step-change, per-round slope, or simple group difference), and occupancy is on the log-odds scale while abundance and biomass models use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded.](outputs/fig-forest-plot.png){#fig-forest-plot width=3in}
-
-![Descriptive context plots, combined. Left column (top to bottom): baseline habitat characteristics (mean ± SE by site type), stone pile structure dimensions (5 stone pile sites), chemical conditions over time (mean ± smoothed trend by site type). Right column: mean catch per monitoring round by site type, for catfish, kōaro, and goldfish. Site-type colours are shared across all panels — see the legend on the right. Background/methods-supporting figures, not primary results — see Results for the BACI, trend, and convergence models.](outputs/fig-descriptive-context.png){#fig-descriptive-context-ch5 width=6.5in}
+![Effect sizes (β ± 95% CI) for the key term of interest across all models (kōura and catfish; baseline, BACI, trajectory, and convergence comparisons). Filled points indicate significant effects (p < 0.05). Each panel has its own x-axis scale — β magnitudes are not directly comparable across panels because each comparison tests a different contrast (step-change, per-round slope, or simple group difference), and occupancy is on the log-odds scale while abundance and biomass models use the Tweedie log link. Models with degenerate confidence intervals (non-positive-definite Hessian) are excluded.](outputs/fig-forest-plot.png){#fig-forest-plot width=65%}
 
 ```{r}
 #| label: tbl-models-summary-full-supp
 #| echo: false
-#| tbl-cap: "Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model currently in model_registry. Unlike the interaction-only summary above, this surfaces covariate effects (e.g. Substrate_index_after, Season) directly rather than requiring a one-off check per model."
+#| tbl-cap: "Full fixed-effect estimates (β, SE, 95% CI, p-value) for every term in every model."
 
 tidy_all_full <- readr::read_csv(file.path("outputs", "tbl-models-summary-full.csv"), show_col_types = FALSE)
 knitr::kable(tidy_all_full, digits = 3)
 ```
 
-![Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term ($\beta$ ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).](outputs/fig-convergence-plot.png){#fig-convergence-plot width=6.5in}
+![Predicted kōura CPUE trajectories over monitoring rounds at stone pile and reference sites from the abundance convergence model. Shaded ribbons represent 95% confidence intervals. The annotation shows the key interaction term ($\beta$ ± p-value) and model R² values for fixed effects (R²m) and conditional (R²c).](outputs/fig-convergence-plot.png){#fig-convergence-plot width=80%}
