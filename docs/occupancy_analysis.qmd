@@ -10,7 +10,7 @@ execute:
 ```{r}
 #| label: setup
 #| cache: false
-knitr::opts_chunk$set(fig.path = "occupancy_analysis_files/figure-html/")
+#knitr::opts_chunk$set(fig.path = "occupancy_analysis_files/figure-html/")
 library(brms)
 library(cmdstanr)
 library(tidyverse)
@@ -563,6 +563,7 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
                     Reference1 = 22, Reference2 = 23)
   season_colours <- c(Summer = "#D55E00", Autumn = "#E69F00",
                       Winter = "#56B4E9", Spring = "#009E73")
+  season_shapes  <- c(Summer = 16, Autumn = 17, Winter = 15, Spring = 18)
 
   # Tidy contrast labels for display
   contrasts_plot <- contrasts_all |>
@@ -642,6 +643,10 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
     scale_colour_manual(values = season_colours, name = "Season")
   else
     scale_colour_manual(values = c("After treatment" = "grey30"), guide = "none")
+  shape_scale <- if (include_season)
+    scale_shape_manual(values = season_shapes, name = "Season")
+  else
+    scale_shape_manual(values = c("After treatment" = 16), guide = "none")
   x_scale <- scale_x_continuous(limits = c(-x_lim, x_lim),
                                  labels = scales::label_number(accuracy = 0.1))
 
@@ -657,12 +662,13 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
     data <- data |>
       dplyr::mutate(contrast = factor(contrast, levels = contrast_levels))
     ggplot(data, aes(x = mean, y = contrast,
-                     colour = if (include_season) season else NULL)) +
+                     colour = if (include_season) season else NULL,
+                     shape  = if (include_season) season else NULL)) +
       geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50", linewidth = 0.6) +
       geom_pointrange(aes(xmin = lower95, xmax = upper95),
                       position = position_dodge(0.6),
                       size = 0.4, linewidth = 0.8, fatten = 3) +
-      colour_scale + x_scale + shared_theme +
+      colour_scale + shape_scale + x_scale + shared_theme +
       labs(x = "Posterior contrast (probability scale)", y = NULL)
   }
 
@@ -681,7 +687,7 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
     patchwork::plot_layout(heights = c(n_baci, n_after))
 
   ggsave(file.path("outputs", paste0("fig-occ-", model_label, "-contrasts.png")),
-         p2, width = 8, height = 6, dpi = 300)
+         p2, width = 6, height = 5, dpi = 300)
 
   cat("\n====", model_label, "====\n")
   print(contrasts_all |>

@@ -10,7 +10,7 @@ execute:
 ```{r}
 #| label: setup
 #| cache: false
-knitr::opts_chunk$set(fig.path = "occupancy_analysis_files/figure-html/")
+#knitr::opts_chunk$set(fig.path = "occupancy_analysis_files/figure-html/")
 library(brms)
 library(cmdstanr)
 library(tidyverse)
