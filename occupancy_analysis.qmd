@@ -319,6 +319,8 @@ cat("Divergences:", sum(brms::nuts_params(fit_full, pars = "divergent__")$Value)
 
 ```{r}
 #| label: traceplots-full
+#| include: false
+#| cache: false
 bayesplot::mcmc_trace(fit_full, regex_pars = "^b_") +
   labs(title = "Full model — fixed-effect trace plots")
 ```
@@ -374,6 +376,8 @@ cat("Divergences:", sum(brms::nuts_params(fit_summer, pars = "divergent__")$Valu
 
 ```{r}
 #| label: traceplots-summer
+#| include: false
+#| cache: false
 bayesplot::mcmc_trace(fit_summer, regex_pars = "^b_") +
   labs(title = "Summer model — fixed-effect trace plots")
 ```
@@ -436,6 +440,8 @@ cat("Divergences:", sum(brms::nuts_params(fit_warm, pars = "divergent__")$Value)
 
 ```{r}
 #| label: traceplots-warm
+#| include: false
+#| cache: false
 bayesplot::mcmc_trace(fit_warm, regex_pars = "^b_") +
   labs(title = "Warm model — fixed-effect trace plots")
 ```
@@ -708,6 +714,8 @@ results_full <- run_contrasts(fit_full, model_data,
 
 ```{r}
 #| label: fig-contrasts-full
+#| include: false
+#| cache: false
 #| fig-cap: "Full model (all seasons): occupancy probability ψ by site type and period (left) and posterior contrasts with 95% credible intervals (right)."
 #| fig-width: 12
 #| fig-height: 7
@@ -724,6 +732,8 @@ results_summer <- run_contrasts(fit_summer, summer_data,
 
 ```{r}
 #| label: fig-contrasts-summer
+#| include: false
+#| cache: false
 #| fig-cap: "Summer-only model: occupancy probability ψ by site type and period (left) and posterior contrasts with 95% credible intervals (right)."
 #| fig-width: 12
 #| fig-height: 5
@@ -740,6 +750,8 @@ results_warm <- run_contrasts(fit_warm, warm_data,
 
 ```{r}
 #| label: fig-contrasts-warm
+#| include: false
+#| cache: false
 #| fig-cap: "Warm-season model (Summer and Autumn): occupancy probability ψ by site type and period (left) and posterior contrasts with 95% credible intervals by season (right). This is the primary inferential model."
 #| fig-width: 12
 #| fig-height: 5
@@ -749,7 +761,7 @@ results_warm$psi_plot + results_warm$contrast_plot
 ## table psi-warm
 ```{r}
 #| label: tbl-psi-warm
-#| tbl-cap: "Posterior kōura occupancy probability (ψ) from the warm-season occupancy model (Summer and Autumn rounds). Values are population-level estimates averaged over random site effects, with 95% credible intervals. Autumn has no Before period as baseline monitoring was conducted in summer only."
+#| tbl-cap: "Posterior kōura occupancy probability ($\\psi$) from the warm-season occupancy model (Summer and Autumn rounds). Values are population-level estimates averaged over random site effects, with 95% credible intervals. Autumn has no Before period as baseline monitoring was conducted in summer only."
 psi_warm_tbl <- results_warm$cell_summary |>
   dplyr::mutate(
     season      = factor(season, levels = c("Summer", "Autumn")),
@@ -770,7 +782,9 @@ psi_warm_tbl <- results_warm$cell_summary |>
 
 readr::write_csv(psi_warm_tbl, file.path("outputs", "tbl-psi-warm.csv"))
 
-knitr::kable(psi_warm_tbl, align = c("l", "l", "l", "c"))
+knitr::kable(psi_warm_tbl, align = c("l", "l", "l", "c"),
+             col.names = c("Season", "Period", "Site type", "$\\psi$ (mean [95% CrI])"),
+             escape = FALSE)
 ```
 
 # Combined contrast summary
@@ -1355,6 +1369,8 @@ p_lines_cpue <- cpue_power_grid |>
 
 ```{r}
 #| label: fig-power-curves-combined
+#| include: false
+#| cache: false
 #| fig-cap: "Simulation-based power curves for the occupancy BACI (left) and kōura CPUE BACI (right). Each line represents a different number of After-period monitoring rounds. Dashed line marks 80% power."
 #| fig-width: 12
 #| fig-height: 5
@@ -1424,6 +1440,8 @@ an optimistic lower bound — the true detection horizon is likely later.
 
 ```{r}
 #| label: fig-trajectory-projection
+#| include: false
+#| cache: false
 #| fig-cap: "Projected kōura CPUE BACI effect size over additional monitoring rounds. The solid line shows the linear projection based on the estimated post-construction trajectory; shaded ribbon shows 95% uncertainty interval. Dashed horizontal line marks the detection threshold for 80% power with five site pairs."
 
 # Parameters read from model summary CSV (written by analysis.qmd)

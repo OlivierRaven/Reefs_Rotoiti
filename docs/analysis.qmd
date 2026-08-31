@@ -555,7 +555,7 @@ all_data <- all_data |>
 #| label: fig-lake-conditions
 #| fig-width: 12
 #| fig-height: 8
-#| fig-cap: "Lake Rotoiti dissolved oxygen (mg/L, top) and water temperature (°C, bottom) from the continuous buoy record across the study period. Vertical dashed lines mark each monitoring visit; the solid orange line marks stone pile completion (14 February 2025)."
+#| fig-cap: "Depth-resolved water temperature (°C, top) and dissolved oxygen (mg/L, bottom) in Lake Rotoiti throughout the study period (February 2025 – July 2026). Data derived from the LimnoTrack continuous monitoring buoy (Moore and McBride, 2026). Vertical green line marks stone pile deployment; dashed vertical lines mark seasonal monitoring rounds. Warm colours in the DO panel (orange–black) indicate hypoxic and anoxic conditions (< 5 mg/L), demonstrating the pronounced summer stratification that compresses oxygenated habitat into the shallow littoral zone."
 
 stone_pile_date <- as.Date("2025-02-14")
 
@@ -602,7 +602,7 @@ p_temp <- ggplot(buoy_daily, aes(x = Date, y = Depth_bin, fill = Temp_mean)) +
     name    = "Temp\n(°C)",
     breaks  = c(10, 14, 17, 20, 23)
   ) +
-  labs(title = "Lake Rotoiti water temperature (°C)", x = NULL, y = "Depth (m)") +
+  labs(x = NULL, y = "Depth (m)") +
   theme_bw() +
   theme(plot.title = element_text(size = 11))
 
@@ -628,7 +628,7 @@ p_do <- ggplot(buoy_daily, aes(x = Date, y = Depth_bin, fill = DO_mean)) +
     name    = "DO\n(mg/L)",
     breaks  = c(0, 4, 8, 12, 16)
   ) +
-  labs(title = "Lake Rotoiti dissolved oxygen (mg/L)", x = NULL, y = "Depth (m)") +
+  labs(x = "Date", y = "Depth (m)") +
   theme_bw() +
   theme(plot.title = element_text(size = 11))
 
@@ -974,9 +974,14 @@ knitr::kable(missing_table,
 # Site-level info from all_data — baseline monitoring only
 site_info_summary <- all_data %>%
   filter(monitoring == 0) %>%
-  distinct(site_id, site, lat, lon, DHT, 
-           Habitat_Type, Substrate_index_before,
-           Slope_0_20m) %>%
+  group_by(site_id, site, DHT, Habitat_Type,
+           Substrate_index_before, Slope_0_20m, max_eff_fetch_km) %>%
+  summarise(
+    Riparian_veg_pct  = mean(Riparian_vegetation, na.rm = TRUE),
+    Overhang_pct      = mean(Overhanging_trees,   na.rm = TRUE),
+    Wood_cover_pct    = mean(Wood_cover,           na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
   mutate(site_id = as.factor(site_id))
 
 # Stone pile summary — mean across 3 piles per modified site at baseline
@@ -1008,14 +1013,27 @@ site_data <- site_info_summary %>%
   left_join(stone_pile_site_summary, by = "site_id") %>%
   arrange(as.numeric(as.character(site_id))) %>%
   mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
-  select(site_id, site, DHT, Substrate_index_before, Slope_0_20m, Distance_shore_m, Depth_m, Height_above_m, Area_m2, Volume_m3)
+  select(site_id, site, DHT, Substrate_index_before, Slope_0_20m,
+         max_eff_fetch_km, Riparian_veg_pct, Overhang_pct, Wood_cover_pct,
+         Distance_shore_m, Depth_m, Height_above_m, Area_m2, Volume_m3)
 
 site_overview_display <- site_data %>%
-  dplyr::select(site_id, site, DHT, Substrate_index_before, Slope_0_20m)
+  dplyr::select(
+    Site    = site_id,
+    Type    = site,
+    Habitat = DHT,
+    `Substrate index` = Substrate_index_before,
+    `Slope (m/m)`     = Slope_0_20m,
+    `Fetch (km)`      = max_eff_fetch_km,
+    `Riparian veg. (%)` = Riparian_veg_pct,
+    `Overhang (%)` = Overhang_pct,
+    `Wood cover (%)` = Wood_cover_pct
+  )
 
 write.csv(site_overview_display, file = file.path(out_dir, "tbl-site-overview.csv"), row.names = FALSE)
 
-knitr::kable(site_overview_display, digits = 2)
+knitr::kable(site_overview_display, digits = 2,
+             caption = "Site physical characteristics at baseline. Sites 1–10 are stone pile (odd) and paired control (even) sites; sites 11–20 are reference sites.")
 
 ```
 
@@ -1206,6 +1224,67 @@ combined_trends
 # Also save individual plots if needed
 #purrr::iwalk(trend_plots, ~ ggsave(filename = file.path(out_dir, paste0("fig-trend-", .y, ".png")), plot= .x, width= 8, height = 4, units = "in", dpi = 300))
 
+```
+
+### Kōura and catfish combined trends
+```{r}
+#| label: fig-cpue-trends
+#| fig-width: 6
+#| fig-height: 5
+#| dpi: 300
+#| fig-cap: "Mean CPUE per monitoring round (± 95 % CI, log scale) by site type for kōura (top) and catfish (bottom). Vertical dashed line distinguishes the pre-construction period (Before) from post-construction monitoring (After)."
+
+make_cpue_panel <- function(species_col, y_label) {
+  all_data %>%
+    group_by(monitoring_int, site) %>%
+    summarise(
+      mean_n  = mean(.data[[species_col]], na.rm = TRUE),
+      se      = sd(.data[[species_col]],  na.rm = TRUE) /
+                sqrt(sum(!is.na(.data[[species_col]]))),
+      n       = sum(!is.na(.data[[species_col]])),
+      ci95    = qt(0.975, df = pmax(n - 1, 1)) * se,
+      .groups = "drop") %>%
+    mutate(
+      site    = factor(site, levels = c("Stone_pile", "Control", "Reference")),
+      ci_low  = pmax(mean_n - ci95, 0),
+      ci_high = mean_n + ci95) %>%
+    ggplot(aes(monitoring_int, mean_n, colour = site, shape = site, fill = site)) +
+    geom_vline(xintercept = 0.25, linetype = "dashed", colour = "grey40", linewidth = 0.6) +
+    annotate("text", x = -0.15, y = Inf, label = "Before", vjust = 1.5,
+             hjust = 0.5, size = 3, colour = "grey40") +
+    annotate("text", x = 3.5,   y = Inf, label = "After",  vjust = 1.5,
+             hjust = 0.5, size = 3, colour = "grey40") +
+    geom_errorbar(aes(ymin = ci_low, ymax = ci_high),
+                  position = position_dodge(width = 0.4),
+                  width = 0.25, linewidth = 0.4, colour = "grey40") +
+    geom_line(aes(group = site),
+              position = position_dodge(width = 0.4), linewidth = 0.6) +
+    geom_point(colour = "black", size = 2.5, stroke = 0.4,
+               position = position_dodge(width = 0.4)) +
+    scale_colour_manual(values = site_colours, labels = site_labels) +
+    scale_fill_manual(values   = site_fill,    labels = site_labels) +
+    scale_shape_manual(values  = site_shapes,  labels = site_labels) +
+    scale_x_continuous(breaks = 0:6, labels = monitor_labels, limits = c(-0.3, 6.3)) +
+    scale_y_continuous(trans = "log1p") +
+    labs(x = NULL, y = y_label,
+         colour = "Site type", shape = "Site type", fill = "Site type") +
+    theme(
+      axis.text.x     = element_text(size = 9),
+      axis.text.y     = element_text(size = 9),
+      axis.title.y    = element_text(size = 10),
+      legend.position = "none")
+}
+
+p_koura   <- make_cpue_panel("Weighted_CPUE_Kōura",   "Mean kōura CPUE\n(± 95% CI, log scale)")
+p_catfish <- make_cpue_panel("Weighted_CPUE_Catfish", "Mean catfish CPUE\n(± 95% CI, log scale)")
+
+cpue_combined <- (p_koura / p_catfish) +
+  patchwork::plot_layout(guides = "collect") &
+  theme(legend.position = "right")
+
+ggsave(file.path(out_dir, "fig-cpue-trends.png"), cpue_combined, width = 6, height = 5, dpi = 300)
+
+cpue_combined
 ```
 
 ### Combined figure

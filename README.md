@@ -1,6 +1,6 @@
-# Reinforcing kōura resilience using habitat enhancement structures
+# Habitat enhancement for a native freshwater crayfish threatened by an invasive predator: a field trial of stone pile structures in an Aotearoa New Zealand lake
 
-Olivier V. Raven | <olivier.raven@icloud.com>
+
 
 **DOI:** To be added upon acceptance
 
@@ -57,23 +57,23 @@ quarto render analysis.qmd
 ```
 
 The rendered HTML analysis is available at:
-<https://olivierraven.github.io/Stone_Piles_Rotoiti/>
+https://anonymous.4open.science/r/Stone_Piles_Rotoiti-26F8/README.md
 
 ## Data availability
 
-The code and derived data supporting the findings of this study are openly available on [GitHub](https://github.com/OlivierRaven/Stone_Piles_Rotoiti) and a rendered version of the analysis is hosted at <https://olivierraven.github.io/Stone_Piles_Rotoiti/>. Raw data will be archived on Zenodo upon acceptance. Peer review documents, including the cover letter and reviewer responses, are available in the manuscript repository in the interest of open and transparent science.
+The code and derived data supporting the findings of this study are openly available on [GitHub](https://anonymous.4open.science/r/Stone_Piles_Rotoiti-26F8/README.md) and a rendered version of the analysis is hosted at <https://anonymous.4open.science/r/Stone_Piles_Rotoiti-26F8/README.md>. Raw data will be archived on Zenodo upon acceptance. Peer review documents, including the cover letter and reviewer responses, are available in the manuscript repository in the interest of open and transparent science.
 
 ## Funding
 
-This research was supported by the Fish Futures programme funded through a Ministry of Business, Innovation and Employment grant (CAWX2101) with additional funding provided by the Bay of Plenty Regional Council under the Toihuarewa Waimāori - Bay of Plenty Regional Council Chair in Lake and Freshwater Science programme.
+
 
 ## Acknowledgements
 
-We thank Te Arawa Lakes Trust and Te Komiti Whakahaere for the opportunity to collect and study the treasured kōura. We are grateful to Soweeta Fort-D'ath and William Anaru (Te Arawa Lakes Trust), and Tihini Grant (Ngāti Pikiao). Also thanks to land owners Piripi Curtis, David McIlraith, Te Takinga Marae, Piki Thomas, Tāheke Opatia Marae, Haddon Lock, Barnett Vercoe, Richard Vercoe, and Caroline Newton for access and allowing the construction of stone piles. And to Martin Sarkezi, Mael Marguet, Ethan Morgan, Logan Kallam and Matt Prentice for assisting with fieldwork and data collection.
+
 
 ## Ethical approval
 
-This study did not involve experimentation on humans or animals beyond standard field sampling methods. Kōura and fish were captured using standard fisheries sampling methods (fyke nets and baited traps). Permission to conduct field sampling, handle aquatic fauna, and construct stone pile structures was granted by Te Arawa Lakes Trust, Te Komiti Whakahaere, and participating landowners. Formal institutional ethical approval was not required.
+
 
 ## Citation
 
