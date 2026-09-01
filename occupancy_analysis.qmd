@@ -569,7 +569,7 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
                     Reference1 = 22, Reference2 = 23)
   season_colours <- c(Summer = "#D55E00", Autumn = "#E69F00",
                       Winter = "#56B4E9", Spring = "#009E73")
-  season_shapes  <- c(Summer = 16, Autumn = 17, Winter = 15, Spring = 18)
+  season_shapes  <- c(Summer = 21, Autumn = 24, Winter = 22, Spring = 23)
 
   # Tidy contrast labels for display
   contrasts_plot <- contrasts_all |>
@@ -622,7 +622,7 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
       text             = element_text(family = "Arial"),
       panel.border     = element_rect(colour = "black", fill = NA, linewidth = 0.3),
       panel.grid.minor = element_blank(),
-      strip.background = element_rect(fill = "grey92", colour = NA),
+      strip.background = element_rect(fill = "white", colour = "black", linewidth = 0.5),
       strip.text       = element_text(face = "plain"),
       legend.position  = "right"
     )
@@ -640,19 +640,19 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
       panel.border       = element_rect(colour = "black", fill = NA, linewidth = 0.3),
       panel.grid.minor   = element_blank(),
       panel.grid.major.y = element_blank(),
-      strip.background   = element_rect(fill = "grey92", colour = NA),
+      strip.background   = element_rect(fill = "white", colour = "black", linewidth = 0.5),
       strip.text         = element_text(face = "plain"),
       axis.text.y        = element_text(size = 10)
     )
   )
-  colour_scale <- if (include_season)
-    scale_colour_manual(values = season_colours, name = "Season")
+  fill_scale <- if (include_season)
+    scale_fill_manual(values = season_colours, name = "Season")
   else
-    scale_colour_manual(values = c("After treatment" = "grey30"), guide = "none")
+    scale_fill_manual(values = c("After treatment" = "grey30"), guide = "none")
   shape_scale <- if (include_season)
     scale_shape_manual(values = season_shapes, name = "Season")
   else
-    scale_shape_manual(values = c("After treatment" = 16), guide = "none")
+    scale_shape_manual(values = c("After treatment" = 21), guide = "none")
   x_scale <- scale_x_continuous(limits = c(-x_lim, x_lim),
                                  labels = scales::label_number(accuracy = 0.1))
 
@@ -667,14 +667,26 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
   make_forest <- function(data) {
     data <- data |>
       dplyr::mutate(contrast = factor(contrast, levels = contrast_levels))
-    ggplot(data, aes(x = mean, y = contrast,
-                     colour = if (include_season) season else NULL,
-                     shape  = if (include_season) season else NULL)) +
-      geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50", linewidth = 0.6) +
-      geom_pointrange(aes(xmin = lower95, xmax = upper95),
-                      position = position_dodge(0.6),
-                      size = 0.4, linewidth = 0.8, fatten = 3) +
-      colour_scale + shape_scale + x_scale + shared_theme +
+    base_plot <- ggplot(data, aes(x = mean, y = contrast)) +
+      geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50", linewidth = 0.6)
+    if (include_season) {
+      base_plot <- base_plot +
+        geom_linerange(aes(xmin = lower95, xmax = upper95, colour = season),
+                       position = position_dodge(0.6), linewidth = 0.8) +
+        geom_point(aes(fill = season, shape = season),
+                   position = position_dodge(0.6),
+                   colour = "black", size = 3, stroke = 0.8) +
+        scale_colour_manual(values = season_colours, guide = "none") +
+        fill_scale + shape_scale
+    } else {
+      base_plot <- base_plot +
+        geom_linerange(aes(xmin = lower95, xmax = upper95),
+                       position = position_dodge(0.6), linewidth = 0.8,
+                       colour = "grey30") +
+        geom_point(position = position_dodge(0.6), shape = 21,
+                   fill = "grey30", colour = "black", size = 4.5, stroke = 0.8)
+    }
+    base_plot + x_scale + shared_theme +
       labs(x = "Posterior contrast (probability scale)", y = NULL)
   }
 
@@ -684,16 +696,24 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
   n_baci  <- dplyr::n_distinct(baci_data$contrast)
   n_after <- dplyr::n_distinct(after_data$contrast)
 
-  p_baci  <- make_forest(baci_data)  + ggtitle("BACI") +
+  strip_theme <- theme(
+    strip.text       = element_text(size = 9, face = "bold"),
+    strip.background = element_rect(fill = "white", colour = "black", linewidth = 0.5))
+
+  p_baci  <- make_forest(baci_data)  +
+    facet_wrap(~ "BACI") +
+    strip_theme +
     theme(legend.position = "none")
-  p_after <- make_forest(after_data) + ggtitle("After treatment") +
+  p_after <- make_forest(after_data) +
+    facet_wrap(~ "After treatment") +
+    strip_theme +
     theme(legend.position = "right")
 
   p2 <- p_baci / p_after +
     patchwork::plot_layout(heights = c(n_baci, n_after))
 
   ggsave(file.path("outputs", paste0("fig-occ-", model_label, "-contrasts.png")),
-         p2, width = 6, height = 5, dpi = 300)
+         p2, width = 6, height = 4, dpi = 300)
 
   cat("\n====", model_label, "====\n")
   print(contrasts_all |>
@@ -1469,7 +1489,7 @@ cat(sprintf("Rounds needed (linear): %.1f additional quarterly rounds (~%.1f yea
             (threshold - baci_now) / traj_per_round / 4))
 
 # Build projection data
-future_rounds <- 0:20
+future_rounds <- 0:10
 proj <- tibble::tibble(
   additional_rounds = future_rounds,
   baci_proj  = baci_now + traj_per_round * future_rounds,
@@ -1494,15 +1514,15 @@ p_traj <- ggplot(proj, aes(x = additional_rounds, y = baci_proj)) +
     colour = "black", size = 0.8, linewidth = 1) +
   geom_hline(yintercept = threshold, linetype = "dashed",
              colour = "grey30", linewidth = 0.8) +
-  annotate("text", x = 19.5, y = threshold + 0.3,
-           label = "80% power threshold", hjust = 1,
+  annotate("text", x = 9.5, y = threshold - 0.3,
+           label = "80% power threshold", hjust = 0.8,
            colour = "grey30", size = 3.5) +
   geom_vline(xintercept = rounds_to_80, linetype = "dotted",
              colour = "grey50", linewidth = 0.7) +
-  annotate("rect", xmin = rounds_to_80, xmax = 20,
+  annotate("rect", xmin = rounds_to_80, xmax = 10,
            ymin = -Inf, ymax = Inf,
            fill = "grey80", alpha = 0.10) +
-  scale_x_continuous(breaks = seq(0, 20, 2),
+  scale_x_continuous(breaks = seq(0, 10, 2),
                      name = "Additional quarterly monitoring rounds beyond current study") +
   scale_y_continuous(
     name    = "Projected BACI effect (log-units)",
@@ -1513,7 +1533,7 @@ p_traj <- ggplot(proj, aes(x = additional_rounds, y = baci_proj)) +
   theme(panel.grid.minor = element_blank())
 
 ggsave(file.path("outputs", "fig-trajectory-projection.png"),
-       p_traj, width = 8, height = 5, dpi = 300)
+       p_traj, width = 5, height = 4, dpi = 300)
 
 p_traj
 ```

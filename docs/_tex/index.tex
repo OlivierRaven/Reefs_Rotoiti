@@ -235,7 +235,7 @@ threatened by an invasive predator: a field trial of stone pile
 structures in an Aotearoa New Zealand lake}
 \author{Olivier V. Raven \and Ian A. K. Kusabs \and Robin
 Holmes \and Francis J. Burdon \and Deniz Özkundakci}
-\date{2026-08-31}
+\date{2026-09-01}
 \begin{document}
 \maketitle
 
@@ -244,6 +244,8 @@ Holmes \and Francis J. Burdon \and Deniz Özkundakci}
 \providecommand{\chaptermark}[1]{}
 \ifcsname c@chapter\endcsname
 \setcounter{chapter}{5}
+\setcounter{figure}{0}
+\setcounter{table}{0}
 \setcounter{section}{0}
 \addcontentsline{toc}{chapter}{\protect\numberline{5}Rock Piles as K\={o}ura Habitat}
 \chaptermark{Rock Piles as K\={o}ura Habitat}
@@ -956,7 +958,7 @@ lake-wide population (\citeproc{ref-Dedual2019}{Dedual, 2019}). Emerging
 biotechnologies such as gene drives and host-specific biological control
 agents may offer future options (\citeproc{ref-Kopf2019}{Kopf et al.,
 2019}; \citeproc{ref-Teem2020}{Teem et al., 2020};
-\citeproc{ref-Thresher2013}{\textbf{Thresher2013?}}), but these remain
+\citeproc{ref-Thresher2014}{Thresher et al., 2014}), but these remain
 experimental. Thermal stratification will intensify as the climate
 continues to warm (\citeproc{ref-Woolway2021}{Woolway et al., 2021}),
 further compressing kōura and expanding suitable conditions for catfish
@@ -1156,15 +1158,15 @@ Wood cover (\%)
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-1 & Stone\_pile & Rocky & 5.20 & 0.12 & 4.76 & 0 & 10 & 0 \\
+1 & Stone pile & Rocky & 5.20 & 0.12 & 4.76 & 0 & 10 & 0 \\
 2 & Control & Rocky & 4.40 & 0.11 & 4.79 & 70 & 0 & 0 \\
-3 & Stone\_pile & Sandy & 3.00 & 0.01 & 1.71 & 100 & 0 & 0 \\
+3 & Stone pile & Sandy & 3.00 & 0.01 & 1.71 & 100 & 0 & 0 \\
 4 & Control & Sandy & 3.00 & 0.01 & 1.74 & 80 & 5 & 0 \\
-5 & Stone\_pile & Sandy & 2.40 & 0.01 & 0.61 & 10 & 0 & 0 \\
+5 & Stone pile & Sandy & 2.40 & 0.01 & 0.61 & 10 & 0 & 0 \\
 6 & Control & Sandy & 3.00 & 0.01 & 0.55 & 0 & 0 & 0 \\
-7 & Stone\_pile & Sandy & 3.00 & 0.06 & 2.50 & 100 & 0 & 0 \\
+7 & Stone pile & Sandy & 3.00 & 0.06 & 2.50 & 100 & 0 & 0 \\
 8 & Control & Sandy & 3.00 & 0.05 & 2.22 & 30 & 0 & 0 \\
-9 & Stone\_pile & Sandy & 3.35 & 0.08 & 3.59 & 0 & 0 & 3 \\
+9 & Stone pile & Sandy & 3.35 & 0.08 & 3.59 & 0 & 0 & 3 \\
 10 & Control & Rocky & 5.00 & 0.09 & 3.74 & 20 & 0 & 0 \\
 11 & Reference & Rocky & 6.60 & 0.16 & 4.47 & 0 & 0 & 0 \\
 12 & Reference & Rocky & 6.20 & 0.12 & 4.17 & 100 & 100 & 0 \\
@@ -1191,7 +1193,7 @@ Notebook}}
 
 \centering{
 
-\includegraphics[width=0.8\linewidth,height=\textheight,keepaspectratio]{images/Rotoiti_monitoring_sites.png}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{images/Rotoiti_monitoring_sites.png}
 
 }
 
@@ -1206,20 +1208,19 @@ maps show the placement of each of the sites.}
 
 \centering{
 
-\includegraphics[width=0.8\linewidth,height=\textheight,keepaspectratio]{outputs/fig-forest-plot.png}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{outputs/fig-forest-plot.png}
 
 }
 
 \caption{\label{fig-forest-plot}Effect sizes (β ± 95\% CI) for the key
-term of interest across all models (kōura and catfish; baseline, BACI,
-trajectory, and convergence comparisons). Filled points indicate
-significant effects (p \textless{} 0.05). Each panel has its own x-axis
-scale --- β magnitudes are not directly comparable across panels because
-each comparison tests a different contrast (step-change, per-round
-slope, or simple group difference), and occupancy is on the log-odds
-scale while abundance and biomass models use the Tweedie log link.
-Models with degenerate confidence intervals (non-positive-definite
-Hessian) are excluded.}
+term of interest across all models, separated by species (columns) and
+comparison type (rows). Filled points indicate significant effects (p
+\textless{} 0.05); open points are non-significant. Each row has its own
+x-axis scale --- effect magnitudes are not directly comparable across
+rows because each comparison tests a different contrast (step-change,
+per-round slope, or simple group difference), and occupancy is on the
+log-odds scale while abundance and biomass models use the Tweedie log
+link. Models with degenerate confidence intervals are excluded.}
 
 \end{figure}%
 
@@ -1227,7 +1228,7 @@ Hessian) are excluded.}
 
 \centering{
 
-\includegraphics[width=0.8\linewidth,height=\textheight,keepaspectratio]{outputs/fig-cpue-trends.png}
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{outputs/fig-cpue-trends.png}
 
 }
 
@@ -1246,10 +1247,12 @@ from post-construction monitoring (After).}
 
 }
 
-\caption{\label{fig-occ-warm-contrasts}Posterior BACI and
-after-treatment contrasts in kōura occupancy from the warm-season model.
-Points show posterior means with 95 \% credible intervals; contrasts
-overlapping zero indicate no detectable difference.}
+\caption{\label{fig-occ-warm-contrasts}Posterior contrasts in kōura
+occupancy from the warm-season model. (A) BACI contrast (stone pile
+minus control, before vs after construction). (B) After-treatment
+contrasts between all site-type pairs. Points show posterior means with
+95 \% credible intervals; contrasts overlapping zero indicate no
+detectable difference.}
 
 \end{figure}%
 
@@ -2174,6 +2177,13 @@ Testa, S., Collier, K. J., \& Death, R. G. (2011). Macroinvertebrate
 response to stream restoration by large wood addition.
 \emph{Ecohydrology}, \emph{4}(6), 800--810.
 \url{https://doi.org/10.1002/eco.146}
+
+\bibitem[\citeproctext]{ref-Thresher2014}
+Thresher, R. E., Hayes, K., Bax, N. J., Teem, J., Benfey, T. J., \&
+Gould, F. (2014). Genetic control of invasive fish: Technological
+options and its role in integrated pest management. \emph{Biological
+Invasions}, \emph{16}(6), 1201--1216.
+\url{https://doi.org/10.1007/s10530-013-0477-0}
 
 \bibitem[\citeproctext]{ref-Underwood1994}
 Underwood, A. J. (1994). On beyond {BACI}: Sampling designs that might
