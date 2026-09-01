@@ -253,7 +253,7 @@ After stone pile construction, measurements of the size and dimensions of each s
 
 Seasonal variable parameters were recorded at every monitoring round and included aquatic vegetation cover (emergent and submerged macrophytes). Chemical parameters included water temperature (°C), dissolved oxygen (mg L$^{-1}$), and conductivity ($\mu$S cm$^{-1}$) were measured using a YSI ProSolo meter (Pro2030, YSI Inc., Yellow Springs, OH, USA). pH was measured using a handheld pH meter (EC-PCTestr35, Eutech Instruments). 
 
-Kōura and fish were sampled every monitoring round using two single-winged, double-throated fyke nets (600 mm high D-shaped entrance hoop) and two collapsible bait traps (480 × 250 mm; two 50 mm entrance openings) baited with catfish flesh [@Joy2013; @MacNeil2025]. Fyke nets were placed perpendicular to the shoreline outside of the stone pile structures or at 10 m intervals, with bait traps positioned between them. All equipment was deployed simultaneously at each site for a 24-h period. Captured kōura were measured for orbital carapace length (OCL) using a digital calliper (0.01 mm precision; 150 mm) and for wet mass using a digital scale (± 1 g; 5 kg capacity, Anko Brand, Kmart Group, Mulgrave, VIC, Australia). Catfish and other fish species, were recorded for abundance, measured for total length, and weighed for wet mass. Catch per unit effort (CPUE) and biomass per unit effort (BPUE) were calculated for all kōura and fish based on the number of nets and traps deployed at each site per monitoring round, standardised by soak time [@Kusabs2015b]. Kōura weights were unavailable for `r predicted_n` individuals because of scale failure and were therefore estimated from a log₁₀–log₁₀ length–weight regression fitted to individuals with both measurements (n = `r measured_n`), following standard approaches for weight length relationships in aquatic organisms [@fig-length-weight-ch5]{.content-visible when-format="pdf"}[Fig. S2]{.content-visible unless-format="pdf"} [@Froese2006]. Predicted values were back-transformed with a lognormal bias correction factor \(10^{0.5 \cdot \sigma^2}\) [@Quinn2002].
+Kōura and fish were sampled every monitoring round using two single-winged, double-throated fyke nets (600 mm high D-shaped entrance hoop) and two collapsible bait traps (480 × 250 mm; two 50 mm entrance openings) baited with catfish flesh [@Joy2013; @MacNeil2025]. Fyke nets were placed perpendicular to the shoreline outside of the stone pile structures or at 10 m intervals, with bait traps positioned between them. All equipment was deployed simultaneously at each site for a 24-h period. Captured kōura were measured for orbital carapace length (OCL) using a digital calliper (0.01 mm precision; 150 mm) and for wet mass using a digital scale (± 1 g; 5 kg capacity, Anko Brand, Kmart Group, Mulgrave, VIC, Australia). Catfish and other fish species, were recorded for abundance, measured for total length, and weighed for wet mass. Catch per unit effort (CPUE) and biomass per unit effort (BPUE) were calculated for all kōura and fish based on the number of nets and traps deployed at each site per monitoring round, standardised by soak time [@Kusabs2015b]. Kōura weights were unavailable for `r predicted_n` individuals because of scale failure and were therefore estimated from a log₁₀–log₁₀ length–weight regression fitted to individuals with both measurements (n = `r measured_n`), following standard approaches for weight length relationships in aquatic organisms [@fig-length-weight-ch5]{.content-visible when-format="pdf"}[Fig. S2]{.content-visible unless-format="pdf"} [@Froese2006]. Predicted values were back-transformed with a lognormal bias correction factor $10^{0.5 \sigma^2}$ [@Quinn2002].
 
 $$
 \log_{10}(\text{Weight [g]}) = `r round(a, 3)` + `r round(b, 3)` \times \log_{10}(\text{OCL length [mm]})
@@ -356,7 +356,82 @@ knitr::kable(site_ov, digits = 2)
 ```
 
 ## Figures
+::: {.content-visible unless-format="html"}
 ![Map of Lake Rotoiti in Bay of Plenty region of New Zealand. The monitoring sites are coloured by site type: stone pile sites red, control site yellow, and reference sites blue. Ten close-up maps show the placement of each of the sites.](images/Rotoiti_monitoring_sites.png){#fig-sites width=100%}
+:::
+
+::: {.content-visible when-format="html"}
+```{r}
+#| label: fig-sites
+#| echo: false
+#| eval: !expr knitr::is_html_output()
+#| fig-cap: "Map of Lake Rotoiti with monitoring sites coloured by site type: stone pile (red), control (yellow), reference (blue). Click a marker to see the site details."
+
+if (!requireNamespace("sf", quietly = TRUE) || !requireNamespace("leaflet", quietly = TRUE)) {
+  img <- if (file.exists("images/Rotoiti_monitoring_sites.png"))
+    "images/Rotoiti_monitoring_sites.png"
+  else
+    "05_stone_piles_rotoiti/images/Rotoiti_monitoring_sites.png"
+  knitr::include_graphics(img)
+} else {
+
+ch5_dir <- if (dir.exists("05_stone_piles_rotoiti")) "05_stone_piles_rotoiti" else "."
+
+rotoiti <- sf::st_read(
+  file.path(ch5_dir, "data/raw/Lake Rotoiti.gpkg"), quiet = TRUE
+) |>
+  sf::st_make_valid() |>
+  sf::st_transform(4326)
+
+site_info <- readr::read_csv(
+  file.path(ch5_dir, "data/derived/Site_info.csv"), show_col_types = FALSE
+) |>
+  dplyr::filter(monitoring == 0) |>
+  dplyr::distinct(site_id, site, lat, lon)
+
+site_colors <- c(
+  "Stone_pile" = "#c0392b",
+  "Control"    = "#e67e22",
+  "Reference"  = "#2980b9"
+)
+site_info <- dplyr::mutate(site_info,
+  color      = site_colors[site],
+  site_label = dplyr::recode(site, "Stone_pile" = "Stone pile")
+)
+
+leaflet::leaflet() |>
+  leaflet::addProviderTiles("CartoDB.Positron") |>
+  leaflet::addPolygons(
+    data        = rotoiti,
+    fillColor   = "#bbdefb",
+    fillOpacity = 0.45,
+    color       = "#1565c0",
+    weight      = 1.5,
+    label       = "Lake Rotoiti"
+  ) |>
+  leaflet::addCircleMarkers(
+    data        = site_info,
+    lat         = ~lat,
+    lng         = ~lon,
+    radius      = 7,
+    color       = ~color,
+    fillColor   = ~color,
+    fillOpacity = 0.9,
+    weight      = 1.5,
+    popup       = ~paste0("<b>Site ", site_id, "</b><br>Type: ", site_label)
+  ) |>
+  leaflet::addLegend(
+    position = "bottomright",
+    colors   = unname(site_colors),
+    labels   = c("Stone pile", "Control", "Reference"),
+    title    = "Site type",
+    opacity  = 0.9
+  )
+
+} # end requireNamespace guard
+```
+:::
+
 
 ![Effect sizes (β ± 95% CI) for the key term of interest across all models, separated by species (columns) and comparison type (rows). Filled points indicate significant effects (p < 0.05); open points are non-significant. Each row has its own x-axis scale — effect magnitudes are not directly comparable across rows because each comparison tests a different contrast (step-change, per-round slope, or simple group difference), and occupancy is on the log-odds scale while abundance and biomass models use the Tweedie log link. Models with degenerate confidence intervals are excluded.](outputs/fig-forest-plot.png){#fig-forest-plot width=100%}
 

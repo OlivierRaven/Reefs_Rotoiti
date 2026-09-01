@@ -60,7 +60,27 @@
       @media screen {
       pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
       }
-    </style>
+      /* CSS for citations */
+      div.csl-bib-body { }
+      div.csl-entry {
+        clear: both;
+        margin-bottom: 0em;
+      }
+      .hanging-indent div.csl-entry {
+        margin-left:2em;
+        text-indent:-2em;
+      }
+      div.csl-left-margin {
+        min-width:2em;
+        float:left;
+      }
+      div.csl-right-inline {
+        margin-left:2em;
+        padding-left:1em;
+      }
+      div.csl-indent {
+        margin-left: 2em;
+      }    </style>
 
     <style>
       body.hypothesis-enabled #quarto-embed-header {
@@ -362,10 +382,10 @@
 <div id="fig-lake-conditions" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-lake-conditions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="outputs/fig-lake-conditions.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Depth-resolved water temperature (°C, top) and dissolved oxygen (mg/L, bottom) in Lake Rotoiti throughout the study period (February 2025 – July 2026). Data derived from the LimnoTrack continuous monitoring buoy [@MooreMcBride2026]. Vertical green line marks stone pile deployment; dashed vertical lines mark seasonal monitoring rounds. Warm colours in the DO panel (orange–black) indicate hypoxic and anoxic conditions (< 5 mg/L), demonstrating the pronounced summer stratification that compresses oxygenated habitat into the shallow littoral zone."><img src="outputs/fig-lake-conditions.png" class="img-fluid figure-img" style="width:80.0%"></a>
+<a href="outputs/fig-lake-conditions.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Depth-resolved water temperature (°C, top) and dissolved oxygen (mg/L, bottom) in Lake Rotoiti throughout the study period (February 2025 – July 2026). Data derived from the LimnoTrack continuous monitoring buoy [@Moore2026]. Vertical green line marks stone pile deployment; dashed vertical lines mark seasonal monitoring rounds. Warm colours in the DO panel (orange–black) indicate hypoxic and anoxic conditions (< 5 mg/L), demonstrating the pronounced summer stratification that compresses oxygenated habitat into the shallow littoral zone."><img src="outputs/fig-lake-conditions.png" class="img-fluid figure-img" style="width:80.0%"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lake-conditions-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Depth-resolved water temperature (°C, top) and dissolved oxygen (mg/L, bottom) in Lake Rotoiti throughout the study period (February 2025 – July 2026). Data derived from the LimnoTrack continuous monitoring buoy <span class="citation" data-cites="MooreMcBride2026">(<a href="#ref-MooreMcBride2026" role="doc-biblioref"><strong>MooreMcBride2026?</strong></a>)</span>. Vertical green line marks stone pile deployment; dashed vertical lines mark seasonal monitoring rounds. Warm colours in the DO panel (orange–black) indicate hypoxic and anoxic conditions (&lt; 5 mg/L), demonstrating the pronounced summer stratification that compresses oxygenated habitat into the shallow littoral zone.
+Depth-resolved water temperature (°C, top) and dissolved oxygen (mg/L, bottom) in Lake Rotoiti throughout the study period (February 2025 – July 2026). Data derived from the LimnoTrack continuous monitoring buoy <span class="citation" data-cites="Moore2026">(<a href="#ref-Moore2026" role="doc-biblioref">Moore &amp; McBride, 2026</a>)</span>. Vertical green line marks stone pile deployment; dashed vertical lines mark seasonal monitoring rounds. Warm colours in the DO panel (orange–black) indicate hypoxic and anoxic conditions (&lt; 5 mg/L), demonstrating the pronounced summer stratification that compresses oxygenated habitat into the shallow littoral zone.
 </figcaption>
 </figure>
 </div>
@@ -2530,6 +2550,11 @@ Predicted kōura CPUE trajectories over monitoring rounds at stone pile and refe
 </div>
 <!-- -->
 
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" data-line-spacing="2" role="list">
+<div id="ref-Moore2026" class="csl-entry" role="listitem">
+Moore, T., &amp; McBride, C. (2026). <em>Aemetools: <span>Tools</span> to expand the <span>Aquatic Ecosystem Model Ensemble Package</span></em>. <a href="https://limnotrack.com/aemetools/">https://limnotrack.com/aemetools/</a>
+</div>
+</div>
 </section>
      </main>
 <!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
@@ -2998,7 +3023,7 @@ Predicted kōura CPUE trajectories over monitoring rounds at stone pile and refe
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">## Chapter 5 — Supplementary information {.unnumbered}</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>!<span class="co">[</span><span class="ot">Depth-resolved water temperature (°C, top) and dissolved oxygen (mg/L, bottom) in Lake Rotoiti throughout the study period (February 2025 – July 2026). Data derived from the LimnoTrack continuous monitoring buoy [@MooreMcBride2026]. Vertical green line marks stone pile deployment; dashed vertical lines mark seasonal monitoring rounds. Warm colours in the DO panel (orange–black) indicate hypoxic and anoxic conditions (&lt; 5 mg/L), demonstrating the pronounced summer stratification that compresses oxygenated habitat into the shallow littoral zone.</span><span class="co">](outputs/fig-lake-conditions.png)</span>{#fig-lake-conditions width=80%}</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>!<span class="co">[</span><span class="ot">Depth-resolved water temperature (°C, top) and dissolved oxygen (mg/L, bottom) in Lake Rotoiti throughout the study period (February 2025 – July 2026). Data derived from the LimnoTrack continuous monitoring buoy [@Moore2026]. Vertical green line marks stone pile deployment; dashed vertical lines mark seasonal monitoring rounds. Warm colours in the DO panel (orange–black) indicate hypoxic and anoxic conditions (&lt; 5 mg/L), demonstrating the pronounced summer stratification that compresses oxygenated habitat into the shallow littoral zone.</span><span class="co">](outputs/fig-lake-conditions.png)</span>{#fig-lake-conditions width=80%}</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="al">![Length–weight relationship for kōura, fitted on log₁₀–log₁₀ scale. Open points are weights predicted from the length–weight regression (used to fill missing scale measurements); filled points are directly measured weights.](outputs/fig-length-weight-ch5.png)</span>{#fig-length-weight-ch5 width=80%}</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
