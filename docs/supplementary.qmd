@@ -10,25 +10,56 @@
 #| tbl-cap: "Full fixed-effect estimates ($\\beta$, SE, 95% CI, p-value) for every term in every model."
 
 tidy_all_full <- readr::read_csv(file.path("outputs", "tbl-models-summary-full.csv"), show_col_types = FALSE)
-knitr::kable(tidy_all_full, digits = 3, escape = FALSE)
+if (knitr::is_html_output()) {
+  DT::datatable(tidy_all_full, filter = "top", rownames = FALSE,
+                options = list(pageLength = 20, dom = 'Bfrtip', buttons = c('csv', 'excel')),
+                extensions = 'Buttons') |>
+    DT::formatRound(columns = intersect(names(tidy_all_full),
+                                        c("estimate","std.error","statistic","p.value",
+                                          "conf.low","conf.high")), digits = 3)
+} else {
+  knitr::kable(tidy_all_full, digits = 3, escape = FALSE, booktabs = TRUE) |>
+    kableExtra::kable_styling(
+      latex_options  = c("scale_down", "repeat_header", "striped"),
+      font_size      = 7,
+      stripe_color   = "gray!8"
+    ) |>
+    kableExtra::landscape()
+}
 ```
 
 ```{r}
 #| label: tbl-baseline-combined-supp
 #| echo: false
 #| tbl-cap: "Baseline (pre-construction) comparability of stone pile, control, and reference sites. Values are mean ± SD; p-values test Stone pile vs Control (paired Wilcoxon signed-rank test) and Stone pile vs Reference (unpaired Wilcoxon rank-sum test)."
+
 baseline_combined <- readr::read_csv(file.path("outputs", "tbl-baseline-combined.csv"), show_col_types = FALSE)
-knitr::kable(baseline_combined, digits = 3)
+if (knitr::is_html_output()) {
+  DT::datatable(baseline_combined, filter = "top", rownames = FALSE,
+                options = list(pageLength = 25, dom = 'Bfrtip', buttons = c('csv', 'excel')),
+                extensions = 'Buttons')
+} else {
+  knitr::kable(baseline_combined, digits = 3)
+}
 ```
 
 ```{r}
 #| label: tbl-psi-warm-supp
 #| echo: false
 #| tbl-cap: "Posterior kōura occupancy probability ($\\psi$) from the warm-season occupancy model (Summer and Autumn rounds). Values are population-level estimates averaged over random site effects, with 95 % credible intervals. Autumn has no Before period as baseline monitoring was conducted in summer only."
+
 psi_w <- readr::read_csv(file.path("outputs", "tbl-psi-warm.csv"), show_col_types = FALSE)
-knitr::kable(psi_w, align = c("l", "l", "l", "c"),
-             col.names = c("Season", "Period", "Site type", "$\\psi$ (mean [95% CrI])"),
-             escape = FALSE)
+if (knitr::is_html_output()) {
+  psi_display <- psi_w
+  names(psi_display) <- c("Season", "Period", "Site type", "ψ (mean [95% CrI])")
+  DT::datatable(psi_display, filter = "top", rownames = FALSE,
+                options = list(pageLength = 25, dom = 'Bfrtip', buttons = c('csv', 'excel')),
+                extensions = 'Buttons')
+} else {
+  knitr::kable(psi_w, align = c("l", "l", "l", "c"),
+               col.names = c("Season", "Period", "Site type", "$\\psi$ (mean [95% CrI])"),
+               escape = FALSE)
+}
 ```
 
 ![Simulation-based power curves for the occupancy BACI (left) and kōura CPUE BACI (right). Each line represents a different number of After-period monitoring rounds. Dashed line marks 80 % power.](outputs/fig-power-curves-combined.png){#fig-power-curves-combined width=80%}

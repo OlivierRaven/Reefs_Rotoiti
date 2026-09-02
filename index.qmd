@@ -395,12 +395,17 @@ site_colors <- c(
   "Reference"  = "#2980b9"
 )
 site_info <- dplyr::mutate(site_info,
-  color      = site_colors[site],
+  color = dplyr::case_when(
+    grepl("stone", site, ignore.case = TRUE) ~ "#c0392b",
+    grepl("control",   site, ignore.case = TRUE) ~ "#e67e22",
+    grepl("reference", site, ignore.case = TRUE) ~ "#2980b9",
+    TRUE ~ "#555555"
+  ),
   site_label = dplyr::recode(site, "Stone_pile" = "Stone pile")
 )
 
 leaflet::leaflet() |>
-  leaflet::addProviderTiles("CartoDB.Positron") |>
+  leaflet::addProviderTiles("Esri.WorldGrayCanvas") |>
   leaflet::addPolygons(
     data        = rotoiti,
     fillColor   = "#bbdefb",
