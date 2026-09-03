@@ -703,17 +703,23 @@ run_contrasts <- function(fit, model_data, model_label, include_season = TRUE) {
   p_baci  <- make_forest(baci_data)  +
     facet_wrap(~ "BACI") +
     strip_theme +
-    theme(legend.position = "none")
+    theme(legend.position = "none") +
+    guides(colour = "none", fill = "none", shape = "none")
   p_after <- make_forest(after_data) +
     facet_wrap(~ "After treatment") +
     strip_theme +
-    theme(legend.position = "right")
+    theme(legend.position = "none")
 
   p2 <- p_baci / p_after +
-    patchwork::plot_layout(heights = c(n_baci, n_after))
+    patchwork::plot_layout(heights = c(n_baci, n_after), guides = "collect") &
+    theme(legend.position  = "top",
+          legend.direction  = "horizontal",
+          legend.title = element_blank(),
+          legend.text       = element_text(size = 9),
+          legend.key.size   = unit(0.8, "lines"))
 
   ggsave(file.path("outputs", paste0("fig-occ-", model_label, "-contrasts.png")),
-         p2, width = 6, height = 4, dpi = 300)
+         p2, width = 6, height = 5.5, dpi = 300)
 
   cat("\n====", model_label, "====\n")
   print(contrasts_all |>

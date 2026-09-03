@@ -64,8 +64,10 @@ Fish_data          <- read.csv(file.path(der_data_dir, "Fish_data.csv"))
 Macroinvertebrates <- read.csv(file.path(der_data_dir, "Macroinvertebrates.csv"))
 
 site_colours <- c("Stone_pile" = "#D55E00", "Control" = "#E69F00", "Reference" = "#0072B2")
+site_colours_effect <- c("Stone pile" = "#D55E00", "Control" = "#E69F00", "Reference1" = "#0072B2", "Reference2" = "#56B4E9")
 site_fill <- c("Stone_pile" = "#D55E00", "Control" = "#E69F00", "Reference" = "#0072B2")
 site_shapes  <- c("Stone_pile" = 21,  "Control" = 24, "Reference" = 22)
+site_shapes_effect <- c("Stone pile" = 21,  "Control" = 24, "Reference1" = 22, "Reference2" = 22)
 
 conv_colours <- c("Stone_pile"= "#D55E00","Reference" = "#0072B2")
 conv_fill    <- conv_colours
@@ -73,6 +75,9 @@ conv_shapes  <- c("Stone_pile" = 21,"Reference" = 22)
 
 site_labels <- c("Stone_pile" = "Stone pile", "Control" = "Control", "Reference" = "Reference")
 conv_labels <- c("Stone_pile" = "Stone pile", "Reference" = "Reference")
+
+season_colours <- c(Summer = "#D55E00", Autumn = "#E69F00", Winter = "#56B4E9", Spring = "#009E73")
+season_shapes  <- c(Summer = 21, Autumn = 24, Winter = 22, Spring = 23)
 
 monitor_labels <- c("Summer\n2025", "Autumn\n2025", "Winter\n2025", "Spring\n2025", "Summer\n2026", "Autumn\n2026", "Winter\n2026")
 
@@ -1449,6 +1454,88 @@ ggsave(file.path(out_dir, "fig-koura-catfish-ratio.png"), ratio_plot,
 ratio_plot
 ```
 
+### Kōura Effect plot
+```{r}
+#| label: fig-koura-effect
+#| fig-width: 9
+#| fig-height: 5
+#| dpi: 300
+#| fig-cap: "Kōura CPUE at individual site pairs across all monitoring rounds. Each panel shows one stone pile/control pair (sites 1–10) or reference pair (sites 11–20). Colour and shape indicate site type. Vertical dotted line marks stone pile construction. y-axis on log(1+x) scale."
+
+# Helper: "sites X & Y" label from site_ids within a pair
+pair_site_label <- function(df, base_label_col) {
+  df %>%
+    dplyr::group_by(across(all_of(base_label_col))) %>%
+    dplyr::mutate(
+      site_ids   = paste(sort(unique(as.integer(as.character(site_id)))),
+                         collapse = " & "),
+      pair_label = paste0("Sites ", site_ids)) %>%
+    dplyr::ungroup()
+}
+
+# Stone pile / control pairs
+sp_ctrl_eff <- all_data %>%
+  dplyr::filter(site %in% c("Stone_pile", "Control")) %>%
+  dplyr::mutate(
+    pair_base = paste("Pair", pair_id),
+    site_eff  = dplyr::recode(as.character(Site_type_detail),
+                  "Stone_pile" = "Stone pile", "Control" = "Control")) %>%
+  pair_site_label("pair_base")
+
+# Reference pairs — each pair_id gets its own facet
+ref_eff <- all_data %>%
+  dplyr::filter(site == "Reference") %>%
+  dplyr::mutate(
+    ref_rank  = as.integer(factor(as.numeric(as.character(pair_id)))),
+    pair_base = paste("Reference pair", ref_rank),
+    site_eff  = dplyr::recode(as.character(Site_type_detail),
+                  "Reference_1" = "Reference1", "Reference_2" = "Reference2")) %>%
+  pair_site_label("pair_base")
+
+# Ordered levels
+sp_levels  <- sp_ctrl_eff %>%
+  dplyr::distinct(pair_base, pair_label) %>%
+  dplyr::arrange(pair_base) %>%
+  dplyr::pull(pair_label)
+ref_levels <- ref_eff %>%
+  dplyr::distinct(pair_base, pair_label) %>%
+  dplyr::arrange(pair_base) %>%
+  dplyr::pull(pair_label)
+
+effect_data <- dplyr::bind_rows(
+  dplyr::select(sp_ctrl_eff, monitoring_int, Weighted_CPUE_Kōura,
+                pair_label, site_eff, site_id),
+  dplyr::select(ref_eff,     monitoring_int, Weighted_CPUE_Kōura,
+                pair_label, site_eff, site_id)) %>%
+  dplyr::mutate(
+    pair_label = factor(pair_label, levels = c(sp_levels, ref_levels)),
+    site_eff   = factor(site_eff,
+                        levels = c("Stone pile","Control","Reference1","Reference2")))
+
+koura_effect <- ggplot(effect_data,
+    aes(x = monitoring_int, y = Weighted_CPUE_Kōura,
+        colour = site_eff, fill = site_eff, shape = site_eff,
+        group  = site_id)) +
+  geom_vline(xintercept = 0.5, linetype = "dotted",
+             colour = "grey50", linewidth = 0.6) +
+  geom_line(linewidth = 0.7) +
+  geom_point(size = 2.5, col="black") +
+  facet_wrap(~ pair_label, ncol = 2) +
+  scale_colour_manual(values = site_colours_effect, name = "Site type",
+                      labels = c("Stone pile","Control","Reference 1","Reference 2")) +
+  scale_fill_manual(  values = site_colours_effect, name = "Site type",
+                      labels = c("Stone pile","Control","Reference 1","Reference 2")) +
+  scale_shape_manual( values = site_shapes_effect,  name = "Site type",
+                      labels = c("Stone pile","Control","Reference 1","Reference 2")) +
+  scale_x_continuous(breaks = 0:6, labels = monitor_labels) +
+  scale_y_continuous(trans = "log1p") +
+  labs(x = NULL, y = "Kōura CPUE\n(log scale)")
+
+ggsave(file.path(out_dir, "fig-koura-effect.png"), koura_effect, width = 9, height = 9, dpi = 300)
+
+koura_effect
+```
+
 ## Combined environmental and fish summary table
 ```{r}
 #| label: tbl-env-fish-summary
@@ -2455,6 +2542,53 @@ DT::datatable(
 
 ```
 
+## Forest plot companion table
+```{r}
+#| label: tbl-forest-summary
+#| tbl-cap: "Summary of key model results shown in the forest plot. Each row corresponds to one panel section and species. β is the estimate for the key term of interest (± 95% CI); direction indicates the sign of the effect regardless of significance. Significance is based on BH-adjusted p-values across all models."
+
+section_labels <- c(
+  "RQ1_treatment_before"   = "Before: stone pile vs control",
+  "RQ1_reference_before"   = "Before: reference 1 vs reference 2",
+  "RQ2_vs_control_full"    = "Before–After: BACI",
+  "RQ2_vs_control_after"   = "After: trajectory",
+  "RQ3_vs_reference_after" = "Convergence toward reference",
+  "RQ3_reference_after"    = "Reference stability")
+
+question_text <- c(
+  "Before: stone pile vs control"      = "Were stone pile and control sites comparable before construction?",
+  "Before: reference 1 vs reference 2" = "Were reference groups comparable at baseline?",
+  "Before–After: BACI"                 = "Was the before-to-after change greater at stone pile than control sites?",
+  "After: trajectory"                  = "Did stone pile and control sites diverge over the post-construction period?",
+  "Convergence toward reference"       = "Did stone pile sites converge toward reference site levels over time?",
+  "Reference stability"                = "Were reference site conditions stable across monitoring rounds?")
+
+forest_summary <- tidy_all %>%
+  dplyr::mutate(
+    section_key = paste(sub("[ab]$", "", RQ), comparison, time_frame, sep = "_"),
+    Section     = dplyr::recode(section_key, !!!section_labels),
+    Question    = dplyr::recode(Section, !!!question_text),
+    Result = dplyr::case_when(
+      p_adj_BH < 0.05 & estimate > 0 ~ "Significant positive",
+      p_adj_BH < 0.05 & estimate < 0 ~ "Significant negative",
+      estimate > 0                    ~ "Non-significant positive",
+      estimate < 0                    ~ "Non-significant negative",
+      TRUE                            ~ "—"),
+    CI = paste0(round(estimate, 2), " [", round(conf.low, 2), ", ", round(conf.high, 2), "]")) %>%
+  dplyr::filter(Section %in% names(question_text)) %>%
+  dplyr::mutate(
+    Section = factor(Section, levels = names(question_text)),
+    species  = factor(species, levels = c("Kōura", "Catfish")),
+    response_type = factor(response_type, levels = c("abundance", "biomass", "occupancy"))) %>%
+  dplyr::arrange(Section, species, response_type) %>%
+  dplyr::select(Section, Question, species, response_type, CI, Result) %>%
+  dplyr::rename(Species = species, Response = response_type,
+                `β [95% CI]` = CI)
+
+write.csv(forest_summary, file.path(out_dir, "tbl-forest-summary.csv"), row.names = FALSE)
+knitr::kable(forest_summary, align = c("l","l","l","l","r","l"))
+```
+
 ## Full fixed-effects table
 ```{r}
 #| label: tbl-models-summary-full
@@ -2506,44 +2640,42 @@ DT::datatable(
 #| fig-width: 6
 #| fig-height: 8
 #| dpi: 300
-#| fig-cap: "Effect sizes (β ± 95% CI) for the key term of interest across all models, separated by species (columns) and comparison type (rows). Filled points indicate significant effects (p < 0.05); open points are non-significant. Each row has its own x-axis scale — effect magnitudes are not directly comparable across rows because each comparison tests a different contrast (step-change, per-round slope, or simple group difference), and occupancy is on the log-odds scale while abundance and biomass models use the Tweedie log link. Models with degenerate confidence intervals are excluded."
+#| fig-cap: "Effect sizes (β ± 95% CI) for the key term of interest across all models, separated by species (columns) and comparison type (rows). Filled points indicate significant effects (*p* < 0.05); open points are non-significant. Each row has its own x-axis scale — effect magnitudes are not directly comparable across rows because each comparison tests a different contrast (step-change, per-round slope, or simple group difference), and occupancy is on the log-odds scale while abundance and biomass models use the Tweedie log link. Models with degenerate confidence intervals are excluded."
 
-# Built directly from tidy_all — drop models with degenerate CIs (non-PD Hessian)
 group_levels <- c(
-  "Baseline: stone pile vs control",
-  "Baseline: Reference 1 vs Reference 2",
-  "Construction impact: step-change",
-  "Construction impact: trajectory",
-  "Convergence toward reference",
-  "Reference stability")
+  "Were stone pile and control sites\ncomparable before construction?",
+  "Were the two reference groups\ncomparable at baseline?",
+  "Was the before-after change greater at\nstone pile than control sites?",
+  "Did stone pile and control sites diverge\nover the post-construction period?",
+  "Did stone pile sites converge toward\nreference site densities over time?",
+  "Were reference site conditions stable\nacross monitoring rounds?")
+
+strip_fills <- setNames(
+  c("#dce8f0", "#dce8f0", "#f8dfbf", "#f8dfbf", "#d6eddc", "#d6eddc"),
+  group_levels)
 
 forest_data <- tidy_all %>%
   dplyr::filter(is.finite(conf.low) & is.finite(conf.high)) %>%
   dplyr::mutate(
-    row_label = dplyr::case_when(
-      response_type == "abundance" ~ "Abundance",
-      response_type == "biomass"   ~ "Biomass",
-      response_type == "occupancy" ~ "Occupancy",
-      TRUE ~ response_type),
+    row_label = dplyr::recode(response_type,
+      "abundance" = "Abundance", "biomass" = "Biomass", "occupancy" = "Occupancy"),
     group = dplyr::case_when(
-      RQ == "RQ1"  & comparison %in% c("vs_control", "treatment") ~ "Baseline: stone pile vs control",
-      RQ == "RQ1"  & comparison == "reference" ~ "Baseline: Reference 1 vs Reference 2",
-      RQ == "RQ2a" ~ "Construction impact: step-change",
-      RQ == "RQ2b" ~ "Construction impact: trajectory",
-      RQ == "RQ3a" ~ "Convergence toward reference",
-      RQ == "RQ3b" ~ "Reference stability",
-      TRUE         ~ RQ),
+      RQ == "RQ1"  & comparison %in% c("vs_control", "treatment") ~ group_levels[1],
+      RQ == "RQ1"  & comparison == "reference"                    ~ group_levels[2],
+      RQ == "RQ2a"                                                ~ group_levels[3],
+      RQ == "RQ2b"                                                ~ group_levels[4],
+      RQ == "RQ3a"                                                ~ group_levels[5],
+      RQ == "RQ3b"                                                ~ group_levels[6],
+      TRUE ~ RQ),
     significant = p.value < 0.05) %>%
-  dplyr::arrange(
-    factor(group,      levels = group_levels),
-    factor(species,    levels = c("Kōura", "Catfish")),
-    factor(row_label,  levels = c("Abundance", "Biomass", "Occupancy"))) %>%
   dplyr::mutate(
     row_label = factor(row_label, levels = rev(c("Abundance", "Biomass", "Occupancy"))),
     group     = factor(group,     levels = group_levels),
     species   = factor(species,   levels = c("Kōura", "Catfish")))
 
 make_species_forest <- function(sp_data) {
+  grp_order <- levels(sp_data$group)
+  fills     <- strip_fills[grp_order]
   ggplot(sp_data, aes(estimate, row_label)) +
     geom_vline(xintercept = 0, linetype = "dashed",
                colour = "grey40", linewidth = 0.5) +
@@ -2553,12 +2685,14 @@ make_species_forest <- function(sp_data) {
                shape = 16, size = 3) +
     geom_point(data = dplyr::filter(sp_data, !significant),
                shape = 21, fill = "white", size = 3, stroke = 0.8) +
-    facet_wrap(~ group, ncol = 1, scales = "free") +
+    ggh4x::facet_wrap2(~ group, ncol = 1, scales = "free",
+      strip = ggh4x::strip_themed(
+        background_x = ggh4x::elem_list_rect(fill = fills,
+                                             colour = "black",
+                                             linewidth = 0.4))) +
     labs(x = "Effect size (β ± 95% CI)", y = NULL) +
     theme(
-      strip.text         = element_text(size = 8.5, face = "bold"),
-      strip.background   = element_rect(fill = "white", colour = "black",
-                                        linewidth = 0.4),
+      strip.text         = element_text(size = 8, face = "bold"),
       axis.text.y        = element_text(size = 9),
       axis.text.x        = element_text(size = 8),
       legend.position    = "none",
@@ -2578,7 +2712,7 @@ p_catfish <- make_species_forest(dplyr::filter(forest_data, species == "Catfish"
 
 forest_plot <- p_koura | p_catfish
 
-ggsave(file.path(out_dir, "fig-forest-plot.png"), forest_plot, width = 6, height = 8, dpi = 300)
+ggsave(file.path(out_dir, "fig-forest-plot.png"), forest_plot, width = 7, height = 9, dpi = 300)
 
 forest_plot
 ```

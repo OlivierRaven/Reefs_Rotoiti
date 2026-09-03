@@ -159,6 +159,21 @@
 \definecolor{thesiscream}{RGB}{255, 252, 240}
 \definecolor{thesissand}{RGB}{232, 212, 162}
 \pagecolor{thesiscream}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabularx}
+\usepackage{xltabular}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
 \KOMAoption{captions}{tableheading}
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
@@ -235,7 +250,7 @@ threatened by an invasive predator: a field trial of stone pile
 structures in an Aotearoa New Zealand lake}
 \author{Olivier V. Raven \and Ian A. K. Kusabs \and Robin
 Holmes \and Francis J. Burdon \and Deniz Özkundakci}
-\date{2026-09-02}
+\date{2026-09-03}
 \begin{document}
 \maketitle
 
@@ -293,39 +308,47 @@ Holmes \and Francis J. Burdon \and Deniz Özkundakci}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
+\tightlist
 \item
   Kōura (\emph{Paranephrops planifrons}), Aotearoa New Zealand's endemic
   freshwater crayfish, have declined by up to 96 \% in Lake Rotoiti (Te
-  Arawa Lakes, Rotorua). This decline is driven by multiple interacting
-  stressors, including predation by the invasive brown bullhead catfish
-  (\emph{Ameiurus nebulosus}), thermal stratification that compresses
-  suitable habitat into the shallow littoral zone, and invasive
-  macrophytes that further reduce available habitat. Because neither
-  stressor can be eliminated at the lake scale, we tested whether stone
-  pile structures deployed in the littoral zone of Lake Rotoiti could
-  provide structural refuge for kōura from predation.
+  Arawa Lakes, Rotorua), driven by predation from the invasive brown
+  bullhead catfish and by thermal stratification and invasive
+  macrophytes that compress suitable habitat into the shallow littoral
+  zone. Because these stressors cannot be removed at the lake scale,
+  adding structural refuge may be one of few practical management
+  options.
 \item
-  Kōura and catfish were monitored at five stone piles, five control,
-  and five paired natural rocky reference sites for 18 months using a
-  quasi before-after control-impact (quasi-BACI) design, with kōura
-  occupancy modelled using a Bayesian framework that incorporated
+  We tested whether stone pile structures deployed in the littoral zone
+  of Lake Rotoiti could provide structural refuge for kōura from
+  predation. Kōura and catfish were monitored at five stone piles, five
+  control, and five paired natural rocky reference sites for 18 months
+  using a quasi before-after control-impact (quasi-BACI) design, with
+  kōura occupancy modelled using a Bayesian framework that incorporated
   detection probabilities from baited traps and fyke nets.
 \item
-  Although stone pile construction produced no statistically significant
-  change in kōura abundance, biomass, or occupancy relative to control
-  sites, effects consistently trended positive, with higher kōura
-  occupancy and abundance at stone pile sites than control sites after
-  deployment; catfish showed no comparable trend, indicating stone piles
-  may attract kōura without also attracting catfish.
+  Stone pile construction produced no statistically significant change
+  in kōura abundance, biomass, or occupancy relative to controls, but
+  effects consistently trended positive across models; a
+  simulation-based power analysis showed the study was underpowered to
+  detect the observed effect size, given high pre-construction occupancy
+  (81--89\%) at all site types and only five site pairs.
 \item
-  \textbf{Synthesis and applications.} Continued long-term monitoring is
-  needed to determine whether the positive kōura trend strengthens over
-  time. Kōura use of stone piles was predominantly seasonal, with
-  structures most valuable when habitat compression and catfish
-  predation pressure are predicted to peak simultaneously in summer and
-  autumn. As both stressors are expected to intensify under climate
-  warming, the refuge value of stone piles is likely to increase, making
-  early deployment an important strategy in refugia-limited lakes.
+  Kōura use of stone piles was strongly seasonal: catch rates at stone
+  pile and control sites fell in winter as kōura withdrew to deeper
+  water, while reference sites remained stable. Catfish showed no
+  comparable attraction to stone piles in any season or model.
+\item
+  Synthesis and applications. Stone piles show early, consistent
+  evidence of benefiting a threatened native crayfish without benefiting
+  its invasive predator, and are most valuable when habitat compression
+  and predation pressure peak together in summer and autumn ---
+  conditions expected to intensify under climate warming. This study
+  establishes a tested, scalable construction and consenting methodology
+  that lake managers can deploy as an interim refuge-based tool while
+  catfish eradication remains unachievable at the lake scale; we
+  recommend continued monitoring beyond three years and trialling
+  connected, corridor-style structures rather than isolated piles.
 \end{enumerate}
 
 \subsection{Introduction}\label{introduction}
@@ -393,11 +416,12 @@ climate scenarios (\citeproc{ref-Lee2025}{Lee et al., 2025};
 \citeproc{ref-Woolway2021}{Woolway et al., 2021}), making kōura habitat
 compression and predation pressure progressively more severe.
 
-The compression of kōura into the littoral zone makes the quality of
-nearshore habitats increasingly important for remaining populations. In
-stream environments, kōura are positively associated with structurally
-complex habitats including bank undercuts, woody debris, leaf litter,
-and coarse substrates (\citeproc{ref-Jowett2008}{Jowett et al., 2008};
+The compression of suitable habitat and subsequent concentration of
+kōura into the littoral zone makes the quality of nearshore lacustrine
+habitats increasingly important for remaining populations. In stream
+environments, kōura are positively associated with structurally complex
+habitats including bank undercuts, woody debris, leaf litter, and coarse
+substrates (\citeproc{ref-Jowett2008}{Jowett et al., 2008};
 \citeproc{ref-Parkyn2009}{Parkyn et al., 2009};
 \citeproc{ref-Parkyn2004}{Parkyn \& Collier, 2004};
 \citeproc{ref-Usio2000}{Usio \& Townsend, 2000}). In lake environments,
@@ -470,8 +494,8 @@ paired control site was established 50 m along the shoreline, matched
 for habitat characteristics e.g., water depth, substrate type and
 vegetation cover. Five naturally occurring rocky shoreline locations,
 with each two monitoring sites 50 m apart were selected as reference. In
-total 20 sites of each 150 m² (15 × 10 m) were monitored seasonally over
-18 months. Physical characteristics of all sites are summarised in
+total, 20 sites of each 150 m² (15 × 10 m) were monitored seasonally
+over 18 months. Physical characteristics of all sites are summarised in
 Table~\ref{tbl-site-overview}. Baseline monitoring was conducted in
 February 2025 prior to stone pile deployment, which occurred the
 following week. Stone piles were constructed from locally sourced quarry
@@ -681,28 +705,28 @@ excluded zero in the positive direction.
 
 \subsection{Results}\label{results}
 
-Kōura were detected at stone pile sites within three months of
+Kōura presence was detected at stone pile sites within three months of
 construction, with occupancy and abundance trending consistently higher
 at stone pile sites than paired control sites throughout the 18-month
 post-construction period, though this difference did not reach
 statistical significance. Results across all models and response
 variables are summarised in Figure~\ref{fig-forest-plot} and
-{Table~\ref{tbl-models-summary-full}}.
+{\textbf{?@tbl-models-summary-full-supp}}.
 
 \subsubsection{Baseline equivalence}\label{baseline-equivalence}
 
 Pre-construction, kōura abundance and biomass did not differ
 significantly between stone pile and paired control sites
-({Table~\ref{tbl-baseline-combined}}), confirming baseline equivalences
-(\emph{p} = 0.783 and \emph{p} = 0.571). Kōura abundance (\emph{p} =
-0.968) and biomass (\emph{p} = 0.968) did not differ between reference
-sites. Catfish abundance (\emph{p} = 0.004) and biomass (\emph{p} =
-0.002) likewise did not differ between stone pile and control sites
-pre-construction. However, catfish abundance and biomass were
-significantly higher at Reference 1 than Reference 2 (\emph{p} = 0.004
-and \emph{p} = 0.002 respectively), despite both sites having comparable
-rocky substrate. This suggests catfish distribution varies considerably
-between nearby sites with similar habitat characteristics.
+({\textbf{?@tbl-baseline-combined-supp}}), confirming baseline
+equivalences (\emph{p} = 0.783 and \emph{p} = 0.571). Kōura abundance
+(\emph{p} = 0.968) and biomass (\emph{p} = 0.968) did not differ between
+reference sites. Catfish abundance (\emph{p} = 0.004) and biomass
+(\emph{p} = 0.002) likewise did not differ between stone pile and
+control sites pre-construction. However, catfish abundance and biomass
+were significantly higher at Reference 1 than Reference 2 (\emph{p} =
+0.004 and \emph{p} = 0.002, respectively), despite both sites having
+comparable rocky substrate. This suggests catfish distribution varies
+considerably between nearby sites with similar habitat characteristics.
 
 \subsubsection{Construction impact (BACI) and post-construction
 trajectory}\label{construction-impact-baci-and-post-construction-trajectory}
@@ -710,25 +734,25 @@ trajectory}\label{construction-impact-baci-and-post-construction-trajectory}
 Stone pile construction produced no detectable step-change in kōura
 abundance, biomass, or occupancy relative to paired control sites over
 the 18-month monitoring period following deployment (all
-\emph{p}\textsubscript{adj} = 0.858). A matched-season comparison,
-comparing Summer 2025 (before construction) with Summer 2026 (one year
-after construction), produced the same conclusion (kōura abundance:
-\emph{p} = 0.582). Post-construction trajectories did not diverge
-significantly between stone pile and control sites (all
-\emph{p}\textsubscript{adj} = 0.215). Kōura abundance declined
-significantly across post-construction rounds at control and stone pile
-sites (β = -0.41, \emph{p} = 0.004), with the sharpest decline observed
-in Winter 2026 (Figure~\ref{fig-cpue-trends}). Stone pile construction
-produced no detectable step-change or trajectory divergence in catfish
-abundance, biomass, or occupancy relative to control sites across any
-model or time period (Figure~\ref{fig-forest-plot}), indicating that
-stone piles did not attract catfish.
+\emph{p}\textsubscript{adj} = 0.858) (Figure~\ref{fig-koura-effect}). A
+matched-season comparison, comparing Summer 2025 (before construction)
+with Summer 2026 (one year after construction), produced the same
+conclusion (kōura abundance: \emph{p} = 0.582). Post-construction
+trajectories did not diverge significantly between stone pile and
+control sites (all \emph{p}\textsubscript{adj} = 0.215). Kōura abundance
+declined significantly across post-construction rounds at control and
+stone pile sites (\(\beta\) = -0.41, \emph{p} = 0.004), with the
+sharpest decline observed in Winter 2026 (Figure~\ref{fig-cpue-trends}).
+Stone pile construction produced no detectable step-change or trajectory
+divergence in catfish abundance, biomass, or occupancy relative to
+control sites across any model or time period
+(Figure~\ref{fig-forest-plot}).
 
 Kōura occupancy was high across all site types before construction,
-81--89 \% in summer ({Table~\ref{tbl-psi-warm}}). After construction,
-occupancy increased marginally at all sites, 89--94 \% in summer,
-thereby limiting our ability to detect a treatment effect. The BACI
-contrast to compare how much stone pile sites changed relative to
+81--89 \% in summer ({\textbf{?@tbl-psi-warm-supp}}). After
+construction, occupancy increased marginally at all sites, 89--94 \% in
+summer, thereby limiting our ability to detect a treatment effect. The
+BACI contrast to compare how much stone pile sites changed relative to
 control sites was slightly positive, but the credible intervals spanned
 zero with wide uncertainty (Figure~\ref{fig-occ-warm-contrasts}),
 indicating no detectable additional increase at stone pile sites.
@@ -759,31 +783,39 @@ stability}\label{convergence-toward-reference-sites-and-reference-stability}
 
 Stone pile sites maintained a consistently lower kōura abundance than
 reference sites throughout the post-construction period, with no
-significant change in this gap over time (β = -0.09, \emph{p} = 0.429;
-{Figure~\ref{fig-convergence-plot}}). Kōura abundance declined across
-monitoring rounds at both stone pile and reference sites (β = -0.09,
-\emph{p} = 0.107). The Winter 2026 monitoring round showed a pronounced
-decline at stone pile sites (CPUE ≈ 0.7) while reference sites
-maintained substantially higher abundance (CPUE ≈ 1.7;
+significant change in this gap over time (\(\beta\) = -0.09, \emph{p} =
+0.429; {Figure~\ref{fig-convergence-plot}}). Kōura abundance declined
+across monitoring rounds at both stone pile and reference sites
+(\(\beta\) = -0.09, \emph{p} = 0.107). The Winter 2026 monitoring round
+showed a pronounced decline at stone pile sites (CPUE ≈ 0.7) while
+reference sites maintained substantially higher abundance (CPUE ≈ 1.7;
 Figure~\ref{fig-cpue-trends}), a within-round contrast not captured by
 the linear trajectory model. Water temperature at Winter 2026 was
 approximately 1.5°C lower than Winter 2025 but consistent across site
 types, ruling out temperature as a site-specific driver. Visual
 inspection of stone pile surfaces during Winter 2026 monitoring revealed
 substantially greater filamentous algal accumulation compared to earlier
-rounds (Figure~\ref{fig-stone-piles}). Catfish abundance and biomass
+rounds ({\textbf{?@fig-stone-piles}}). Catfish abundance and biomass
 showed no significant convergence or divergence between stone pile and
 reference sites over time (Figure~\ref{fig-forest-plot}).
 
 \subsection{Discussion}\label{discussion}
 
+Stone pile structures were deployed in the littoral zone of Lake Rotoiti
+to test whether physical refuge could reduce predation pressure on kōura
+by invasive catfish. Thermal stratification and invasive macrophytes
+already compress suitable kōura habitat into the shallow littoral zone,
+and with catfish eradication probably unachievable at the lake scale,
+habitat-based interventions represent one of the few management options
+currently available to support this declining endemic crayfish.
+
 \subsubsection{Short-term construction
 effect}\label{short-term-construction-effect}
 
 Kōura catch rates were highly variable across all site types throughout
-the monitoring period, with wide confidence intervals reflecting genuine
-biological variability in kōura distribution. This variability likely
-reflects seasonal activity patterns, detection probability changes
+the monitoring period, with wide confidence intervals, likely reflecting
+genuine biological variability in kōura distribution. This variability
+may reflect seasonal activity patterns, detection probability changes
 across monitoring rounds, and natural heterogeneity in littoral zone
 use, rather than stable site associations. Despite this variability, the
 Bayesian occupancy model revealed a consistent positive directional
@@ -792,19 +824,19 @@ after construction, and occupancy at stone pile sites was comparable to
 that at natural rocky reference sites across both summer and autumn
 post-deployment comparisons. The BACI posterior contrast was positive,
 indicating that occupancy increased more at stone pile sites than
-control sites following construction, consistent with the stone piles as
-refuge, though whether this reflects active refuge-seeking driven by
-catfish predation pressure or gradual colonisation and population
-expansion into newly available habitats cannot be determined from the
-current data. However, no statistically significant effect was detected
-indicating that while the predicted directional response occurred, it
-did not reach detectable magnitude within the 18-month monitoring
-period.
+control sites following construction, consistent with the intended
+purpose of the stone piles as refuge, though whether this reflects
+active refuge-seeking driven by catfish predation pressure or gradual
+colonisation and population expansion into newly available habitats
+cannot be determined from the current data. However, no statistically
+significant effect was detected indicating that while the predicted
+directional response occurred, it did not reach detectable magnitude
+within the 18-month monitoring period.
 
 The absence of a significant effect is most likely explained by a
 combination of monitoring duration, statistical power, and system
-dynamics rather than genuine ineffectiveness of the structures. Habitat
-establishment for freshwater crayfish can be inherently slow: Johnsen \&
+dynamics rather than ineffectiveness of the structures. Habitat
+establishment for freshwater crayfish can be inherently slow. Johnsen \&
 Taugbøl (\citeproc{ref-Johnsen2008}{2008}) reported that crayfish
 abundance at a stone addition site took 13 years to reach reference
 levels, and monitoring periods shorter than two years are often
@@ -812,18 +844,19 @@ insufficient to detect significant responses to habitat modification
 (\citeproc{ref-Pilotto2018}{Pilotto et al., 2018};
 \citeproc{ref-Ruh2012}{Ruhí et al., 2012};
 \citeproc{ref-Testa2011}{Testa et al., 2011}). Following reconstruction
-of the Rotorua lakefront, 57 kōura were removed before construction but
-none were observed after 13 months and only 17 after 28 months
-(\citeproc{ref-Kusabs2023}{Kusabs, 2023}). Slow recolonisation was
-attributed to persistent catfish predation pressure and distance from
-source population, consistent with time scales observed here. The
-present study was also statistically underpowered, with five stone pile
-and five control site pairs insufficient to reliably detect the observed
-effect size, and pre-construction occupancy already high across site
-types (81-89 \%), leaving little statistical room for a measurable
-treatment effect. The simultaneous elevation of kōura CPUE across all
-site types in Autumn 2025 further complicated detection of an early
-treatment effect in the BACI contrast.
+of the Lake Rotorua lakefront, which is located in close proximity to
+our study site, kōura showed no meaningful recolonisation after 28
+months (\citeproc{ref-Kusabs2023}{Kusabs, 2023}). They attributed slow
+recolonisation to persistent catfish predation pressure and distance
+from source population, consistent with time scales observed here. The
+power analysis indicates that five site pairs are insufficient to
+reliably detect effects of the magnitude observed here within 18 months,
+establishing a minimum design threshold: future stone pile monitoring
+programmes should plan for at least three years of monitoring and expect
+potential of high pre-construction occupancy, leaving little statistical
+room for a measurable treatment effect. The simultaneous elevation of
+kōura CPUE across all site types in Autumn 2025 further complicated
+detection of an early treatment effect in the BACI contrast.
 
 Beyond study design, features of the system itself may also explain the
 weak response. Kōura abundance is highest in lakes without catfish
@@ -837,8 +870,9 @@ new capacity that will only be filled gradually as the population
 expands, which is unlikely to be detectable within 18 months. In either
 case, a delayed rather than absent population response would be
 expected. Isolated stone pile structures may also be difficult for kōura
-to locate, as connectivity between habitat patches is a key determinant
-of colonisation success (\citeproc{ref-Hanski1998}{Hanski, 1998}).
+to locate, as distance between isolated habitat patches is a key
+determinant of colonisation success (\citeproc{ref-Hanski1998}{Hanski,
+1998}).
 
 \subsubsection{Winter 2026}\label{winter-2026}
 
@@ -849,16 +883,16 @@ This result at the control and stone pile sites is consistent with known
 seasonal migration behaviour across lake depth profiles and kōura
 activity rates during cooler water temperatures
 (\citeproc{ref-Devcich1979}{Devcich, 1979}). When lake thermal
-stratification breaks down in winter, deep-water habitat becomes
-thermally accessible, reducing the value of the shallow littoral zone as
-refuge and allowing kōura to redistribute along the depth gradient
-(\citeproc{ref-Devcich1979}{Devcich, 1979}). Kōura activity declines at
-low water temperatures (\citeproc{ref-Devcich1979}{Devcich, 1979}),
-reducing the probability of trap entry independently of true abundance.
-Water temperature in Winter 2026 was 1.5 °C lower than Winter 2025,
-though this difference was consistent across all site types and
-therefore cannot explain why reference sites were substantially more
-resilient to the winter decline than the stone pile sites.
+stratification breaks down in winter, the hypolimnion re-oxygenates and
+deep-water habitat becomes accessible, allowing kōura to redistribute
+along the depth gradient (\citeproc{ref-Devcich1979}{Devcich, 1979}).
+Kōura activity declines at low water temperatures
+(\citeproc{ref-Devcich1979}{Devcich, 1979}), reducing the probability of
+trap entry independently of true abundance. Water temperature in Winter
+2026 was 1.5 °C lower than Winter 2025, though this difference was
+consistent across all site types and therefore cannot explain why
+reference sites were substantially more resilient to the winter decline
+than the stone pile sites.
 
 Natural rocky reference sites in this study represent the ecological
 target for stone pile deployment. Reference sites had established kōura
@@ -874,19 +908,19 @@ convergence toward reference levels. However, kōura occupancy at stone
 pile sites was comparable to that at reference sites after construction,
 suggesting that kōura found and used the structures at similar frequency
 to natural rocky habitat but at lower densities. This distinction
-between occupancy and abundance reflects the early stage of colonisation
-and the small structural footprint of stone piles relative to the
-extensive natural rocky habitat at reference sites. These differences
-are expected to narrow as biofilm succession matures and kōura
-accumulate at the structures over time.
+between occupancy and abundance likely reflects the early stage of
+colonisation and the small structural footprint of stone piles relative
+to the extensive natural rocky habitat at reference sites. These
+differences are expected to narrow as biofilm succession matures and
+kōura accumulate at the structures over time.
 
-Extensive growth of filamentous algae was observed on the structures in
-Winter 2026 (Figure~\ref{fig-stone-piles}) but did not occur to the same
-degree in Winter 2025. Filamentous algal growth on hard substrates is
-characteristic of winter conditions in thermally stratified lakes, as
-seasonal mixing increases nutrient availability in the water column
-(\citeproc{ref-Wetzel2001}{Wetzel, 2001}), while reduced water
-temperature suppresses invertebrate grazing activity
+Extensive growth of filamentous algae was observed on the stone pile
+structures in Winter 2026 ({\textbf{?@fig-stone-piles}}) but did not
+occur to the same degree in Winter 2025. Filamentous algal growth on
+hard substrates is characteristic of winter conditions in thermally
+stratified lakes, as seasonal mixing increases nutrient availability in
+the water column (\citeproc{ref-Wetzel2001}{Wetzel, 2001}), while
+reduced water temperature suppresses invertebrate grazing activity
 (\citeproc{ref-Bonacina2023}{Bonacina et al., 2023}), allowing algal
 mats to accumulate on available hard surfaces. The stone pile surfaces,
 freshly quarried and free from biofilm at deployment, provided clean
@@ -1011,33 +1045,36 @@ et al., 1996}), and scaling from individual stone pile deployment to
 habitat addition at population-relevant extents is a central challenge
 in restoration ecology (\citeproc{ref-Ngwenya2025}{Ngwenya et al.,
 2025}). The temporal dimension of this mismatch is equally important as
-continued monitoring for at least three years is recommended to
-determine whether the Winter 2026 decline was a one-time event and
-whether kōura abundance at stone pile sites continues to build over
-subsequent spring and summer seasons.
+continued monitoring for at least three years is recommended, as the
+minimum at which the current observed trajectory would become
+statistically detectable, and to determine whether the Winter 2026
+decline was a one-time event. It is expected that kōura abundance at
+stone pile sites will continue to build over subsequent spring and
+summer seasons.
 
 Beyond the ecological findings, this study established a practical
 foundation for scaling habitat enhancement in these lakes. The necessary
 approvals, consents, and construction methodology for deploying stone
-piles or rocky structures at scale have now been established and tested,
-and this study provided evidence that the structures are unlikely to
-provide meaningful additional benefit to catfish. These outcomes provide
-lake managers with a practical, tested option for future large-scale
-deployment.
+piles or rocky structures have now been documented and tested, providing
+a repeatable framework ready for wider application. This study also
+provided evidence that the structures are unlikely to provide meaningful
+additional benefit to catfish, addressing a key management concern
+before any wider deployment. Together, these outcomes give lake managers
+with a practical, tested option for future large-scale deployment.
 
 As thermal stratification and catfish distribution expands under
 continued warming (\citeproc{ref-Lee2025}{Lee et al., 2025};
 \citeproc{ref-Woolway2021}{Woolway et al., 2021}), the band of suitable
-habitat available to kōura will continue to narrow. In this context, the
-value of structural refugia is expected to increase over time rather
-than diminish. Stone pile deployment alone cannot reverse the trajectory
-of kōura decline in Lake Rotoiti, but it directly addresses the current
-bottleneck, the shortage of structural refuge in a lake where soft
-sediment is dominant on the shorelines and the two primary stressors
-cannot be controlled at the lake scale. Establishing refugia before
-populations decline further may be more effective than waiting until the
-effect of the stressors becomes more severe and kōura source populations
-fall below critical densities for recolonisation
+habitat available to kōura will likely continue to narrow. In this
+context, the value of structural refugia is expected to increase over
+time rather than diminish. Stone pile deployment alone cannot reverse
+the trajectory of kōura decline in Lake Rotoiti, but it directly
+addresses the current bottleneck, the shortage of structural refuge in a
+lake where soft sediment is dominant on the shorelines and the two
+primary stressors cannot be controlled at the lake scale. Establishing
+refugia before populations decline further may be more effective than
+waiting until the effect of the stressors becomes more severe and kōura
+source populations fall below critical densities for recolonisation
 (\citeproc{ref-Kusabs2026}{I. A. K. Kusabs et al., 2026};
 \citeproc{ref-Morelli2016}{Morelli et al., 2016}).
 
@@ -1110,18 +1147,9 @@ transparent science.
 
 \subsection{Tables}\label{tables}
 
-{
+\begingroup\fontsize{8}{10}\selectfont
 
-\begin{longtable}[]{@{}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.0459}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1009}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.0734}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1468}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1101}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1009}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1651}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1193}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 16\tabcolsep) * \real{0.1376}}@{}}
+\begin{longtable}[t]{rllrrrrrr}
 
 \caption{\label{tbl-site-overview}Physical characteristics of stone
 pile, control, and reference monitoring sites at baseline. Sites 1--10
@@ -1134,54 +1162,37 @@ percentage cover.}
 
 \tabularnewline
 
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedleft
-Site
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Type
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Habitat
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Substrate index
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Slope (m/m)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Fetch (km)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Riparian veg. (\%)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Overhang (\%)
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-Wood cover (\%)
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-1 & Stone pile & Rocky & 5.20 & 0.12 & 4.76 & 0 & 10 & 0 \\
-2 & Control & Rocky & 4.40 & 0.11 & 4.79 & 70 & 0 & 0 \\
-3 & Stone pile & Sandy & 3.00 & 0.01 & 1.71 & 100 & 0 & 0 \\
-4 & Control & Sandy & 3.00 & 0.01 & 1.74 & 80 & 5 & 0 \\
-5 & Stone pile & Sandy & 2.40 & 0.01 & 0.61 & 10 & 0 & 0 \\
-6 & Control & Sandy & 3.00 & 0.01 & 0.55 & 0 & 0 & 0 \\
-7 & Stone pile & Sandy & 3.00 & 0.06 & 2.50 & 100 & 0 & 0 \\
-8 & Control & Sandy & 3.00 & 0.05 & 2.22 & 30 & 0 & 0 \\
-9 & Stone pile & Sandy & 3.35 & 0.08 & 3.59 & 0 & 0 & 3 \\
-10 & Control & Rocky & 5.00 & 0.09 & 3.74 & 20 & 0 & 0 \\
-11 & Reference & Rocky & 6.60 & 0.16 & 4.47 & 0 & 0 & 0 \\
-12 & Reference & Rocky & 6.20 & 0.12 & 4.17 & 100 & 100 & 0 \\
-13 & Reference & Sandy & 3.60 & 0.09 & 1.71 & 100 & 100 & 0 \\
-14 & Reference & Sandy & 3.50 & 0.11 & 1.65 & 100 & 100 & 0 \\
-15 & Reference & Rocky & 5.20 & 0.03 & 1.44 & 100 & 100 & 6 \\
-16 & Reference & Rocky & 5.20 & 0.04 & 1.40 & 100 & 100 & 2 \\
-17 & Reference & Rocky & 5.00 & 0.05 & 3.47 & 100 & 100 & 30 \\
-18 & Reference & Rocky & 6.20 & 0.05 & 3.46 & 100 & 100 & 7 \\
-19 & Reference & Rocky & 5.70 & 0.11 & 2.63 & 100 & 100 & 4 \\
-20 & Reference & Rocky & 5.70 & 0.13 & 2.87 & 100 & 100 & 0 \\
+\toprule
+Site & Type & Habitat & Substrate index & Slope (m/m) & Fetch (km) & Riparian veg. (\%) & Overhang (\%) & Wood cover (\%)\\
+\midrule
+\cellcolor{gray!8}{1} & \cellcolor{gray!8}{Stone pile} & \cellcolor{gray!8}{Rocky} & \cellcolor{gray!8}{5.20} & \cellcolor{gray!8}{0.12} & \cellcolor{gray!8}{4.76} & \cellcolor{gray!8}{0} & \cellcolor{gray!8}{10} & \cellcolor{gray!8}{0}\\
+2 & Control & Rocky & 4.40 & 0.11 & 4.79 & 70 & 0 & 0\\
+\cellcolor{gray!8}{3} & \cellcolor{gray!8}{Stone pile} & \cellcolor{gray!8}{Sandy} & \cellcolor{gray!8}{3.00} & \cellcolor{gray!8}{0.01} & \cellcolor{gray!8}{1.71} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{0} & \cellcolor{gray!8}{0}\\
+4 & Control & Sandy & 3.00 & 0.01 & 1.74 & 80 & 5 & 0\\
+\cellcolor{gray!8}{5} & \cellcolor{gray!8}{Stone pile} & \cellcolor{gray!8}{Sandy} & \cellcolor{gray!8}{2.40} & \cellcolor{gray!8}{0.01} & \cellcolor{gray!8}{0.61} & \cellcolor{gray!8}{10} & \cellcolor{gray!8}{0} & \cellcolor{gray!8}{0}\\
+\addlinespace
+6 & Control & Sandy & 3.00 & 0.01 & 0.55 & 0 & 0 & 0\\
+\cellcolor{gray!8}{7} & \cellcolor{gray!8}{Stone pile} & \cellcolor{gray!8}{Sandy} & \cellcolor{gray!8}{3.00} & \cellcolor{gray!8}{0.06} & \cellcolor{gray!8}{2.50} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{0} & \cellcolor{gray!8}{0}\\
+8 & Control & Sandy & 3.00 & 0.05 & 2.22 & 30 & 0 & 0\\
+\cellcolor{gray!8}{9} & \cellcolor{gray!8}{Stone pile} & \cellcolor{gray!8}{Sandy} & \cellcolor{gray!8}{3.35} & \cellcolor{gray!8}{0.08} & \cellcolor{gray!8}{3.59} & \cellcolor{gray!8}{0} & \cellcolor{gray!8}{0} & \cellcolor{gray!8}{3}\\
+10 & Control & Rocky & 5.00 & 0.09 & 3.74 & 20 & 0 & 0\\
+\addlinespace
+\cellcolor{gray!8}{11} & \cellcolor{gray!8}{Reference} & \cellcolor{gray!8}{Rocky} & \cellcolor{gray!8}{6.60} & \cellcolor{gray!8}{0.16} & \cellcolor{gray!8}{4.47} & \cellcolor{gray!8}{0} & \cellcolor{gray!8}{0} & \cellcolor{gray!8}{0}\\
+12 & Reference & Rocky & 6.20 & 0.12 & 4.17 & 100 & 100 & 0\\
+\cellcolor{gray!8}{13} & \cellcolor{gray!8}{Reference} & \cellcolor{gray!8}{Sandy} & \cellcolor{gray!8}{3.60} & \cellcolor{gray!8}{0.09} & \cellcolor{gray!8}{1.71} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{0}\\
+14 & Reference & Sandy & 3.50 & 0.11 & 1.65 & 100 & 100 & 0\\
+\cellcolor{gray!8}{15} & \cellcolor{gray!8}{Reference} & \cellcolor{gray!8}{Rocky} & \cellcolor{gray!8}{5.20} & \cellcolor{gray!8}{0.03} & \cellcolor{gray!8}{1.44} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{6}\\
+\addlinespace
+16 & Reference & Rocky & 5.20 & 0.04 & 1.40 & 100 & 100 & 2\\
+\cellcolor{gray!8}{17} & \cellcolor{gray!8}{Reference} & \cellcolor{gray!8}{Rocky} & \cellcolor{gray!8}{5.00} & \cellcolor{gray!8}{0.05} & \cellcolor{gray!8}{3.47} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{30}\\
+18 & Reference & Rocky & 6.20 & 0.05 & 3.46 & 100 & 100 & 7\\
+\cellcolor{gray!8}{19} & \cellcolor{gray!8}{Reference} & \cellcolor{gray!8}{Rocky} & \cellcolor{gray!8}{5.70} & \cellcolor{gray!8}{0.11} & \cellcolor{gray!8}{2.63} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{100} & \cellcolor{gray!8}{4}\\
+20 & Reference & Rocky & 5.70 & 0.13 & 2.87 & 100 & 100 & 0\\
+\bottomrule
 
 \end{longtable}
 
-}
+\endgroup{}
 
 \textsubscript{Source:
 \href{https://OlivierRaven.github.io/Reefs_Rotoiti/index.qmd.html}{Article
@@ -1212,15 +1223,32 @@ maps show the placement of each of the sites.}
 
 }
 
-\caption{\label{fig-forest-plot}Effect sizes (β ± 95\% CI) for the key
-term of interest across all models, separated by species (columns) and
-comparison type (rows). Filled points indicate significant effects (p
-\textless{} 0.05); open points are non-significant. Each row has its own
-x-axis scale --- effect magnitudes are not directly comparable across
-rows because each comparison tests a different contrast (step-change,
-per-round slope, or simple group difference), and occupancy is on the
-log-odds scale while abundance and biomass models use the Tweedie log
-link. Models with degenerate confidence intervals are excluded.}
+\caption{\label{fig-forest-plot}Effect sizes (\(\beta\) ± 95\% CI) for
+the key term of interest across all models, separated by species
+(columns) and comparison type (rows). Filled points indicate significant
+effects (\emph{p} \textless{} 0.05); open points are non-significant.
+Each row has its own x-axis scale --- effect magnitudes are not directly
+comparable across rows because each comparison tests a different
+contrast (step-change, per-round slope, or simple group difference), and
+occupancy is on the log-odds scale while abundance and biomass models
+use the Tweedie log link. Models with degenerate confidence intervals
+are excluded.}
+
+\end{figure}%
+
+\begin{figure}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{outputs/fig-koura-effect.png}
+
+}
+
+\caption{\label{fig-koura-effect}Kōura CPUE at individual site pairs
+across all monitoring rounds. Each panel shows one stone pile / control
+pair (sites 1--10) or reference pair (sites 11--20). Colour and shape
+indicate site type. Vertical dotted line marks stone pile construction.
+y-axis on log(1+x) scale.}
 
 \end{figure}%
 
@@ -1248,11 +1276,11 @@ from post-construction monitoring (After).}
 }
 
 \caption{\label{fig-occ-warm-contrasts}Posterior contrasts in kōura
-occupancy from the warm-season model. (A) BACI contrast (stone pile
-minus control, before vs after construction). (B) After-treatment
-contrasts between all site-type pairs. Points show posterior means with
-95 \% credible intervals; contrasts overlapping zero indicate no
-detectable difference.}
+occupancy from the warm-season model. BACI contrast (stone pile minus
+control, before vs after construction). After-treatment contrasts
+between all site-type pairs. Points show posterior means with 95 \%
+credible intervals; contrasts overlapping zero indicate no detectable
+difference.}
 
 \end{figure}%
 
@@ -1269,22 +1297,6 @@ effect size over additional monitoring rounds. The solid line shows the
 linear projection based on the estimated post-construction trajectory;
 shaded ribbon shows 95\% uncertainty interval. Dashed horizontal line
 marks the detection threshold for 80 \% power with five site pairs.}
-
-\end{figure}%
-
-\begin{figure}
-
-\centering{
-
-\includegraphics[width=0.8\linewidth,height=\textheight,keepaspectratio]{images/Stone_pile_development.png}
-
-}
-
-\caption{\label{fig-stone-piles}Progressive algal biofouling at stone
-pile site 9 in Lake Rotoiti across three monitoring periods. Summer 2025
-(top left, shortly after construction) shows clean stone surfaces.
-Summer 2026 (bottom left) moderate biofilm accumulation is visible.
-Winter 2026 (right) shows cover of stone surfaces by filamentous algae.}
 
 \end{figure}%
 
@@ -1345,8 +1357,8 @@ measurements); filled points are directly measured weights.}
   >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0536}}
   >{\raggedleft\arraybackslash}p{(\linewidth - 26\tabcolsep) * \real{0.0595}}@{}}
 
-\caption{\label{tbl-models-summary-full}Full fixed-effect estimates (β,
-SE, 95\% CI, p-value) for every term in every model.}
+\caption{\label{tbl-models-summary-full}Full fixed-effect estimates
+(\(\beta\), SE, 95\% CI, p-value) for every term in every model.}
 
 \tabularnewline
 

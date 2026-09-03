@@ -4,20 +4,22 @@
 
 ![Length–weight relationship for kōura, fitted on log₁₀–log₁₀ scale. Open points are weights predicted from the length–weight regression (used to fill missing scale measurements); filled points are directly measured weights.](outputs/fig-length-weight-ch5.png){#fig-length-weight-ch5 width=80%}
 
+![Progressive algal biofouling at stone pile site 9 in Lake Rotoiti across three monitoring periods. Summer 2025 (top left, shortly after construction) shows clean stone surfaces. Summer 2026 (bottom left) shows moderate biofilm accumulation. Winter 2026 (right) shows extensive cover of stone surfaces by filamentous algae.](images/Stone_pile_development.png){#fig-stone-piles width=80%}
+
 ```{r}
 #| label: tbl-models-summary-full-supp
 #| echo: false
 #| tbl-cap: "Full fixed-effect estimates ($\\beta$, SE, 95% CI, p-value) for every term in every model."
 
 tidy_all_full <- readr::read_csv(file.path("outputs", "tbl-models-summary-full.csv"), show_col_types = FALSE)
-if (knitr::is_html_output()) {
+if (isTRUE(getOption("thesis.is.html"))) {
   DT::datatable(tidy_all_full, filter = "top", rownames = FALSE,
                 options = list(pageLength = 20, dom = 'Bfrtip', buttons = c('csv', 'excel')),
                 extensions = 'Buttons') |>
     DT::formatRound(columns = intersect(names(tidy_all_full),
                                         c("estimate","std.error","statistic","p.value",
                                           "conf.low","conf.high")), digits = 3)
-} else {
+} else if (knitr::is_latex_output()) {
   knitr::kable(tidy_all_full, digits = 3, escape = FALSE, booktabs = TRUE) |>
     kableExtra::kable_styling(
       latex_options  = c("scale_down", "repeat_header", "striped"),
@@ -25,6 +27,8 @@ if (knitr::is_html_output()) {
       stripe_color   = "gray!8"
     ) |>
     kableExtra::landscape()
+} else {
+  knitr::kable(tidy_all_full, digits = 3)
 }
 ```
 
@@ -34,12 +38,23 @@ if (knitr::is_html_output()) {
 #| tbl-cap: "Baseline (pre-construction) comparability of stone pile, control, and reference sites. Values are mean ± SD; p-values test Stone pile vs Control (paired Wilcoxon signed-rank test) and Stone pile vs Reference (unpaired Wilcoxon rank-sum test)."
 
 baseline_combined <- readr::read_csv(file.path("outputs", "tbl-baseline-combined.csv"), show_col_types = FALSE)
-if (knitr::is_html_output()) {
+col_names_bl <- c("Variable", "Stone pile", "Control", "Reference",
+                  "*p* vs Control", "*p* vs Reference")
+if (isTRUE(getOption("thesis.is.html"))) {
   DT::datatable(baseline_combined, filter = "top", rownames = FALSE,
+                colnames = col_names_bl,
                 options = list(pageLength = 25, dom = 'Bfrtip', buttons = c('csv', 'excel')),
                 extensions = 'Buttons')
+} else if (knitr::is_latex_output()) {
+  knitr::kable(baseline_combined, digits = 3,
+               col.names = col_names_bl, escape = FALSE,
+               booktabs = TRUE) |>
+    kableExtra::kable_styling(
+      latex_options = c("striped", "hold_position"),
+      font_size     = 8,
+      stripe_color  = "gray!8")
 } else {
-  knitr::kable(baseline_combined, digits = 3)
+  knitr::kable(baseline_combined, digits = 3, col.names = col_names_bl)
 }
 ```
 
@@ -49,12 +64,21 @@ if (knitr::is_html_output()) {
 #| tbl-cap: "Posterior kōura occupancy probability ($\\psi$) from the warm-season occupancy model (Summer and Autumn rounds). Values are population-level estimates averaged over random site effects, with 95 % credible intervals. Autumn has no Before period as baseline monitoring was conducted in summer only."
 
 psi_w <- readr::read_csv(file.path("outputs", "tbl-psi-warm.csv"), show_col_types = FALSE)
-if (knitr::is_html_output()) {
+if (isTRUE(getOption("thesis.is.html"))) {
   psi_display <- psi_w
   names(psi_display) <- c("Season", "Period", "Site type", "ψ (mean [95% CrI])")
   DT::datatable(psi_display, filter = "top", rownames = FALSE,
                 options = list(pageLength = 25, dom = 'Bfrtip', buttons = c('csv', 'excel')),
                 extensions = 'Buttons')
+} else if (knitr::is_latex_output()) {
+  knitr::kable(psi_w, align = c("l", "l", "l", "c"),
+               col.names = c("Season", "Period", "Site type", "$\\psi$ (mean [95% CrI])"),
+               escape = FALSE, booktabs = TRUE) |>
+    kableExtra::kable_styling(
+      latex_options = c("striped", "hold_position"),
+      font_size = 9,
+      stripe_color = "gray!8"
+    )
 } else {
   knitr::kable(psi_w, align = c("l", "l", "l", "c"),
                col.names = c("Season", "Period", "Site type", "$\\psi$ (mean [95% CrI])"),
