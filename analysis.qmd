@@ -3157,6 +3157,133 @@ MuMIn::dredge(m_full)
 
 ```
 
+# Interactive widgets (saved as RDS for HTML thesis)
+
+```{r}
+#| label: widget-forest-plot-ch5
+#| include: false
+widget_forest_rds <- file.path(der_data_dir, "widget_forest_plot.rds")
+if (!file.exists(widget_forest_rds)) {
+  grp_short <- c(
+    "Were stone pile and control sites\ncomparable before construction?"      = "Baseline: SP vs Control",
+    "Were the two reference groups\ncomparable at baseline?"                  = "Baseline: Ref groups",
+    "Was the before-after change greater at\nstone pile than control sites?"  = "BACI: SP vs Control",
+    "Did stone pile and control sites diverge\nover the post-construction period?" = "Trend: SP vs Control",
+    "Did stone pile sites converge toward\nreference site densities over time?"    = "Convergence: SP vs Ref",
+    "Were reference site conditions stable\nacross monitoring rounds?"              = "Reference stability"
+  )
+  fp_w <- forest_data |>
+    dplyr::mutate(
+      grp_s  = grp_short[as.character(group)],
+      y_lbl  = paste0(grp_s, " | ", row_label),
+      hover  = paste0(
+        "<b>", species, " — ", row_label, "</b><br>",
+        grp_s, "<br>",
+        "β = ", round(estimate, 3),
+        " [", round(conf.low, 3), ", ", round(conf.high, 3), "]<br>",
+        "p = ", signif(p.value, 3), ifelse(significant, " ★", "")
+      )
+    )
+
+  make_fp <- function(sp_data, show_y = TRUE) {
+    plotly::plot_ly(sp_data) |>
+      plotly::add_segments(
+        x = ~conf.low, xend = ~conf.high, y = ~y_lbl, yend = ~y_lbl,
+        line = list(color = "rgba(60,60,60,0.65)", width = 1.8),
+        hoverinfo = "none", showlegend = FALSE
+      ) |>
+      plotly::add_markers(
+        x = ~estimate, y = ~y_lbl,
+        marker = list(
+          size   = 9,
+          color  = ~ifelse(significant, "#1a1a1a", "white"),
+          symbol = "circle",
+          line   = list(color = "#1a1a1a", width = 1.5)
+        ),
+        text = ~hover, hoverinfo = "text", showlegend = FALSE
+      ) |>
+      plotly::layout(
+        shapes = list(list(
+          type = "line", x0 = 0, x1 = 0, y0 = 0, y1 = 1,
+          yref = "paper", line = list(color = "grey60", dash = "dash", width = 1)
+        )),
+        xaxis = list(title = "β ± 95% CI", zeroline = FALSE, showgrid = TRUE),
+        yaxis = list(title = "", autorange = "reversed",
+                     showticklabels = show_y, tickfont = list(size = 11))
+      )
+  }
+
+  p_k <- make_fp(dplyr::filter(fp_w, species == "Kōura"),   show_y = TRUE)
+  p_c <- make_fp(dplyr::filter(fp_w, species == "Catfish"), show_y = FALSE)
+
+  fp_widget <- plotly::subplot(p_k, p_c, nrows = 1, shareY = TRUE, titleX = TRUE,
+                               widths = c(0.6, 0.4)) |>
+    plotly::layout(
+      annotations = list(
+        list(x = 0.28, y = 1.04, text = "<b>Kōura</b>",   showarrow = FALSE,
+             xref = "paper", yref = "paper", font = list(size = 13)),
+        list(x = 0.82, y = 1.04, text = "<b>Catfish</b>", showarrow = FALSE,
+             xref = "paper", yref = "paper", font = list(size = 13))
+      ),
+      margin = list(t = 60)
+    )
+  saveRDS(fp_widget, widget_forest_rds)
+}
+```
+
+
+```{r}
+#| label: widget-site-overview-ch5
+#| include: false
+widget_site_ov_rds <- file.path(der_data_dir, "widget_site_overview.rds")
+if (!file.exists(widget_site_ov_rds)) {
+  site_ov_w <- readr::read_csv(file.path(out_dir, "tbl-site-overview.csv"), show_col_types = FALSE)
+  dt_w <- DT::datatable(site_ov_w, rownames = FALSE, filter = "top",
+                        options = list(pageLength = 25, dom = 'frtip', scrollX = TRUE)) |>
+    DT::formatRound(columns = which(sapply(site_ov_w, is.numeric)), digits = 2)
+  saveRDS(dt_w, widget_site_ov_rds)
+}
+```
+
+```{r}
+#| label: widget-sites-map-ch5
+#| include: false
+widget_sites_map_rds <- file.path(der_data_dir, "widget_sites_map.rds")
+if (!file.exists(widget_sites_map_rds)) {
+  rotoiti_w <- sf::st_read("data/raw/Lake Rotoiti.gpkg", quiet = TRUE) |>
+    sf::st_make_valid() |>
+    sf::st_transform(4326)
+  site_info_w <- readr::read_csv(file.path(der_data_dir, "Site_info.csv"), show_col_types = FALSE) |>
+    dplyr::filter(monitoring == 0) |>
+    dplyr::distinct(site_id, site, lat, lon)
+  site_colors_w <- c("Stone_pile" = "#c0392b", "Control" = "#e67e22", "Reference" = "#2980b9")
+  site_info_w <- dplyr::mutate(site_info_w,
+    color = dplyr::case_when(
+      grepl("stone",     site, ignore.case = TRUE) ~ "#c0392b",
+      grepl("control",   site, ignore.case = TRUE) ~ "#e67e22",
+      grepl("reference", site, ignore.case = TRUE) ~ "#2980b9",
+      TRUE ~ "#555555"
+    ),
+    site_label = dplyr::recode(site, "Stone_pile" = "Stone pile")
+  )
+  sites_map_w <- leaflet::leaflet() |>
+    leaflet::addProviderTiles("Esri.WorldGrayCanvas") |>
+    leaflet::addPolygons(
+      data = rotoiti_w, fillColor = "#bbdefb", fillOpacity = 0.45,
+      color = "#1565c0", weight = 1.5, label = "Lake Rotoiti"
+    ) |>
+    leaflet::addCircleMarkers(
+      data = site_info_w, lat = ~lat, lng = ~lon, radius = 7,
+      color = ~color, fillColor = ~color, fillOpacity = 0.9, weight = 1.5,
+      popup = ~paste0("<b>Site ", site_id, "</b><br>Type: ", site_label)
+    ) |>
+    leaflet::addLegend(position = "bottomright", colors = unname(site_colors_w),
+                       labels = c("Stone pile", "Control", "Reference"),
+                       title = "Site type", opacity = 0.9)
+  saveRDS(sites_map_w, widget_sites_map_rds)
+}
+```
+
 # Session info
 ```{r}
 #| label: session-info
