@@ -152,7 +152,7 @@ Olivier V. Raven, Ian A. K. Kusabs, Robin Holmes, Francis J. Burdon & Deniz Özk
 if (file.exists(.i)) cat(sprintf('<div class="ch-hero-wrap"><img class="ch-hero-img" src="%s" alt=""><div class="ch-hero-fade"></div><div class="ch-hero-text"><span class="ch-eyebrow">Chapter 5</span><span class="ch-hero-title">Rock Piles as Kōura Habitat</span></div></div>', knitr::image_uri(.i)))
 ```
 
-# Chapter 5 Rock Piles as Kōura Habitat {.unnumbered}
+# Chapter 5 Rock Piles as Kōura Habitat {.unnumbered .ch-page-heading}
 :::
 
 ```{r}
@@ -227,11 +227,11 @@ after_rng  <- psi_extract(psi_after_summer,  "ψ (mean [95% CrI])")
 2.	We tested whether stone pile structures deployed in the littoral zone of Lake Rotoiti could provide structural refuge for kōura from predation. Kōura and catfish were monitored at five stone piles, five control, and five paired natural rocky reference sites for 18 months using a quasi before-after control-impact (quasi-BACI) design, with kōura occupancy modelled using a Bayesian framework that incorporated detection probabilities from baited traps and fyke nets.
 3.	Stone pile construction produced no statistically significant change in kōura abundance, biomass, or occupancy relative to controls, but effects consistently trended positive across models; a simulation-based power analysis showed the study was underpowered to detect the observed effect size, given high pre-construction occupancy (81–89%) at all site types and only five site pairs.
 4.	Kōura use of stone piles was strongly seasonal: catch rates at stone pile and control sites fell in winter as kōura withdrew to deeper water, while reference sites remained stable. Catfish showed no comparable attraction to stone piles in any season or model.
-5.	Synthesis and applications. Stone piles show early, consistent evidence of benefiting a threatened native crayfish without benefiting its invasive predator, and are most valuable when habitat compression and predation pressure peak together in summer and autumn — conditions expected to intensify under climate warming. This study establishes a tested, scalable construction and consenting methodology that lake managers can deploy as an interim refuge-based tool while catfish eradication remains unachievable at the lake scale; we recommend continued monitoring beyond three years and trialling connected, corridor-style structures rather than isolated piles.
+5.	Synthesis and applications. Stone piles show early, consistent evidence of benefiting a threatened native crayfish without benefiting its invasive predator, and are most valuable when habitat compression and predation pressure peak together in summer and autumn, conditions expected to intensify under climate warming. This study establishes a tested, scalable construction and consenting methodology that lake managers can deploy as an interim refuge-based tool while catfish eradication remains unachievable at the lake scale; we recommend continued monitoring beyond three years and trialling connected, corridor-style structures rather than isolated piles.
 
 
 ## Introduction
-Freshwater biodiversity is declining faster than any other biome, with one quarter of freshwater fauna now threatened with extinction [@Sayer2025]. Among the most endangered are freshwater crayfish, with 32% of species assessed as threatened globally due to habitat loss, invasive species, and declining water quality [@Richman2015]. As keystone species and ecosystem engineers, crayfish play crucial roles in nutrient cycling, bioturbation, and food web dynamics, and their loss can have cascading consequences for freshwater ecosystems [@Momot1995; @Collier1997; @Parkyn2001]. In Aotearoa New Zealand, these pressures converge on kōura (*Paranephrops planifrons* White, 1842), an endemic freshwater crayfish now facing rapid population decline in lakes that have long supported some of the largest customary kōura fisheries in the country [@Hiroa1921; @Kusabs2009].
+Freshwater biodiversity is declining faster than any other biome, with one quarter of freshwater fauna now threatened with extinction [@Sayer2025]. Among the most endangered are freshwater crayfish, with 32 % of species assessed as threatened globally due to habitat loss, invasive species, and declining water quality [@Richman2015]. As keystone species and ecosystem engineers, crayfish play crucial roles in nutrient cycling, bioturbation, and food web dynamics, and their loss can have cascading consequences for freshwater ecosystems [@Momot1995; @Collier1997; @Parkyn2001]. In Aotearoa New Zealand, these pressures converge on kōura (*Paranephrops planifrons* White, 1842), an endemic freshwater crayfish now facing rapid population decline in lakes that have long supported some of the largest customary kōura fisheries in the country [@Hiroa1921; @Kusabs2009].
 
 Kōura populations in Lake Rotoiti, located in the Rotorua Te Arawa Lakes region of the North Island of Aotearoa New Zealand (hereafter Aotearoa), have declined by up to 96 % over the past two decades [@Kusabs2026]. This collapse has virtually ended customary harvest practices for Te Arawa iwi (Māori tribal group) who are hunga tiaki (traditional custodians) of the lake [@Kusabs2015a]. The decline in kōura numbers is driven by multiple interacting stressors that compound over time in different parts of the lake [@Lee2025; @Kusabs2026]. The invasive brown bullhead catfish (*Ameiurus nebulosus* Lesueur, 1819, hereafter catfish), confirmed in Lake Rotoiti in 2016 [@Francis2019; @Grayling2020], preys directly on kōura and suppresses their foraging through non-consumptive ‘fear’ effects [@Raven2026a]. Predation pressure from catfish is compounded by additional stressors that constrain where in the lake kōura can seek refuge from this invasive predator [@Kusabs2026]. 
 
@@ -361,7 +361,7 @@ The code and derived data supporting the findings of this study are openly avail
 #| echo: false
 #| tbl-cap: "Physical characteristics of stone pile, control, and reference monitoring sites at baseline. Sites 1–10 are stone pile (odd) and paired control (even) sites; sites 11–20 are reference sites. Substrate index is a weighted composite of substrate particle sizes (higher values indicate coarser substrate more suitable for kōura). Slope is the gradient to the 20 m depth contour. Fetch is maximum effective fetch. Vegetation values are visually estimated percentage cover."
 ch5_dir <- if (dir.exists("05_stone_piles_rotoiti")) "05_stone_piles_rotoiti" else "."
-if (isTRUE(getOption("thesis.is.html"))) {
+if (isTRUE(getOption("thesis.is.html")) && knitr::is_html_output()) {
   .rds <- file.path(ch5_dir, "data/derived/widget_site_overview.rds")
   if (file.exists(.rds)) readRDS(.rds) else htmltools::tags$p(htmltools::tags$em("Table not yet built — render analysis.qmd first."), style = "color:#888;padding:1em")
 } else if (knitr::is_latex_output()) {
@@ -396,21 +396,7 @@ if (file.exists(.rds)) readRDS(.rds) else htmltools::tags$p(htmltools::tags$em("
 :::
 
 
-::: {.content-visible unless-format="html"}
 ![Effect sizes ($\beta$ ± 95% CI) for the key term of interest across all models, separated by species (columns) and comparison type (rows). Filled points indicate significant effects (*p* < 0.05); open points are non-significant. Each row has its own x-axis scale, effect magnitudes are not directly comparable across rows because each comparison tests a different contrast (step-change, per-round slope, or simple group difference), and occupancy is on the log-odds scale while abundance and biomass models use the Tweedie log link. Models with degenerate confidence intervals are excluded.](outputs/fig-forest-plot.png){#fig-forest-plot width=100%}
-:::
-
-::: {.content-visible when-format="html"}
-```{r}
-#| label: fig-forest-plot
-#| echo: false
-#| eval: !expr knitr::is_html_output()
-#| fig-cap: "Effect sizes (β ± 95% CI) for the key term of interest across all models, for kōura (left) and catfish (right). Filled points indicate significant effects (*p* < 0.05); open points are non-significant. Hover over points for exact estimates, confidence intervals, and p-values. Each panel has its own x-axis scale."
-ch5_dir <- if (dir.exists("05_stone_piles_rotoiti")) "05_stone_piles_rotoiti" else "."
-.rds <- file.path(ch5_dir, "data/derived/widget_forest_plot.rds")
-if (file.exists(.rds)) readRDS(.rds) else htmltools::tags$p(htmltools::tags$em("Interactive plot not yet built — render analysis.qmd first."), style = "color:#888;padding:1em")
-```
-:::
 
 ![Kōura CPUE at individual site pairs across all monitoring rounds. Each panel shows one stone pile / control pair (sites 1–10) or reference pair (sites 11–20). Colour and shape indicate site type. Vertical dotted line marks stone pile construction. y-axis on log(1+x) scale.](outputs/fig-koura-effect.png){#fig-koura-effect width=100%}
 
